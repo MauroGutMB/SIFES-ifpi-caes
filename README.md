@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/logo.png" alt="Logo SIFES" width="160" />
+  <img src="assets/favicon.png" alt="Logo SIFES" width="120" />
 
   # SIFES — Sistema do Instituto Federal de Esperantina
 
