@@ -1,4 +1,5 @@
 // Schema de dados do SIFES — Diário de Aula
+// Referência de regras de negócio: docs/regras-negocio.md
 
 generator client {
   provider = "prisma-client"
