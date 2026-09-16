@@ -1,0 +1,12 @@
+# Node
+node_modules/
+
+# Builds
+dist/
+build/
+generated/
+coverage/
+
+# Env
+.env
+.env.local

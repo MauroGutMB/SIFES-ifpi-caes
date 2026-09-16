@@ -1,5 +1,4 @@
 // Schema de dados do SIFES — Diário de Aula
-// Referência de regras de negócio: docs/regras-negocio.md
 
 generator client {
   provider = "prisma-client"
@@ -60,6 +59,7 @@ model User {
   senhaHash           String
   role                Role
   precisaTrocarSenha  Boolean   @default(true)
+  fotoUrl             String?
   criadoEm            DateTime  @default(now())
 
   professor           Professor?
@@ -132,8 +132,27 @@ model Aluno {
   frequencias Frequencia[]
   notas       Nota[]
   entregas    Entrega[]
+  solicitacoesFoto SolicitacaoFoto[]
 
   @@map("alunos")
+}
+
+enum StatusSolicitacaoFoto {
+  PENDENTE
+  APROVADA
+  REJEITADA
+}
+
+model SolicitacaoFoto {
+  id                String                 @id @default(uuid())
+  alunoId           String
+  aluno             Aluno                  @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  arquivoStagingUrl String
+  status            StatusSolicitacaoFoto  @default(PENDENTE)
+  criadaEm          DateTime               @default(now())
+  resolvidaEm       DateTime?
+
+  @@map("solicitacoes_foto")
 }
 
 model Materia {
