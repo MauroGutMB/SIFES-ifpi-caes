@@ -17,6 +17,7 @@ import { PlanoDisciplinaModule } from './plano-disciplina/plano-disciplina.modul
 import { MateriaisAulaModule } from './materiais-aula/materiais-aula.module';
 import { AtividadesModule } from './atividades/atividades.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
+import { RelatoriosModule } from './relatorios/relatorios.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
     MateriaisAulaModule,
     AtividadesModule,
     AdminDashboardModule,
+    RelatoriosModule,
   ],
   controllers: [AppController],
   providers: [AppService],
