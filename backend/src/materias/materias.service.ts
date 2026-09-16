@@ -3,8 +3,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '../../generated/prisma/client';
+import { EstadoMateria, Prisma, Role } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuthenticatedUser } from '../auth/auth.types';
+import { BoletimService } from '../boletim/boletim.service';
+import { agoraComoBrasiliaFake } from '../common/tempo.util';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
 import { gerarOcorrenciasAula, validarHorario } from './horario.util';
@@ -13,7 +16,10 @@ type Tx = Prisma.TransactionClient;
 
 @Injectable()
 export class MateriasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly boletim: BoletimService,
+  ) {}
 
   private async carregarTurmaComSemestre(turmaId: string) {
     const turma = await this.prisma.turma.findUnique({
@@ -220,6 +226,103 @@ export class MateriasService {
 
   remove(id: string) {
     return this.prisma.materia.delete({ where: { id } });
+  }
+
+  async encerrar(id: string, user: AuthenticatedUser) {
+    const materia = await this.prisma.materia.findUnique({
+      where: { id },
+      include: { turma: { include: { semestre: true } } },
+    });
+    if (!materia) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    if (
+      user.role === Role.PROFESSOR &&
+      materia.professorId !== user.professorId
+    ) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    if (materia.estado === EstadoMateria.ENCERRADA) {
+      throw new BadRequestException('Matéria já está encerrada');
+    }
+    // Professor só encerra após o fim do Semestre; admin pode a qualquer momento (override).
+    if (user.role === Role.PROFESSOR) {
+      const agora = agoraComoBrasiliaFake();
+      if (agora < materia.turma.semestre.dataFim) {
+        throw new BadRequestException(
+          'Só é possível encerrar a Matéria após o fim do Semestre',
+        );
+      }
+    }
+
+    const atualizada = await this.prisma.materia.update({
+      where: { id },
+      data: { estado: EstadoMateria.ENCERRADA, encerradaEm: new Date() },
+    });
+
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { materiaId: id },
+      select: { alunoId: true },
+    });
+    for (const { alunoId } of vinculos) {
+      await this.verificarDesligamentoAutomatico(alunoId);
+    }
+
+    return atualizada;
+  }
+
+  /** Admin reabre uma Matéria já encerrada (correção). */
+  async reabrir(id: string) {
+    const materia = await this.prisma.materia.findUnique({ where: { id } });
+    if (!materia) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    return this.prisma.materia.update({
+      where: { id },
+      data: { estado: EstadoMateria.ABERTA, encerradaEm: null },
+    });
+  }
+
+  /**
+   * Um semestre só é concluído pro aluno quando todas as Matérias vinculadas da sua turma
+   * atual estiverem encerradas. Aprovado em tudo → desliga automaticamente (fica sem turma,
+   * livre pra ser matriculado em outra). Reprovado em alguma → fica pendente, vinculado até
+   * o admin agir manualmente (ver regras-negocio.md — Pendência e desligamento do semestre).
+   */
+  private async verificarDesligamentoAutomatico(alunoId: string) {
+    const aluno = await this.prisma.aluno.findUnique({
+      where: { id: alunoId },
+    });
+    if (!aluno?.turmaId) return;
+
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { alunoId },
+      include: { materia: true },
+    });
+    const vinculosDaTurmaAtual = vinculos.filter(
+      (v) => v.materia.turmaId === aluno.turmaId,
+    );
+    if (vinculosDaTurmaAtual.length === 0) return;
+
+    const todasEncerradas = vinculosDaTurmaAtual.every(
+      (v) => v.materia.estado === EstadoMateria.ENCERRADA,
+    );
+    if (!todasEncerradas) return;
+
+    for (const vinculo of vinculosDaTurmaAtual) {
+      const boletim = await this.boletim.calcularBoletimMateria(
+        vinculo.materiaId,
+      );
+      const linha = boletim.find((b) => b.aluno.id === alunoId);
+      if (!linha || linha.situacao !== 'APROVADO') {
+        return; // reprovado em alguma: fica pendente, sem ação automática
+      }
+    }
+
+    await this.prisma.aluno.update({
+      where: { id: alunoId },
+      data: { turmaId: null },
+    });
   }
 
   /**

@@ -12,6 +12,11 @@ import { ProfessoresModule } from './professores/professores.module';
 import { AlunosModule } from './alunos/alunos.module';
 import { MateriasModule } from './materias/materias.module';
 import { AulasModule } from './aulas/aulas.module';
+import { BoletimModule } from './boletim/boletim.module';
+import { PlanoDisciplinaModule } from './plano-disciplina/plano-disciplina.module';
+import { MateriaisAulaModule } from './materiais-aula/materiais-aula.module';
+import { AtividadesModule } from './atividades/atividades.module';
+import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 
 @Module({
   imports: [
@@ -26,6 +31,11 @@ import { AulasModule } from './aulas/aulas.module';
     AlunosModule,
     MateriasModule,
     AulasModule,
+    BoletimModule,
+    PlanoDisciplinaModule,
+    MateriaisAulaModule,
+    AtividadesModule,
+    AdminDashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
