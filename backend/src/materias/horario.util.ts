@@ -1,6 +1,13 @@
 import { DiaSemana, Turno } from '../../generated/prisma/client';
 
-/** Mapeia o enum DiaSemana para o índice usado por Date.getDay() (0=domingo). */
+/**
+ * Todas as datas/horários deste módulo são manipulados em UTC (getUTCDay, setUTCHours etc.),
+ * tratando o valor UTC como se já fosse a hora de Brasília — convenção única, sem depender do
+ * fuso horário do processo Node. Nunca usar os métodos locais (getDay, setHours...) aqui: eles
+ * dependem do fuso do servidor e já causaram um bug real de desalinhamento de datas.
+ */
+
+/** Mapeia o enum DiaSemana para o índice usado por Date.getUTCDay() (0=domingo). */
 const JS_DAY_BY_DIA_SEMANA: Record<DiaSemana, number> = {
   [DiaSemana.SEGUNDA]: 1,
   [DiaSemana.TERCA]: 2,
@@ -49,7 +56,7 @@ export function validarHorarioNoTurno(
 
 function combinarDataHora(data: Date, minutosDoDia: number): Date {
   const resultado = new Date(data);
-  resultado.setHours(Math.floor(minutosDoDia / 60), minutosDoDia % 60, 0, 0);
+  resultado.setUTCHours(Math.floor(minutosDoDia / 60), minutosDoDia % 60, 0, 0);
   return resultado;
 }
 
@@ -65,12 +72,12 @@ export function gerarOcorrenciasAula(
   const ocorrencias: { data: Date; horaInicio: Date; horaFim: Date }[] = [];
 
   const cursor = new Date(dataInicioSemestre);
-  cursor.setHours(0, 0, 0, 0);
+  cursor.setUTCHours(0, 0, 0, 0);
   const fim = new Date(dataFimSemestre);
-  fim.setHours(0, 0, 0, 0);
+  fim.setUTCHours(0, 0, 0, 0);
 
   while (cursor <= fim) {
-    if (cursor.getDay() === diaAlvo) {
+    if (cursor.getUTCDay() === diaAlvo) {
       const dataAula = new Date(cursor);
       ocorrencias.push({
         data: dataAula,
@@ -81,7 +88,7 @@ export function gerarOcorrenciasAula(
         ),
       });
     }
-    cursor.setDate(cursor.getDate() + 1);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
   return ocorrencias;
