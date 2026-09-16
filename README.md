@@ -20,6 +20,7 @@ O sistema permite o controle de administradores, professores e alunos, cobrindo 
   <img src="assets/identidade-visual.jpg" alt="Identidade visual do SIFES" width="800" />
 </div>
 
+
 **Paleta de cores**
 
 | Cor | Uso | Hex aproximado |
@@ -30,7 +31,6 @@ O sistema permite o controle de administradores, professores e alunos, cobrindo 
 | 🟥 Vermelho | Secundária | `#E52625` |
 | ⬛ Preto | Terciária | `#222222` |
 
-O logo remete à chama do conhecimento entrelaçada com um livro aberto, simbolizando a educação e o desenvolvimento tecnológico do Instituto Federal.
 
 ## Stack
 
