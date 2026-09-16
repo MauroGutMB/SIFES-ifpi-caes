@@ -7,7 +7,7 @@ import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
-import { gerarOcorrenciasAula, validarHorarioNoTurno } from './horario.util';
+import { gerarOcorrenciasAula, validarHorario } from './horario.util';
 
 type Tx = Prisma.TransactionClient;
 
@@ -120,7 +120,7 @@ export class MateriasService {
     const turma = await this.carregarTurmaComSemestre(dto.turmaId);
     await this.validarProfessor(dto.professorId);
 
-    const erroHorario = validarHorarioNoTurno(dto.horaInicio, turma.turno);
+    const erroHorario = validarHorario(dto.horaInicio);
     if (erroHorario) {
       throw new BadRequestException(erroHorario);
     }
@@ -188,7 +188,7 @@ export class MateriasService {
     const diaSemana = dto.diaSemana ?? materiaAtual.diaSemana;
     const horaInicio = dto.horaInicio ?? materiaAtual.horaInicio;
 
-    const erroHorario = validarHorarioNoTurno(horaInicio, turma.turno);
+    const erroHorario = validarHorario(horaInicio);
     if (erroHorario) {
       throw new BadRequestException(erroHorario);
     }

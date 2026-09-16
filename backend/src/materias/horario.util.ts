@@ -1,4 +1,4 @@
-import { DiaSemana, Turno } from '../../generated/prisma/client';
+import { DiaSemana } from '../../generated/prisma/client';
 
 /**
  * Todas as datas/horários deste módulo são manipulados em UTC (getUTCDay, setUTCHours etc.),
@@ -17,12 +17,9 @@ const JS_DAY_BY_DIA_SEMANA: Record<DiaSemana, number> = {
   [DiaSemana.SABADO]: 6,
 };
 
-// Janela geral de aulas: 7h–18h. Turno divide essa janela ao meio-dia.
+// Janela geral de aulas: 7h–18h. O turno da Turma é só a designação principal dela — Matérias
+// podem ser oferecidas em contraturno, então não há restrição de turno aqui, só a janela geral.
 const JANELA_MINUTOS = { inicio: 7 * 60, fim: 18 * 60 };
-const JANELA_POR_TURNO: Record<Turno, { inicio: number; fim: number }> = {
-  [Turno.MANHA]: { inicio: 7 * 60, fim: 12 * 60 },
-  [Turno.TARDE]: { inicio: 12 * 60, fim: 18 * 60 },
-};
 
 const DURACAO_AULA_MINUTOS = 60;
 
@@ -34,21 +31,13 @@ export function parseHoraMinuto(hora: string): number {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-/** Valida que o horário (HH:mm) cabe na janela 7h–18h e dentro do turno da turma. */
-export function validarHorarioNoTurno(
-  hora: string,
-  turno: Turno,
-): string | null {
+/** Valida que o horário (HH:mm) cabe na janela geral 7h–18h (considerando 1h de duração). */
+export function validarHorario(hora: string): string | null {
   const minutos = parseHoraMinuto(hora);
   const fimAula = minutos + DURACAO_AULA_MINUTOS;
 
   if (minutos < JANELA_MINUTOS.inicio || fimAula > JANELA_MINUTOS.fim) {
     return 'Horário deve estar dentro da janela 7h–18h (considerando 1h de duração)';
-  }
-
-  const janelaTurno = JANELA_POR_TURNO[turno];
-  if (minutos < janelaTurno.inicio || fimAula > janelaTurno.fim) {
-    return `Horário deve respeitar o turno da turma (${turno === Turno.MANHA ? '7h–12h' : '12h–18h'})`;
   }
 
   return null;
