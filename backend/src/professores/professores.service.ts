@@ -56,7 +56,11 @@ export class ProfessoresService {
     }
   }
 
-  remove(id: string) {
-    return this.prisma.professor.delete({ where: { id } });
+  async remove(id: string) {
+    const professor = await this.prisma.professor.findUniqueOrThrow({
+      where: { id },
+    });
+    // Cascata: remover o User remove o Professor junto (onDelete: Cascade no schema).
+    return this.prisma.user.delete({ where: { id: professor.userId } });
   }
 }
