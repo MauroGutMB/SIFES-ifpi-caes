@@ -1,0 +1,260 @@
+// Schema de dados do SIFES — Diário de Aula
+// Referência de regras de negócio: docs/regras-negocio.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  PROFESSOR
+  ALUNO
+}
+
+enum Turno {
+  MANHA
+  TARDE
+}
+
+enum DiaSemana {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
+  SABADO
+}
+
+enum EstadoMateria {
+  ABERTA
+  ENCERRADA
+}
+
+// Override manual do admin sobre o estado calculado (por horário) de uma Aula.
+// Nulo = sem override, estado segue a janela de horário (ver regras-negocio.md).
+enum AulaEstadoOverride {
+  LANCADO
+  NAO_LANCADO
+}
+
+enum StatusFrequencia {
+  PRESENTE
+  FALTA
+  FALTA_JUSTIFICADA
+}
+
+enum FormatoArquivo {
+  PDF
+  WORD
+  FOTO
+}
+
+model User {
+  id                  String    @id @default(uuid())
+  login               String    @unique
+  senhaHash           String
+  role                Role
+  precisaTrocarSenha  Boolean   @default(true)
+  criadoEm            DateTime  @default(now())
+
+  professor           Professor?
+  aluno               Aluno?
+  refreshTokens       RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash     String    @unique
+  criadoEm      DateTime  @default(now())
+  expiraEm      DateTime
+  revogadoEm    DateTime?
+  substituidoPorId String? @unique
+
+  @@map("refresh_tokens")
+}
+
+model Semestre {
+  id           String    @id @default(uuid())
+  nome         String    @unique // ex.: "2026/1"
+  dataInicio   DateTime
+  dataFim      DateTime
+
+  turmas       Turma[]
+
+  @@map("semestres")
+}
+
+model Turma {
+  id            String    @id @default(uuid())
+  semestreId    String
+  semestre      Semestre  @relation(fields: [semestreId], references: [id], onDelete: Restrict)
+  cursoTecnico  String
+  anoSerie      String
+  turno         Turno
+
+  materias      Materia[]
+  alunos        Aluno[]
+
+  @@map("turmas")
+}
+
+model Professor {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome      String
+  email     String    @unique
+
+  materias  Materia[]
+
+  @@map("professores")
+}
+
+model Aluno {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nome        String
+  matricula   String    @unique
+  turmaId     String?
+  turma       Turma?    @relation(fields: [turmaId], references: [id], onDelete: SetNull)
+
+  vinculos    VinculoAlunoMateria[]
+  frequencias Frequencia[]
+  notas       Nota[]
+  entregas    Entrega[]
+
+  @@map("alunos")
+}
+
+model Materia {
+  id                       String        @id @default(uuid())
+  turmaId                  String
+  turma                    Turma         @relation(fields: [turmaId], references: [id], onDelete: Restrict)
+  professorId              String
+  professor                Professor     @relation(fields: [professorId], references: [id], onDelete: Restrict)
+  cargaHorariaReferencia   Int
+  diaSemana                DiaSemana
+  horaInicio               String        // "HH:mm", duração fixa de 1h (ver regras-negocio.md)
+  estado                   EstadoMateria @default(ABERTA)
+  encerradaEm              DateTime?
+
+  vinculos                 VinculoAlunoMateria[]
+  aulas                    Aula[]
+  itensAvaliacao           ItemAvaliacao[]
+  atividades               Atividade[]
+
+  @@map("materias")
+}
+
+model VinculoAlunoMateria {
+  id         String   @id @default(uuid())
+  alunoId    String
+  aluno      Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  materiaId  String
+  materia    Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  criadoEm   DateTime @default(now())
+
+  @@unique([alunoId, materiaId])
+  @@map("vinculos_aluno_materia")
+}
+
+model Aula {
+  id             String              @id @default(uuid())
+  materiaId      String
+  materia        Materia             @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  data           DateTime
+  horaInicio     DateTime
+  horaFim        DateTime
+  titulo         String?
+  descricao      String?
+  estadoOverride AulaEstadoOverride?
+
+  frequencias    Frequencia[]
+  materiais      MaterialAula[]
+
+  @@map("aulas")
+}
+
+model Frequencia {
+  id        String           @id @default(uuid())
+  aulaId    String
+  aula      Aula             @relation(fields: [aulaId], references: [id], onDelete: Cascade)
+  alunoId   String
+  aluno     Aluno            @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  status    StatusFrequencia
+
+  @@unique([aulaId, alunoId])
+  @@map("frequencias")
+}
+
+model MaterialAula {
+  id          String   @id @default(uuid())
+  aulaId      String
+  aula        Aula     @relation(fields: [aulaId], references: [id], onDelete: Cascade)
+  titulo      String
+  arquivoUrl  String
+  postadoEm   DateTime @default(now())
+
+  @@map("materiais_aula")
+}
+
+model ItemAvaliacao {
+  id            String   @id @default(uuid())
+  materiaId     String
+  materia       Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  nome          String
+  valorMaximo   Decimal  @db.Decimal(5, 2)
+
+  notas         Nota[]
+
+  @@map("itens_avaliacao")
+}
+
+model Nota {
+  id              String        @id @default(uuid())
+  itemAvaliacaoId String
+  itemAvaliacao   ItemAvaliacao @relation(fields: [itemAvaliacaoId], references: [id], onDelete: Cascade)
+  alunoId         String
+  aluno           Aluno         @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  valorObtido     Decimal       @db.Decimal(5, 2)
+
+  @@unique([itemAvaliacaoId, alunoId])
+  @@map("notas")
+}
+
+model Atividade {
+  id              String         @id @default(uuid())
+  materiaId       String
+  materia         Materia        @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  titulo          String
+  descricao       String?
+  formatoExigido  FormatoArquivo
+  criadaEm        DateTime       @default(now())
+
+  entregas        Entrega[]
+
+  @@map("atividades")
+}
+
+model Entrega {
+  id           String    @id @default(uuid())
+  atividadeId  String
+  atividade    Atividade @relation(fields: [atividadeId], references: [id], onDelete: Cascade)
+  alunoId      String
+  aluno        Aluno     @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  arquivoUrl   String
+  enviadoEm    DateTime  @updatedAt
+
+  @@unique([atividadeId, alunoId])
+  @@map("entregas")
+}
