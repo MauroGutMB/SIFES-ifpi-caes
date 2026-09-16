@@ -11,6 +11,7 @@ import { TurmasModule } from './turmas/turmas.module';
 import { ProfessoresModule } from './professores/professores.module';
 import { AlunosModule } from './alunos/alunos.module';
 import { MateriasModule } from './materias/materias.module';
+import { AulasModule } from './aulas/aulas.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { MateriasModule } from './materias/materias.module';
     ProfessoresModule,
     AlunosModule,
     MateriasModule,
+    AulasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
