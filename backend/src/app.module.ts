@@ -10,6 +10,7 @@ import { SemestresModule } from './semestres/semestres.module';
 import { TurmasModule } from './turmas/turmas.module';
 import { ProfessoresModule } from './professores/professores.module';
 import { AlunosModule } from './alunos/alunos.module';
+import { MateriasModule } from './materias/materias.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AlunosModule } from './alunos/alunos.module';
     TurmasModule,
     ProfessoresModule,
     AlunosModule,
+    MateriasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
