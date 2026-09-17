@@ -1,4 +1,4 @@
-import { Box, Paper, Tooltip, Typography } from '@mui/material';
+import { Box, Paper, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { DIAS_SEMANA } from '../pages/admin/materias/dias-semana';
 
 export interface AgendaHorario {
@@ -28,6 +28,9 @@ function corPara(id: string): string {
 }
 
 export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const diasComAula = new Set(itens.flatMap((item) => item.horarios.map((h) => h.diaSemana)));
   const dias = DIAS_SEMANA.filter(
     (d) => d.value !== 'SABADO' || diasComAula.has('SABADO'),
@@ -56,29 +59,36 @@ export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
     );
   }
 
+  // Em celular a grade precisa caber na largura da tela sem arrastar — colunas encolhem
+  // livremente (minmax(0,1fr)) em vez de ter um piso fixo em pixels.
+  const colunaHora = isMobile ? 22 : 64;
+
   return (
-    <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
+    <Paper variant="outlined" sx={{ overflowX: isMobile ? 'hidden' : 'auto' }}>
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: `64px repeat(${dias.length}, minmax(120px, 1fr))`,
-          minWidth: 120 * dias.length + 64,
+          gridTemplateColumns: `${colunaHora}px repeat(${dias.length}, minmax(0, 1fr))`,
+          minWidth: isMobile ? 0 : 120 * dias.length + 64,
+          width: '100%',
         }}
       >
-        <Box sx={{ p: 1 }} />
+        <Box sx={{ p: isMobile ? 0.25 : 1 }} />
         {dias.map((dia) => (
           <Box
             key={dia.value}
             sx={{
-              p: 1,
+              p: isMobile ? 0.25 : 1,
               textAlign: 'center',
               fontWeight: 600,
-              fontSize: '0.8rem',
+              fontSize: isMobile ? '0.62rem' : '0.8rem',
               borderLeft: 1,
               borderColor: 'divider',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
             }}
           >
-            {dia.label}
+            {isMobile ? dia.label.slice(0, 3) : dia.label}
           </Box>
         ))}
 
@@ -86,14 +96,15 @@ export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
           <Box key={hora} sx={{ display: 'contents' }}>
             <Box
               sx={{
-                p: 1,
-                fontSize: '0.75rem',
+                p: isMobile ? 0.25 : 1,
+                fontSize: isMobile ? '0.6rem' : '0.75rem',
                 color: 'text.secondary',
                 borderTop: 1,
                 borderColor: 'divider',
+                whiteSpace: 'nowrap',
               }}
             >
-              {String(hora).padStart(2, '0')}:00
+              {String(hora).padStart(2, '0')}h
             </Box>
             {dias.map((dia) => {
               const celulas = porCelula.get(`${dia.value}-${hora}`) ?? [];
@@ -101,14 +112,15 @@ export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
                 <Box
                   key={dia.value}
                   sx={{
-                    p: 0.5,
-                    minHeight: 44,
+                    p: isMobile ? 0.25 : 0.5,
+                    minHeight: isMobile ? 32 : 44,
                     borderTop: 1,
                     borderLeft: 1,
                     borderColor: 'divider',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 0.5,
+                    overflow: 'hidden',
                   }}
                 >
                   {celulas.map(({ item, horario }) => (
@@ -121,16 +133,16 @@ export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
                           bgcolor: corPara(item.id),
                           color: '#fff',
                           borderRadius: 0.5,
-                          px: 0.75,
+                          px: isMobile ? 0.25 : 0.75,
                           py: 0.25,
-                          fontSize: '0.7rem',
+                          fontSize: isMobile ? '0.55rem' : '0.7rem',
                           lineHeight: 1.3,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {item.titulo}
+                        {isMobile ? item.titulo.slice(0, 3) : item.titulo}
                       </Box>
                     </Tooltip>
                   ))}
