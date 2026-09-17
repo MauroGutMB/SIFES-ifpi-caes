@@ -8,6 +8,16 @@ DB_USER="sifes"
 DB_NAME="sifes"
 SNAPSHOTS_DIR="db-snapshots"
 
+# Carrega o .env pro ambiente do shell — necessário pros comandos que rodam via
+# `tsx` direto (populate-realcase), já que só o `prisma <comando>` carrega o .env
+# sozinho (via prisma7.config.ts).
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
 postgres_cid() {
   docker compose -f "$COMPOSE_FILE" ps -q postgres
 }
