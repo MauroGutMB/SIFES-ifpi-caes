@@ -138,12 +138,18 @@ export class MateriasService {
       existentesPorDia.set(chave, lista);
     }
 
-    let criadas = 0;
-    let removidas = 0;
     const todosOsDias = new Set([
       ...esperadasPorDia.keys(),
       ...existentesPorDia.keys(),
     ]);
+
+    // Agrupadas em lotes (createMany/updateMany/deleteMany) em vez de uma query por
+    // ocorrência — um semestre inteiro pode gerar dezenas de Aulas, e uma query por Aula
+    // dentro da mesma transaction já estourou o timeout padrão do Prisma em produção
+    // (round-trip de rede até o banco, não localhost).
+    const paraCriar: { data: Date; horaInicio: Date; horaFim: Date }[] = [];
+    const paraAtualizar: { id: string; horaInicio: Date; horaFim: Date }[] = [];
+    const idsParaRemover: string[] = [];
 
     for (const dia of todosOsDias) {
       const esperadasNoDia = esperadasPorDia.get(dia) ?? [];
@@ -158,32 +164,44 @@ export class MateriasService {
           if (
             existente.horaInicio.getTime() !== esperada.horaInicio.getTime()
           ) {
-            await tx.aula.update({
-              where: { id: existente.id },
-              data: {
-                horaInicio: esperada.horaInicio,
-                horaFim: esperada.horaFim,
-              },
+            paraAtualizar.push({
+              id: existente.id,
+              horaInicio: esperada.horaInicio,
+              horaFim: esperada.horaFim,
             });
           }
         } else if (esperada && !existente) {
-          await tx.aula.create({
-            data: {
-              materiaId,
-              data: esperada.data,
-              horaInicio: esperada.horaInicio,
-              horaFim: esperada.horaFim,
-            },
-          });
-          criadas++;
+          paraCriar.push(esperada);
         } else if (!esperada && existente) {
-          await tx.aula.delete({ where: { id: existente.id } });
-          removidas++;
+          idsParaRemover.push(existente.id);
         }
       }
     }
 
-    return { criadas, removidas };
+    if (paraCriar.length > 0) {
+      await tx.aula.createMany({
+        data: paraCriar.map((ocorrencia) => ({
+          materiaId,
+          data: ocorrencia.data,
+          horaInicio: ocorrencia.horaInicio,
+          horaFim: ocorrencia.horaFim,
+        })),
+      });
+    }
+    for (const atualizacao of paraAtualizar) {
+      await tx.aula.update({
+        where: { id: atualizacao.id },
+        data: {
+          horaInicio: atualizacao.horaInicio,
+          horaFim: atualizacao.horaFim,
+        },
+      });
+    }
+    if (idsParaRemover.length > 0) {
+      await tx.aula.deleteMany({ where: { id: { in: idsParaRemover } } });
+    }
+
+    return { criadas: paraCriar.length, removidas: idsParaRemover.length };
   }
 
   async create(dto: CreateMateriaDto) {
