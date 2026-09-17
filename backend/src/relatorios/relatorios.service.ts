@@ -72,7 +72,7 @@ export class RelatoriosService {
     }
 
     const tabela: TabelaRelatorio = {
-      titulo: `Diario de aula - ${materia.professor.nome}`,
+      titulo: `Diario de aula - ${materia.nome} (${materia.professor.nome})`,
       colunas: [
         'Data',
         'Titulo',
@@ -120,6 +120,7 @@ export class RelatoriosService {
       );
       const linha = boletim.find((b) => b.aluno.id === alunoId);
       linhas.push([
+        vinculo.materia.nome,
         vinculo.materia.turma.cursoTecnico,
         vinculo.materia.turma.anoSerie,
         linha?.situacao ?? 'CURSANDO',
@@ -130,7 +131,14 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Boletim - ${aluno.nome} (${aluno.matricula})`,
-      colunas: ['Curso', 'Turma', 'Situacao', 'Nota Final', 'Frequencia %'],
+      colunas: [
+        'Materia',
+        'Curso',
+        'Turma',
+        'Situacao',
+        'Nota Final',
+        'Frequencia %',
+      ],
       linhas,
     };
     return {
@@ -169,7 +177,7 @@ export class RelatoriosService {
         linhas.push([
           aluno.nome,
           aluno.matricula,
-          vinculo.materiaId,
+          vinculo.materia.nome,
           linha?.situacao ?? 'CURSANDO',
           linha?.notaFinal ?? 0,
           linha?.frequenciaPercentual ?? 100,
@@ -182,7 +190,7 @@ export class RelatoriosService {
       colunas: [
         'Aluno',
         'Matricula',
-        'Materia (id)',
+        'Materia',
         'Situacao',
         'Nota Final',
         'Frequencia %',
@@ -204,7 +212,7 @@ export class RelatoriosService {
     const boletim = await this.boletim.calcularBoletimMateria(materiaId);
 
     const tabela: TabelaRelatorio = {
-      titulo: `Frequencia consolidada - Materia ${materia.diaSemana} ${materia.horaInicio}`,
+      titulo: `Frequencia consolidada - ${materia.nome}`,
       colunas: ['Aluno', 'Matricula', 'Frequencia %'],
       linhas: boletim.map((b) => [
         b.aluno.nome,
@@ -237,7 +245,7 @@ export class RelatoriosService {
         linhas.push([
           b.aluno.nome,
           b.aluno.matricula,
-          materia.id,
+          materia.nome,
           b.frequenciaPercentual,
         ]);
       }
@@ -245,7 +253,7 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - Turma ${turma.cursoTecnico} ${turma.anoSerie}`,
-      colunas: ['Aluno', 'Matricula', 'Materia (id)', 'Frequencia %'],
+      colunas: ['Aluno', 'Matricula', 'Materia', 'Frequencia %'],
       linhas,
     };
     return {
