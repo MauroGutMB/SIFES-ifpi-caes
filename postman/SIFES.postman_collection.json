@@ -1,2585 +1,2717 @@
 {
-  "info": {
-    "name": "SIFES API",
-    "description": "Colecao de testes manuais da API do SIFES (Sistema do Instituto Federal de Esperantina). Use o environment 'SIFES - Dev' junto com esta colecao. Rode 'Login Admin' primeiro, depois siga cada pasta na ordem (Semestres -> Turmas -> Professores -> Alunos -> Materias -> ...) para encadear os IDs automaticamente via variaveis de ambiente.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{adminToken}}",
-        "type": "string"
-      }
-    ]
-  },
-  "variable": [],
-  "item": [
-    {
-      "name": "Auth",
-      "item": [
-        {
-          "name": "Login Admin",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{adminLogin}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('adminToken', json.accessToken);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Refresh Token",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/refresh",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "refresh"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Logout",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/auth/logout",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "logout"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Trocar Senha (usuario autenticado)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/change-password",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "change-password"
-              ]
-            },
-            "description": "Troca a senha pelo mesmo valor de {{adminSenha}} — so pra demonstrar o endpoint sem quebrar o login do admin nas proximas vezes que a colecao rodar. Pra testar de verdade a troca de senha, use um Professor/Aluno recem-criado.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"novaSenha\": \"{{adminSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Semestres (Admin)",
-      "item": [
-        {
-          "name": "Criar Semestre",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/semestres",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "semestres"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"2026/1\",\n  \"dataInicio\": \"2026-02-01\",\n  \"dataFim\": \"2026-07-15\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('semestreId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Semestres",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/semestres",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "semestres"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar Semestre",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/semestres/{{semestreId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "semestres",
-                "{{semestreId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Semestre",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/semestres/{{semestreId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "semestres",
-                "{{semestreId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"dataFim\": \"2026-07-31\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Turmas (Admin)",
-      "item": [
-        {
-          "name": "Criar Turma",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/turmas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "turmas"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"semestreId\": \"{{semestreId}}\",\n  \"cursoTecnico\": \"Informatica\",\n  \"anoSerie\": \"1 ano\",\n  \"turno\": \"MANHA\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('turmaId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Turmas",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/turmas?semestreId={{semestreId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "turmas"
-              ],
-              "query": [
-                {
-                  "key": "semestreId",
-                  "value": "{{semestreId}}"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar Turma",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/turmas/{{turmaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "turmas",
-                "{{turmaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Turma",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/turmas/{{turmaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "turmas",
-                "{{turmaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"anoSerie\": \"2 ano\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Professores (Admin)",
-      "item": [
-        {
-          "name": "Criar Professor",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/professores",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "professores"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"{{professorNome}}\",\n  \"email\": \"professor.{{$timestamp}}@sifes.ifpi.edu.br\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('professorId', json.id);",
-                  "pm.environment.set('professorEmail', json.email);",
-                  "pm.environment.set('professorSenha', json.senhaInicial);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Professores",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/professores",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "professores"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar Professor",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/professores/{{professorId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "professores",
-                "{{professorId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Professor",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/professores/{{professorId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "professores",
-                "{{professorId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Professor Editado\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Login Professor",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{professorEmail}}\",\n  \"senha\": \"{{professorSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('professorToken', json.accessToken);"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Alunos (Admin)",
-      "item": [
-        {
-          "name": "Criar Aluno",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/alunos",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"{{alunoNome}}\",\n  \"matricula\": \"MAT-{{$timestamp}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('alunoId', json.id);",
-                  "pm.environment.set('alunoMatricula', json.matricula);",
-                  "pm.environment.set('alunoSenha', json.senhaInicial);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Alunos",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/alunos?turmaId={{turmaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos"
-              ],
-              "query": [
-                {
-                  "key": "turmaId",
-                  "value": "{{turmaId}}"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar Aluno",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/alunos/{{alunoId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos",
-                "{{alunoId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Aluno",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/alunos/{{alunoId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos",
-                "{{alunoId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Aluno Editado\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Vincular Aluno a Turma",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/alunos/{{alunoId}}/turma",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos",
-                "{{alunoId}}",
-                "turma"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"turmaId\": \"{{turmaId}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Login Aluno",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/auth/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "auth",
-                "login"
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"login\": \"{{alunoMatricula}}\",\n  \"senha\": \"{{alunoSenha}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('alunoToken', json.accessToken);"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "Materias (Admin)",
-      "item": [
-        {
-          "name": "Criar Materia",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/materias",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"turmaId\": \"{{turmaId}}\",\n  \"professorId\": \"{{professorId}}\",\n  \"cargaHorariaReferencia\": 40,\n  \"diaSemana\": \"SEGUNDA\",\n  \"horaInicio\": \"08:00\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('materiaId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Materias",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias?turmaId={{turmaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias"
-              ],
-              "query": [
-                {
-                  "key": "turmaId",
-                  "value": "{{turmaId}}"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Buscar Materia",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Materia",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cargaHorariaReferencia\": 60\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Adicionar Materia ao Aluno (vinculo individual)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/alunos/{{alunoId}}/materias/{{materiaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos",
-                "{{alunoId}}",
-                "materias",
-                "{{materiaId}}"
-              ]
-            },
-            "description": "So necessario se o aluno nao foi vinculado via Turma (o vinculo bulk ja cobre isso).",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Encerrar Materia (Admin, ignora prazo)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/encerrar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "encerrar"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Reabrir Materia (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/reabrir",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "reabrir"
-              ]
-            },
-            "description": "Reabre para as pastas seguintes (Aulas, Plano, Atividades) poderem editar normalmente.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Aulas",
-      "item": [
-        {
-          "name": "Listar Aulas da Materia",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/aulas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "aulas"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (Array.isArray(json) && json.length > 0) {",
-                  "  pm.environment.set('aulaId', json[0].id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Buscar Aula",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Sobrepor Estado da Aula (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}/override",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}",
-                "override"
-              ]
-            },
-            "description": "Forca o estado 'lancado' pra poder editar/lancar frequencia agora, sem depender do horario real da Aula.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"LANCADO\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Editar Aula (titulo/descricao)",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Introducao\",\n  \"descricao\": \"Aula de abertura\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Lancar Frequencias",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}/frequencias",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}",
-                "frequencias"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"frequencias\": [\n    {\n      \"alunoId\": \"{{alunoId}}\",\n      \"status\": \"PRESENTE\"\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Plano de Disciplina",
-      "item": [
-        {
-          "name": "Criar Item de Avaliacao",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/itens-avaliacao",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "itens-avaliacao"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nome\": \"Prova 1\",\n  \"valorMaximo\": 10\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('itemAvaliacaoId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Itens de Avaliacao",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/itens-avaliacao",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "itens-avaliacao"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Item de Avaliacao",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/itens-avaliacao/{{itemAvaliacaoId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "itens-avaliacao",
-                "{{itemAvaliacaoId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"valorMaximo\": 10\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Lancar Notas",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/itens-avaliacao/{{itemAvaliacaoId}}/notas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "itens-avaliacao",
-                "{{itemAvaliacaoId}}",
-                "notas"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"notas\": [\n    {\n      \"alunoId\": \"{{alunoId}}\",\n      \"valorObtido\": 8.5\n    }\n  ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Ver Boletim da Materia",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/boletim",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "boletim"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Materiais de Aula",
-      "item": [
-        {
-          "name": "Upload de Material",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}/materiais",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}",
-                "materiais"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "titulo",
-                  "value": "Slides da aula 1",
-                  "type": "text"
-                },
-                {
-                  "key": "arquivo",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('materialAulaId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Materiais da Aula",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/aulas/{{aulaId}}/materiais",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "aulas",
-                "{{aulaId}}",
-                "materiais"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Atividades e Entregas",
-      "item": [
-        {
-          "name": "Criar Atividade",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/atividades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "atividades"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titulo\": \"Trabalho 1\",\n  \"descricao\": \"Entregar em PDF\",\n  \"formatoExigido\": \"PDF\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('atividadeId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Listar Atividades da Materia",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}/atividades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}",
-                "atividades"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Atualizar Atividade",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/atividades/{{atividadeId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "atividades",
-                "{{atividadeId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"descricao\": \"Atualizado\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          }
-        },
-        {
-          "name": "Entregar Atividade (Aluno)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/atividades/{{atividadeId}}/entrega",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "atividades",
-                "{{atividadeId}}",
-                "entrega"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{alunoToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "arquivo",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Minha Entrega (Aluno)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/atividades/{{atividadeId}}/entrega",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "atividades",
-                "{{atividadeId}}",
-                "entrega"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{alunoToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar Entregas (Professor)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/atividades/{{atividadeId}}/entregas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "atividades",
-                "{{atividadeId}}",
-                "entregas"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Usuarios e Foto de Perfil",
-      "item": [
-        {
-          "name": "Listar Todos os Usuarios (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users"
-              ]
-            },
-            "description": "Aceita filtro opcional ?role=ADMIN|PROFESSOR|ALUNO",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Meu Perfil",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "me"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Trocar Minha Foto (Admin/Professor)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/me/foto",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "me",
-                "foto"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "foto",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remover Foto de um Usuario (Admin)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/{{userId}}/foto",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "{{userId}}",
-                "foto"
-              ]
-            },
-            "description": "Substitua {{userId}} pelo id do User (nao do Aluno/Professor) cuja foto sera removida.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Solicitacoes de Foto (Aluno)",
-      "item": [
-        {
-          "name": "Solicitar Troca de Foto (Aluno)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/me/foto/solicitacoes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "me",
-                "foto",
-                "solicitacoes"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{alunoToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "foto",
-                  "type": "file",
-                  "src": []
-                }
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "pm.environment.set('solicitacaoFotoId', json.id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Minhas Solicitacoes (Aluno)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/users/me/foto/solicitacoes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "users",
-                "me",
-                "foto",
-                "solicitacoes"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{alunoToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Listar Solicitacoes Pendentes (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin/foto-solicitacoes",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "foto-solicitacoes"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Aprovar Solicitacao (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin/foto-solicitacoes/{{solicitacaoFotoId}}/aprovar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "foto-solicitacoes",
-                "{{solicitacaoFotoId}}",
-                "aprovar"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Rejeitar Solicitacao (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin/foto-solicitacoes/{{solicitacaoFotoId}}/rejeitar",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "foto-solicitacoes",
-                "{{solicitacaoFotoId}}",
-                "rejeitar"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Aprovar Todas Pendentes (Admin)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin/foto-solicitacoes/aprovar-todas",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "foto-solicitacoes",
-                "aprovar-todas"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin Dashboard",
-      "item": [
-        {
-          "name": "Contagens do Dashboard",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/admin/dashboard",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "admin",
-                "dashboard"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Relatorios (PDF/Excel)",
-      "item": [
-        {
-          "name": "Diario de Aula - PDF",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/diario/{{materiaId}}?formato=pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "diario",
-                "{{materiaId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "pdf"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Diario de Aula - Excel",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/diario/{{materiaId}}?formato=xlsx",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "diario",
-                "{{materiaId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "xlsx"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Boletim do Aluno - PDF",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/boletim/{{alunoId}}?formato=pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "boletim",
-                "{{alunoId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "pdf"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{alunoToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Boletim do Aluno - Excel (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/boletim/{{alunoId}}?formato=xlsx",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "boletim",
-                "{{alunoId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "xlsx"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Lista de Turma - Excel (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/turma/{{turmaId}}?formato=xlsx",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "turma",
-                "{{turmaId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "xlsx"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Frequencia por Materia - PDF",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/frequencia-materia/{{materiaId}}?formato=pdf",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "frequencia-materia",
-                "{{materiaId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "pdf"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{professorToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Frequencia por Turma - Excel (Admin)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/relatorios/frequencia-turma/{{turmaId}}?formato=xlsx",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "relatorios",
-                "frequencia-turma",
-                "{{turmaId}}"
-              ],
-              "query": [
-                {
-                  "key": "formato",
-                  "value": "xlsx"
-                }
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Limpeza (rodar por ultimo)",
-      "item": [
-        {
-          "name": "Remover Aluno (definitivo)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/alunos/{{alunoId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "alunos",
-                "{{alunoId}}"
-              ]
-            },
-            "description": "Cascata: remove tambem vinculos, frequencias, notas e entregas do aluno.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remover Materia",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/materias/{{materiaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "materias",
-                "{{materiaId}}"
-              ]
-            },
-            "description": "Cascata: remove tambem Aulas, Itens de Avaliacao, Atividades e Materiais de Aula da Materia.",
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remover Professor",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/professores/{{professorId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "professores",
-                "{{professorId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remover Turma",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/turmas/{{turmaId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "turmas",
-                "{{turmaId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Remover Semestre",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/semestres/{{semestreId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "semestres",
-                "{{semestreId}}"
-              ]
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            }
-          }
-        }
-      ]
-    }
-  ]
+	"info": {
+		"name": "SIFES API",
+		"description": "Colecao de testes manuais da API do SIFES (Sistema do Instituto Federal de Esperantina). Use o environment 'SIFES - Dev' junto com esta colecao. Rode 'Login Admin' primeiro, depois siga cada pasta na ordem (Semestres -> Turmas -> Professores -> Alunos -> Materias -> ...) para encadear os IDs automaticamente via variaveis de ambiente.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{adminToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"login\": \"{{adminLogin}}\",\n  \"senha\": \"{{adminSenha}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('adminToken', json.accessToken);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						}
+					}
+				},
+				{
+					"name": "Trocar Senha (usuario autenticado)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
+						},
+						"description": "Troca a senha pelo mesmo valor de {{adminSenha}} — so pra demonstrar o endpoint sem quebrar o login do admin nas proximas vezes que a colecao rodar. Pra testar de verdade a troca de senha, use um Professor/Aluno recem-criado.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"novaSenha\": \"{{adminSenha}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Semestres (Admin)",
+			"item": [
+				{
+					"name": "Criar Semestre",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/semestres",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"semestres"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"2026/1\",\n  \"dataInicio\": \"2026-02-01\",\n  \"dataFim\": \"2026-07-15\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('semestreId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Semestres",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/semestres",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"semestres"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Semestre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/semestres/{{semestreId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"semestres",
+								"{{semestreId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Semestre",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/semestres/{{semestreId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"semestres",
+								"{{semestreId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"dataFim\": \"2026-07-31\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Turmas (Admin)",
+			"item": [
+				{
+					"name": "Criar Turma",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/turmas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turmas"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"semestreId\": \"{{semestreId}}\",\n  \"cursoTecnico\": \"Informatica\",\n  \"anoSerie\": \"1 ano\",\n  \"turno\": \"MANHA\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('turmaId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Turmas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turmas?semestreId={{semestreId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turmas"
+							],
+							"query": [
+								{
+									"key": "semestreId",
+									"value": "{{semestreId}}"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Turma",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turmas/{{turmaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turmas",
+								"{{turmaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Turma",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/turmas/{{turmaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turmas",
+								"{{turmaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"anoSerie\": \"2 ano\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Professores (Admin)",
+			"item": [
+				{
+					"name": "Criar Professor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/professores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"professores"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"{{professorNome}}\",\n  \"email\": \"professor.{{$timestamp}}@sifes.ifpi.edu.br\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('professorId', json.id);",
+									"pm.environment.set('professorEmail', json.email);",
+									"pm.environment.set('professorSenha', json.senhaInicial);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Professores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/professores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"professores"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Professor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/professores/{{professorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"professores",
+								"{{professorId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Professor",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/professores/{{professorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"professores",
+								"{{professorId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Professor Editado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Login Professor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"login\": \"{{professorEmail}}\",\n  \"senha\": \"{{professorSenha}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('professorToken', json.accessToken);"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Alunos (Admin)",
+			"item": [
+				{
+					"name": "Criar Aluno",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/alunos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"{{alunoNome}}\",\n  \"matricula\": \"MAT-{{$timestamp}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('alunoId', json.id);",
+									"pm.environment.set('alunoMatricula', json.matricula);",
+									"pm.environment.set('alunoSenha', json.senhaInicial);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Alunos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/alunos?turmaId={{turmaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos"
+							],
+							"query": [
+								{
+									"key": "turmaId",
+									"value": "{{turmaId}}"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Aluno",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/{{alunoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"{{alunoId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Aluno",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/{{alunoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"{{alunoId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Aluno Editado\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Vincular Aluno a Turma",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/{{alunoId}}/turma",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"{{alunoId}}",
+								"turma"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"turmaId\": \"{{turmaId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Login Aluno",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"login\": \"{{alunoMatricula}}\",\n  \"senha\": \"{{alunoSenha}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('alunoToken', json.accessToken);"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Materias (Admin)",
+			"item": [
+				{
+					"name": "Criar Materia",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/materias",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"turmaId\": \"{{turmaId}}\",\n  \"professorId\": \"{{professorId}}\",\n  \"cargaHorariaReferencia\": 40,\n  \"diaSemana\": \"SEGUNDA\",\n  \"horaInicio\": \"08:00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('materiaId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Materias",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias?turmaId={{turmaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias"
+							],
+							"query": [
+								{
+									"key": "turmaId",
+									"value": "{{turmaId}}"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Materia",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cargaHorariaReferencia\": 60\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Adicionar Materia ao Aluno (vinculo individual)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/{{alunoId}}/materias/{{materiaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"{{alunoId}}",
+								"materias",
+								"{{materiaId}}"
+							]
+						},
+						"description": "So necessario se o aluno nao foi vinculado via Turma (o vinculo bulk ja cobre isso).",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Encerrar Materia (Admin, ignora prazo)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/encerrar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"encerrar"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Reabrir Materia (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/reabrir",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"reabrir"
+							]
+						},
+						"description": "Reabre para as pastas seguintes (Aulas, Plano, Atividades) poderem editar normalmente.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Aulas",
+			"item": [
+				{
+					"name": "Listar Aulas da Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/aulas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"aulas"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"if (Array.isArray(json) && json.length > 0) {",
+									"  pm.environment.set('aulaId', json[0].id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Buscar Aula",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Sobrepor Estado da Aula (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}/override",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}",
+								"override"
+							]
+						},
+						"description": "Forca o estado 'lancado' pra poder editar/lancar frequencia agora, sem depender do horario real da Aula.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"estado\": \"LANCADO\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Editar Aula (titulo/descricao)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"titulo\": \"Introducao\",\n  \"descricao\": \"Aula de abertura\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Lancar Frequencias",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}/frequencias",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}",
+								"frequencias"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"frequencias\": [\n    {\n      \"alunoId\": \"{{alunoId}}\",\n      \"status\": \"PRESENTE\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Plano de Disciplina",
+			"item": [
+				{
+					"name": "Criar Item de Avaliacao",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/itens-avaliacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"itens-avaliacao"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Prova 1\",\n  \"valorMaximo\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('itemAvaliacaoId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Itens de Avaliacao",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/itens-avaliacao",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"itens-avaliacao"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Item de Avaliacao",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/itens-avaliacao/{{itemAvaliacaoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"itens-avaliacao",
+								"{{itemAvaliacaoId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"valorMaximo\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Lancar Notas",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/itens-avaliacao/{{itemAvaliacaoId}}/notas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"itens-avaliacao",
+								"{{itemAvaliacaoId}}",
+								"notas"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notas\": [\n    {\n      \"alunoId\": \"{{alunoId}}\",\n      \"valorObtido\": 8.5\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					}
+				},
+				{
+					"name": "Ver Boletim da Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/boletim",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"boletim"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Detalhamento de Notas de um Aluno (Professor/Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/alunos/{{alunoId}}/detalhamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"alunos",
+								"{{alunoId}}",
+								"detalhamento"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Materiais de Aula",
+			"item": [
+				{
+					"name": "Upload de Material",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}/materiais",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}",
+								"materiais"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "titulo",
+									"value": "Slides da aula 1",
+									"type": "text"
+								},
+								{
+									"key": "arquivo",
+									"type": "file",
+									"src": []
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('materialAulaId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Materiais da Aula",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/aulas/{{aulaId}}/materiais",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"aulas",
+								"{{aulaId}}",
+								"materiais"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Atividades e Entregas",
+			"item": [
+				{
+					"name": "Meu Resumo de Atividades (Aluno)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/me/atividades-resumo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"me",
+								"atividades-resumo"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Criar Atividade",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/atividades",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"atividades"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "titulo",
+									"value": "Trabalho 1",
+									"type": "text"
+								},
+								{
+									"key": "descricao",
+									"value": "Entregar em PDF",
+									"type": "text"
+								},
+								{
+									"key": "formatoExigido",
+									"value": "PDF",
+									"type": "text"
+								},
+								{
+									"key": "prazo",
+									"value": "2026-12-01T23:59:00.000Z",
+									"type": "text"
+								},
+								{
+									"key": "anexo",
+									"type": "file",
+									"src": []
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('atividadeId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Listar Atividades da Materia",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}/atividades",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}",
+								"atividades"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Atividade",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/atividades/{{atividadeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"atividades",
+								"{{atividadeId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "descricao",
+									"value": "Atualizado",
+									"type": "text"
+								},
+								{
+									"key": "prazo",
+									"value": "2026-12-15T23:59:00.000Z",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "anexo",
+									"type": "file",
+									"src": [],
+									"disabled": true
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Entregar Atividade (Aluno)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/atividades/{{atividadeId}}/entrega",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"atividades",
+								"{{atividadeId}}",
+								"entrega"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "arquivo",
+									"type": "file",
+									"src": []
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Minha Entrega (Aluno)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/atividades/{{atividadeId}}/entrega",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"atividades",
+								"{{atividadeId}}",
+								"entrega"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Entregas (Professor)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/atividades/{{atividadeId}}/entregas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"atividades",
+								"{{atividadeId}}",
+								"entregas"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Usuarios e Foto de Perfil",
+			"item": [
+				{
+					"name": "Listar Todos os Usuarios (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Aceita filtro opcional ?role=ADMIN|PROFESSOR|ALUNO",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Meu Perfil",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"me"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Trocar Minha Foto (Admin/Professor)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me/foto",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"me",
+								"foto"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "foto",
+									"type": "file",
+									"src": []
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover Foto de um Usuario (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}/foto",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"foto"
+							]
+						},
+						"description": "Substitua {{userId}} pelo id do User (nao do Aluno/Professor) cuja foto sera removida.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Solicitacoes de Foto (Aluno)",
+			"item": [
+				{
+					"name": "Solicitar Troca de Foto (Aluno)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me/foto/solicitacoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"me",
+								"foto",
+								"solicitacoes"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "foto",
+									"type": "file",
+									"src": []
+								}
+							]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const json = pm.response.json();",
+									"pm.environment.set('solicitacaoFotoId', json.id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Minhas Solicitacoes (Aluno)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/me/foto/solicitacoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"me",
+								"foto",
+								"solicitacoes"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Solicitacoes Pendentes (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/foto-solicitacoes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"foto-solicitacoes"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Aprovar Solicitacao (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/foto-solicitacoes/{{solicitacaoFotoId}}/aprovar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"foto-solicitacoes",
+								"{{solicitacaoFotoId}}",
+								"aprovar"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Rejeitar Solicitacao (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/foto-solicitacoes/{{solicitacaoFotoId}}/rejeitar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"foto-solicitacoes",
+								"{{solicitacaoFotoId}}",
+								"rejeitar"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Aprovar Todas Pendentes (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/foto-solicitacoes/aprovar-todas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"foto-solicitacoes",
+								"aprovar-todas"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin Dashboard",
+			"item": [
+				{
+					"name": "Contagens do Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/dashboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"dashboard"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Relatorios (PDF/Excel)",
+			"item": [
+				{
+					"name": "Diario de Aula - PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/diario/{{materiaId}}?formato=pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"diario",
+								"{{materiaId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "pdf"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Diario de Aula - Excel",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/diario/{{materiaId}}?formato=xlsx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"diario",
+								"{{materiaId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "xlsx"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Boletim do Aluno - PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/boletim/{{alunoId}}?formato=pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"boletim",
+								"{{alunoId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "pdf"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{alunoToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Boletim do Aluno - Excel (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/boletim/{{alunoId}}?formato=xlsx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"boletim",
+								"{{alunoId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "xlsx"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Lista de Turma - Excel (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/turma/{{turmaId}}?formato=xlsx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"turma",
+								"{{turmaId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "xlsx"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Frequencia por Materia - PDF",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/frequencia-materia/{{materiaId}}?formato=pdf",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"frequencia-materia",
+								"{{materiaId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "pdf"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Frequencia por Turma - Excel (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/frequencia-turma/{{turmaId}}?formato=xlsx",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"frequencia-turma",
+								"{{turmaId}}"
+							],
+							"query": [
+								{
+									"key": "formato",
+									"value": "xlsx"
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Frequencia Detalhada da Turma (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/relatorios/turma/{{turmaId}}/frequencia?materiaId={{materiaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"relatorios",
+								"turma",
+								"{{turmaId}}",
+								"frequencia"
+							],
+							"query": [
+								{
+									"key": "materiaId",
+									"value": "{{materiaId}}"
+								},
+								{
+									"key": "alunoId",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "dataInicio",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "dataFim",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{professorToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Limpeza (rodar por ultimo)",
+			"item": [
+				{
+					"name": "Remover Aluno (definitivo)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/alunos/{{alunoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"alunos",
+								"{{alunoId}}"
+							]
+						},
+						"description": "Cascata: remove tambem vinculos, frequencias, notas e entregas do aluno.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover Materia",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/materias/{{materiaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"materias",
+								"{{materiaId}}"
+							]
+						},
+						"description": "Cascata: remove tambem Aulas, Itens de Avaliacao, Atividades e Materiais de Aula da Materia.",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover Professor",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/professores/{{professorId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"professores",
+								"{{professorId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover Turma",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/turmas/{{turmaId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"turmas",
+								"{{turmaId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Remover Semestre",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/semestres/{{semestreId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"semestres",
+								"{{semestreId}}"
+							]
+						},
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminToken}}",
+									"type": "string"
+								}
+							]
+						}
+					}
+				}
+			]
+		}
+	]
 }
