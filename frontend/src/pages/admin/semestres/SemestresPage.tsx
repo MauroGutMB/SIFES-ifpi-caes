@@ -141,6 +141,7 @@ export function SemestresPage() {
         columns={columns}
         loading={isLoading}
         disableRowSelectionOnClick
+        density="compact"
         autoHeight
         initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
       />

@@ -21,9 +21,9 @@ export function AppLayout() {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="static">
-        <Toolbar sx={{ gap: 1.5 }}>
-          <img src={sifesMark} alt="" width={28} height={28} />
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Toolbar sx={{ gap: 1.25 }}>
+          <img src={sifesMark} alt="" width={22} height={22} />
+          <Typography variant="subtitle1" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
             SIFES
           </Typography>
           {user && (
@@ -37,7 +37,7 @@ export function AppLayout() {
         </Toolbar>
       </AppBar>
 
-      <Box component="main" sx={{ p: 3 }}>
+      <Box component="main" sx={{ p: 2.5 }}>
         <Outlet />
       </Box>
     </Box>
