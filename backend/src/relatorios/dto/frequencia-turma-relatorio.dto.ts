@@ -11,6 +11,9 @@ export class MateriaResumoRelatorioDto {
 
 export class FrequenciaDetalheLinhaDto {
   @ApiProperty()
+  aulaId: string;
+
+  @ApiProperty()
   data: Date;
 
   @ApiProperty()

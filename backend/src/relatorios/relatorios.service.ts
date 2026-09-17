@@ -339,6 +339,7 @@ export class RelatoriosService {
 
     const detalhado = aulas.flatMap((aula) =>
       aula.frequencias.map((f) => ({
+        aulaId: aula.id,
         data: aula.data,
         materiaId: aula.materiaId,
         materiaNome: nomePorMateria.get(aula.materiaId) ?? '',
