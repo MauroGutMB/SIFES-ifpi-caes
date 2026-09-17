@@ -22,17 +22,19 @@ import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 export class AtividadesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async carregarMateriaComPosse(
-    materiaId: string,
-    user: AuthenticatedUser,
-  ) {
+  private async carregarMateria(materiaId: string, user: AuthenticatedUser) {
     const materia = await this.prisma.materia.findUnique({
       where: { id: materiaId },
     });
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
@@ -68,7 +70,7 @@ export class AtividadesService {
     dto: CreateAtividadeDto,
     user: AuthenticatedUser,
   ) {
-    const materia = await this.carregarMateriaComPosse(materiaId, user);
+    const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     return this.prisma.atividade.create({
       data: {
@@ -80,27 +82,8 @@ export class AtividadesService {
     });
   }
 
-  private async carregarMateriaComAcessoLeitura(
-    materiaId: string,
-    user: AuthenticatedUser,
-  ) {
-    const materia = await this.prisma.materia.findUnique({
-      where: { id: materiaId },
-    });
-    if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
-    await garantirAcessoLeituraMateria(
-      this.prisma,
-      user,
-      materia,
-      'Matéria não encontrada',
-    );
-    return materia;
-  }
-
   async listarPorMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComAcessoLeitura(materiaId, user);
+    await this.carregarMateria(materiaId, user);
     return this.prisma.atividade.findMany({
       where: { materiaId },
       orderBy: { criadaEm: 'desc' },

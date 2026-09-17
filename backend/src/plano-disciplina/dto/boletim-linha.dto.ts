@@ -1,19 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-
-class BoletimAlunoResumoDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  nome: string;
-
-  @ApiProperty()
-  matricula: string;
-}
+import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 
 export class BoletimLinhaDto {
-  @ApiProperty({ type: BoletimAlunoResumoDto })
-  aluno: BoletimAlunoResumoDto;
+  @ApiProperty({ type: AlunoResumoDto })
+  aluno: AlunoResumoDto;
 
   @ApiProperty()
   notaFinal: number;

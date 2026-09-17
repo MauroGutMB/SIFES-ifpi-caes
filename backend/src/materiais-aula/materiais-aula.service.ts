@@ -15,7 +15,7 @@ import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 export class MateriaisAulaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async carregarAulaComPosse(aulaId: string, user: AuthenticatedUser) {
+  private async carregarAula(aulaId: string, user: AuthenticatedUser) {
     const aula = await this.prisma.aula.findUnique({
       where: { id: aulaId },
       include: { materia: true },
@@ -23,9 +23,10 @@ export class MateriaisAulaService {
     if (!aula) {
       throw new NotFoundException('Aula não encontrada');
     }
-    garantirPosseProfessor(
+    await garantirAcessoLeituraMateria(
+      this.prisma,
       user,
-      aula.materia.professorId,
+      aula.materia,
       'Aula não encontrada',
     );
     return aula;
@@ -53,7 +54,7 @@ export class MateriaisAulaService {
     file: Express.Multer.File,
     user: AuthenticatedUser,
   ) {
-    await this.carregarAulaComPosse(aulaId, user);
+    await this.carregarAula(aulaId, user);
 
     await mkdir(MATERIAIS_AULA_DIR, { recursive: true });
     const ext = extname(file.originalname) || '';
@@ -69,28 +70,8 @@ export class MateriaisAulaService {
     });
   }
 
-  private async carregarAulaComAcessoLeitura(
-    aulaId: string,
-    user: AuthenticatedUser,
-  ) {
-    const aula = await this.prisma.aula.findUnique({
-      where: { id: aulaId },
-      include: { materia: true },
-    });
-    if (!aula) {
-      throw new NotFoundException('Aula não encontrada');
-    }
-    await garantirAcessoLeituraMateria(
-      this.prisma,
-      user,
-      aula.materia,
-      'Aula não encontrada',
-    );
-    return aula;
-  }
-
   async listar(aulaId: string, user: AuthenticatedUser) {
-    await this.carregarAulaComAcessoLeitura(aulaId, user);
+    await this.carregarAula(aulaId, user);
     return this.prisma.materialAula.findMany({
       where: { aulaId },
       orderBy: { postadoEm: 'desc' },

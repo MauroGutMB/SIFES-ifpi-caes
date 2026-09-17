@@ -23,17 +23,19 @@ export class PlanoDisciplinaService {
     private readonly boletim: BoletimService,
   ) {}
 
-  private async carregarMateriaComPosse(
-    materiaId: string,
-    user: AuthenticatedUser,
-  ) {
+  private async carregarMateria(materiaId: string, user: AuthenticatedUser) {
     const materia = await this.prisma.materia.findUnique({
       where: { id: materiaId },
     });
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
@@ -66,7 +68,7 @@ export class PlanoDisciplinaService {
     dto: CreateItemAvaliacaoDto,
     user: AuthenticatedUser,
   ) {
-    const materia = await this.carregarMateriaComPosse(materiaId, user);
+    const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     return this.prisma.itemAvaliacao.create({
       data: { materiaId, nome: dto.nome, valorMaximo: dto.valorMaximo },
@@ -74,7 +76,7 @@ export class PlanoDisciplinaService {
   }
 
   async listarItens(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
+    await this.carregarMateria(materiaId, user);
     const itens = await this.prisma.itemAvaliacao.findMany({
       where: { materiaId },
     });
@@ -151,18 +153,7 @@ export class PlanoDisciplinaService {
   }
 
   async boletimMateria(materiaId: string, user: AuthenticatedUser) {
-    const materia = await this.prisma.materia.findUnique({
-      where: { id: materiaId },
-    });
-    if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
-    await garantirAcessoLeituraMateria(
-      this.prisma,
-      user,
-      materia,
-      'Matéria não encontrada',
-    );
+    await this.carregarMateria(materiaId, user);
     const linhas = await this.boletim.calcularBoletimMateria(materiaId);
     // Aluno só vê a própria linha do boletim, nunca a da turma inteira.
     if (user.role === Role.ALUNO) {
@@ -172,18 +163,7 @@ export class PlanoDisciplinaService {
   }
 
   async meuDetalhamento(materiaId: string, user: AuthenticatedUser) {
-    const materia = await this.prisma.materia.findUnique({
-      where: { id: materiaId },
-    });
-    if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
-    await garantirAcessoLeituraMateria(
-      this.prisma,
-      user,
-      materia,
-      'Matéria não encontrada',
-    );
+    await this.carregarMateria(materiaId, user);
 
     const itens = await this.prisma.itemAvaliacao.findMany({
       where: { materiaId },
