@@ -20,6 +20,7 @@ const API_ROUTE_PREFIXES = [
   'materiais-aula',
   'admin',
   'relatorios',
+  'uploads',
 ]
 
 // https://vite.dev/config/
