@@ -79,6 +79,11 @@ cmd_populate_realcase() {
   npx tsx prisma/seed-realcase.ts
 }
 
+cmd_populate_realcase_list() {
+  ensure_up
+  npx tsx prisma/list-realcase.ts
+}
+
 cmd_snapshot() {
   ensure_up
   mkdir -p "$SNAPSHOTS_DIR"
@@ -145,6 +150,8 @@ Dados de teste:
   --populate-realcase        Popula um cenário acadêmico completo de demonstração
                               (semestre, turmas, professores, alunos, matérias, notas,
                               frequência, uma matéria já encerrada) — não duplica se já rodou
+  --populate-realcase-list   Lista os logins criados pelo populate-realcase (role, login, nome)
+                              pra testar manualmente — senha "demo1234" para todos
 
 Backup/restauração:
   --snapshot [nome]           Salva um dump em db-snapshots/<nome-ou-timestamp>.sql
@@ -164,6 +171,7 @@ case "${1:-}" in
   --seed) cmd_seed ;;
   --reset-db) cmd_reset_db ;;
   --populate-realcase) cmd_populate_realcase ;;
+  --populate-realcase-list) cmd_populate_realcase_list ;;
   --snapshot|--snapshot-db) cmd_snapshot "${2:-}" ;;
   --list-snapshots) cmd_list_snapshots ;;
   --restore) cmd_restore "${2:-}" ;;
