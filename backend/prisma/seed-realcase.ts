@@ -41,13 +41,15 @@ async function criarUsuario(login: string, role: 'PROFESSOR' | 'ALUNO') {
 async function gerarAulasEFrequencia(materiaId: string, alunoIds: string[], hoje: Date) {
   const materia = await prisma.materia.findUniqueOrThrow({
     where: { id: materiaId },
-    include: { turma: { include: { semestre: true } } },
+    include: { turma: { include: { semestre: true } }, horarios: true },
   });
-  const ocorrencias = gerarOcorrenciasAula(
-    materia.turma.semestre.dataInicio,
-    materia.turma.semestre.dataFim,
-    materia.diaSemana,
-    materia.horaInicio,
+  const ocorrencias = materia.horarios.flatMap((horario) =>
+    gerarOcorrenciasAula(
+      materia.turma.semestre.dataInicio,
+      materia.turma.semestre.dataFim,
+      horario.diaSemana,
+      horario.horaInicio,
+    ),
   );
 
   for (const ocorrencia of ocorrencias) {
@@ -121,20 +123,46 @@ async function main() {
   }
 
   const materiasInfo = [
-    { turmaId: turmaInfo.id, nome: 'Matemática', professor: 'Ana Souza', dia: DiaSemana.SEGUNDA, hora: '08:00' },
-    { turmaId: turmaInfo.id, nome: 'Português', professor: 'Carlos Lima', dia: DiaSemana.QUARTA, hora: '08:00' },
-    { turmaId: turmaAgro.id, nome: 'Zootecnia', professor: 'Beatriz Rocha', dia: DiaSemana.TERCA, hora: '13:00' },
-    { turmaId: turmaAgro.id, nome: 'Solos', professor: 'Ana Souza', dia: DiaSemana.QUINTA, hora: '13:00' },
+    {
+      turmaId: turmaInfo.id,
+      nome: 'Matemática',
+      professor: 'Ana Souza',
+      horarios: [
+        { diaSemana: DiaSemana.SEGUNDA, horaInicio: '08:00' },
+        { diaSemana: DiaSemana.QUINTA, horaInicio: '08:00' },
+      ],
+    },
+    {
+      turmaId: turmaInfo.id,
+      nome: 'Português',
+      professor: 'Carlos Lima',
+      horarios: [{ diaSemana: DiaSemana.QUARTA, horaInicio: '08:00' }],
+    },
+    {
+      turmaId: turmaAgro.id,
+      nome: 'Zootecnia',
+      professor: 'Beatriz Rocha',
+      horarios: [
+        { diaSemana: DiaSemana.TERCA, horaInicio: '13:00' },
+        { diaSemana: DiaSemana.TERCA, horaInicio: '14:00' },
+      ],
+    },
+    {
+      turmaId: turmaAgro.id,
+      nome: 'Solos',
+      professor: 'Ana Souza',
+      horarios: [{ diaSemana: DiaSemana.QUINTA, horaInicio: '13:00' }],
+    },
   ];
   const materiaIds: { id: string; turmaId: string; nome: string }[] = [];
   for (const m of materiasInfo) {
     const materia = await prisma.materia.create({
       data: {
+        nome: m.nome,
         turmaId: m.turmaId,
         professorId: professores[m.professor],
         cargaHorariaReferencia: 60,
-        diaSemana: m.dia,
-        horaInicio: m.hora,
+        horarios: { createMany: { data: m.horarios } },
       },
     });
     materiaIds.push({ id: materia.id, turmaId: m.turmaId, nome: m.nome });

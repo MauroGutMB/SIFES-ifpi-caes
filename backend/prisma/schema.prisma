@@ -158,22 +158,40 @@ model SolicitacaoFoto {
 
 model Materia {
   id                       String        @id @default(uuid())
+  nome                     String
   turmaId                  String
   turma                    Turma         @relation(fields: [turmaId], references: [id], onDelete: Restrict)
   professorId              String
   professor                Professor     @relation(fields: [professorId], references: [id], onDelete: Restrict)
   cargaHorariaReferencia   Int
-  diaSemana                DiaSemana
-  horaInicio               String        // "HH:mm", duração fixa de 1h (ver regras-negocio.md)
   estado                   EstadoMateria @default(ABERTA)
   encerradaEm              DateTime?
 
+  horarios                 HorarioMateria[]
   vinculos                 VinculoAlunoMateria[]
   aulas                    Aula[]
   itensAvaliacao           ItemAvaliacao[]
   atividades               Atividade[]
 
   @@map("materias")
+}
+
+/**
+ * Um slot semanal recorrente de uma Matéria (ex: Terça 08:00) — uma Matéria pode ter vários,
+ * já que pode se encontrar mais de uma vez por semana. Cada slot gera uma ocorrência de Aula
+ * por semana dentro do intervalo do Semestre da Turma (ver horario.util.ts). Dentro de uma
+ * mesma Turma, dois slots com o mesmo dia+horário não podem pertencer a Matérias diferentes
+ * (validado na aplicação — a Turma não pode estar em duas aulas ao mesmo tempo).
+ */
+model HorarioMateria {
+  id         String    @id @default(uuid())
+  materiaId  String
+  materia    Materia   @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  diaSemana  DiaSemana
+  horaInicio String    // "HH:mm", duração fixa de 1h (ver regras-negocio.md)
+
+  @@unique([materiaId, diaSemana, horaInicio])
+  @@map("horarios_materia")
 }
 
 model VinculoAlunoMateria {
