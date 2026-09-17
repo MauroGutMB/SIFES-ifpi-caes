@@ -138,7 +138,7 @@ export function LoginPage() {
               <TextField
                 {...register('login')}
                 label="Login"
-                helperText={errors.login?.message ?? 'Matrícula (aluno) ou e-mail (professor/admin)'}
+                helperText={errors.login?.message ?? 'Matrícula ou e-mail'}
                 error={!!errors.login}
                 fullWidth
                 autoFocus
