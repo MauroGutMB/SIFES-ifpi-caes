@@ -278,6 +278,7 @@ model Atividade {
   descricao       String?
   formatoExigido  FormatoArquivo
   arquivoUrl      String?
+  prazo           DateTime?
   criadaEm        DateTime       @default(now())
 
   entregas        Entrega[]
