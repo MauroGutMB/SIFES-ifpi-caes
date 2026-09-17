@@ -14,6 +14,7 @@ import { SolicitacoesFotoPage } from '../pages/admin/solicitacoes-foto/Solicitac
 import { ProfessorDashboardPage } from '../pages/professor/DashboardPage';
 import { MateriaProfessorPage } from '../pages/professor/materia/MateriaProfessorPage';
 import { AlunoDashboardPage } from '../pages/aluno/DashboardPage';
+import { MateriaAlunoPage } from '../pages/aluno/materia/MateriaAlunoPage';
 import { SessionGate } from '../auth/SessionGate';
 import { RoleGate } from '../auth/RoleGate';
 import { HomeRedirect } from '../auth/HomeRedirect';
@@ -59,7 +60,10 @@ export const router = createBrowserRouter([
           {
             path: 'aluno',
             element: <RoleGate allow={['ALUNO']} />,
-            children: [{ index: true, element: <AlunoDashboardPage /> }],
+            children: [
+              { index: true, element: <AlunoDashboardPage /> },
+              { path: 'materias/:materiaId', element: <MateriaAlunoPage /> },
+            ],
           },
         ],
       },
