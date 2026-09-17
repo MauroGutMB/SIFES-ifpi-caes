@@ -20,6 +20,14 @@ export class AtividadeDto {
   @ApiProperty({ nullable: true, type: String })
   arquivoUrl: string | null;
 
+  @ApiProperty({
+    nullable: true,
+    type: Date,
+    description:
+      'null só em atividades antigas, criadas antes do prazo ser obrigatório',
+  })
+  prazo: Date | null;
+
   @ApiProperty()
   criadaEm: Date;
 }

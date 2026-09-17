@@ -33,6 +33,7 @@ export class AtividadesController {
         titulo: { type: 'string' },
         descricao: { type: 'string' },
         formatoExigido: { type: 'string', enum: ['PDF', 'WORD', 'FOTO'] },
+        prazo: { type: 'string', format: 'date-time' },
         anexo: { type: 'string', format: 'binary' },
       },
     },

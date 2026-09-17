@@ -94,6 +94,7 @@ export class AtividadesService {
         titulo: dto.titulo,
         descricao: dto.descricao,
         formatoExigido: dto.formatoExigido,
+        prazo: new Date(dto.prazo),
         arquivoUrl: anexo ? await this.salvarAnexo(anexo) : null,
       },
     });
@@ -126,6 +127,7 @@ export class AtividadesService {
         titulo: dto.titulo,
         descricao: dto.descricao,
         formatoExigido: dto.formatoExigido,
+        prazo: dto.prazo ? new Date(dto.prazo) : undefined,
         arquivoUrl,
       },
     });
@@ -160,6 +162,11 @@ export class AtividadesService {
       throw new NotFoundException('Atividade não encontrada');
     }
     this.garantirAberta(atividade.materia);
+    if (atividade.prazo && new Date() > atividade.prazo) {
+      throw new BadRequestException(
+        'O prazo de entrega desta Atividade já passou',
+      );
+    }
 
     const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
       where: {
