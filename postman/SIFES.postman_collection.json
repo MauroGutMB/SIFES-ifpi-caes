@@ -1844,6 +1844,33 @@
       "name": "Usuarios e Foto de Perfil",
       "item": [
         {
+          "name": "Listar Todos os Usuarios (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users"
+              ]
+            },
+            "description": "Aceita filtro opcional ?role=ADMIN|PROFESSOR|ALUNO",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "Meu Perfil",
           "request": {
             "method": "GET",

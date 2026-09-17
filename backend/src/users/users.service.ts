@@ -3,10 +3,30 @@ import { mkdir, readdir, unlink, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { EXT_BY_MIME, FOTOS_DIR } from '../common/foto.util';
 import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '../../generated/prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
+
+  findAll(role?: Role) {
+    return this.prisma.user.findMany({
+      where: role ? { role } : undefined,
+      select: {
+        id: true,
+        login: true,
+        role: true,
+        precisaTrocarSenha: true,
+        fotoUrl: true,
+        criadoEm: true,
+        professor: { select: { id: true, nome: true } },
+        aluno: {
+          select: { id: true, nome: true, matricula: true, turmaId: true },
+        },
+      },
+      orderBy: { criadoEm: 'desc' },
+    });
+  }
 
   findMe(userId: string) {
     return this.prisma.user.findUniqueOrThrow({

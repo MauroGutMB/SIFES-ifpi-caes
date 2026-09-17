@@ -5,6 +5,7 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -21,6 +22,12 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Roles(Role.ADMIN)
+  @Get()
+  findAll(@Query('role') role?: Role) {
+    return this.usersService.findAll(role);
+  }
 
   @Get('me')
   me(@CurrentUser() user: AuthenticatedUser) {
