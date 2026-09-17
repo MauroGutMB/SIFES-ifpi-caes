@@ -101,13 +101,38 @@ export const theme = createTheme({
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { padding: '6px 12px', fontSize: '0.8125rem', borderColor: tokens.border },
-        head: { fontWeight: 700, fontFamily: displayFont, fontSize: '0.7rem' },
+        root: { padding: '8px 12px', fontSize: '0.8125rem', borderColor: tokens.border },
+        head: {
+          fontWeight: 700,
+          fontFamily: displayFont,
+          fontSize: '0.68rem',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          color: tokens.textSecondary,
+        },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: { backgroundColor: '#FAFBFA' },
+      },
+    },
+    MuiTableRow: {
+      styleOverrides: {
+        root: {
+          '&:last-of-type td': { borderBottom: 0 },
+          '&.MuiTableRow-hover:hover': { backgroundColor: tokens.greenTint, cursor: 'pointer' },
+        },
       },
     },
     MuiListItemButton: {
       styleOverrides: {
-        root: { paddingTop: 6, paddingBottom: 6 },
+        root: {
+          paddingTop: 8,
+          paddingBottom: 8,
+          borderRadius: 4,
+          '&:hover': { backgroundColor: tokens.greenTint },
+        },
       },
     },
     MuiDialogTitle: {
