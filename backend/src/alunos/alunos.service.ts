@@ -11,6 +11,7 @@ import { rethrowAsConflict } from '../common/prisma-error.util';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
+import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
 
 @Injectable()
 export class AlunosService {
@@ -210,5 +211,48 @@ export class AlunosService {
         b.semestre.dataInicio.getTime() - a.semestre.dataInicio.getTime(),
     );
     return resultado;
+  }
+
+  /** Contagem de atividades por matéria pra tela "Minha situação" — concluída (já entregou),
+   * pendente (ainda dentro do prazo, sem entrega) ou vencida (prazo passou, sem entrega). */
+  async resumoAtividades(
+    alunoId: string,
+  ): Promise<AtividadesResumoMateriaDto[]> {
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { alunoId },
+      include: {
+        materia: {
+          include: {
+            atividades: {
+              include: { entregas: { where: { alunoId } } },
+            },
+          },
+        },
+      },
+    });
+
+    const agora = new Date();
+    return vinculos.map((vinculo) => {
+      let concluidas = 0;
+      let pendentes = 0;
+      let vencidas = 0;
+      for (const atividade of vinculo.materia.atividades) {
+        if (atividade.entregas.length > 0) {
+          concluidas++;
+        } else if (atividade.prazo && agora > atividade.prazo) {
+          vencidas++;
+        } else {
+          pendentes++;
+        }
+      }
+      return {
+        materiaId: vinculo.materiaId,
+        materiaNome: vinculo.materia.nome,
+        concluidas,
+        pendentes,
+        vencidas,
+        total: vinculo.materia.atividades.length,
+      };
+    });
   }
 }

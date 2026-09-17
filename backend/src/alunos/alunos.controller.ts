@@ -19,6 +19,7 @@ import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { VincularTurmaDto } from './dto/vincular-turma.dto';
 import { AlunoCriadoDto, AlunoDto, AlunoMeDto } from './dto/aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
+import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
 
 @ApiTags('alunos')
 @Roles(Role.ADMIN)
@@ -52,6 +53,15 @@ export class AlunosController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<MeuSemestreDto[]> {
     return this.service.meusSemestres(user.alunoId!);
+  }
+
+  @Roles(Role.ALUNO)
+  @Get('me/atividades-resumo')
+  @ApiOkResponse({ type: AtividadesResumoMateriaDto, isArray: true })
+  resumoAtividades(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AtividadesResumoMateriaDto[]> {
+    return this.service.resumoAtividades(user.alunoId!);
   }
 
   @Get(':id')
