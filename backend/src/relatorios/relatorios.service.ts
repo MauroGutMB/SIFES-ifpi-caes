@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { BoletimService } from '../boletim/boletim.service';
+import { garantirPosseProfessor } from '../common/posse.util';
 import { Formato, gerarRelatorio, TabelaRelatorio } from './report-render.util';
 
 @Injectable()
@@ -27,12 +28,7 @@ export class RelatoriosService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
+    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
     return materia;
   }
 

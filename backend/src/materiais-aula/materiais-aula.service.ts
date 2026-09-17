@@ -4,8 +4,8 @@ import { randomUUID } from 'crypto';
 import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { Role } from '../../generated/prisma/client';
 import { MATERIAIS_AULA_DIR } from '../common/foto.util';
+import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 
 @Injectable()
@@ -20,12 +20,11 @@ export class MateriaisAulaService {
     if (!aula) {
       throw new NotFoundException('Aula não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      aula.materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Aula não encontrada');
-    }
+    garantirPosseProfessor(
+      user,
+      aula.materia.professorId,
+      'Aula não encontrada',
+    );
     return aula;
   }
 
@@ -37,12 +36,11 @@ export class MateriaisAulaService {
     if (!material) {
       throw new NotFoundException('Material não encontrado');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      material.aula.materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Material não encontrado');
-    }
+    garantirPosseProfessor(
+      user,
+      material.aula.materia.professorId,
+      'Material não encontrado',
+    );
     return material;
   }
 

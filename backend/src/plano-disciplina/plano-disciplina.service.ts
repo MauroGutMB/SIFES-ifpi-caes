@@ -5,8 +5,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { EstadoMateria, Role } from '../../generated/prisma/client';
+import { EstadoMateria } from '../../generated/prisma/client';
 import { BoletimService } from '../boletim/boletim.service';
+import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
@@ -28,12 +29,7 @@ export class PlanoDisciplinaService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
+    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
     return materia;
   }
 
@@ -53,12 +49,11 @@ export class PlanoDisciplinaService {
     if (!item) {
       throw new NotFoundException('Item de avaliação não encontrado');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      item.materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Item de avaliação não encontrado');
-    }
+    garantirPosseProfessor(
+      user,
+      item.materia.professorId,
+      'Item de avaliação não encontrado',
+    );
     return item;
   }
 

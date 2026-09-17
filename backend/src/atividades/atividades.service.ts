@@ -8,8 +8,9 @@ import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { EstadoMateria, Role } from '../../generated/prisma/client';
+import { EstadoMateria } from '../../generated/prisma/client';
 import { ENTREGAS_DIR } from '../common/foto.util';
+import { garantirPosseProfessor } from '../common/posse.util';
 import { extensaoPorMime, mimeRegexParaFormato } from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
@@ -28,12 +29,7 @@ export class AtividadesService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
+    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
     return materia;
   }
 
@@ -56,12 +52,11 @@ export class AtividadesService {
     if (!atividade) {
       throw new NotFoundException('Atividade não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      atividade.materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Atividade não encontrada');
-    }
+    garantirPosseProfessor(
+      user,
+      atividade.materia.professorId,
+      'Atividade não encontrada',
+    );
     return atividade;
   }
 

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { BoletimService } from '../boletim/boletim.service';
 import { agoraComoBrasiliaFake } from '../common/tempo.util';
+import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
 import { gerarOcorrenciasAula, validarHorario } from './horario.util';
@@ -236,12 +237,7 @@ export class MateriasService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    if (
-      user.role === Role.PROFESSOR &&
-      materia.professorId !== user.professorId
-    ) {
-      throw new NotFoundException('Matéria não encontrada');
-    }
+    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
     if (materia.estado === EstadoMateria.ENCERRADA) {
       throw new BadRequestException('Matéria já está encerrada');
     }
