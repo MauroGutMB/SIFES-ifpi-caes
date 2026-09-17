@@ -1,4 +1,4 @@
-import { Box, Button, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import CheckIcon from '@mui/icons-material/CheckOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
@@ -114,15 +114,17 @@ export function SolicitacoesFotoPage() {
         Lista apenas as solicitações pendentes.
       </Typography>
 
-      <DataGrid
-        rows={data ?? []}
-        columns={columns}
-        loading={isLoading}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-      />
+      <Paper variant="outlined">
+        <DataGrid
+          rows={data ?? []}
+          columns={columns}
+          loading={isLoading}
+          disableRowSelectionOnClick
+          density="compact"
+          autoHeight
+          initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
+        />
+      </Paper>
     </>
   );
 }

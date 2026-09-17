@@ -16,6 +16,8 @@ import {
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
+import { usePaginacao } from '../../components/usePaginacao';
+import { Paginacao } from '../../components/Paginacao';
 
 const LABEL_STATUS: Record<string, { label: string; color: 'success' | 'error' | 'default' }> = {
   PRESENTE: { label: 'Presente', color: 'success' },
@@ -46,6 +48,11 @@ export function TurmaProfessorPage() {
       },
       { query: { enabled: !!turmaId } },
     );
+
+  const resumo = relatorio?.resumo ?? [];
+  const detalhado = relatorio?.detalhado ?? [];
+  const paginacaoResumo = usePaginacao(resumo);
+  const paginacaoDetalhado = usePaginacao(detalhado);
 
   const alunosDisponiveis = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -135,7 +142,7 @@ export function TurmaProfessorPage() {
           </TableHead>
           <TableBody>
             {!carregandoRelatorio &&
-              (relatorio?.resumo ?? []).map((linha) => (
+              paginacaoResumo.itensDaPagina.map((linha) => (
                 <TableRow key={`${linha.materiaId}-${linha.alunoId}`}>
                   <TableCell>{linha.alunoNome}</TableCell>
                   <TableCell>{linha.matricula}</TableCell>
@@ -150,7 +157,7 @@ export function TurmaProfessorPage() {
                   </TableCell>
                 </TableRow>
               ))}
-            {!carregandoRelatorio && (relatorio?.resumo.length ?? 0) === 0 && (
+            {!carregandoRelatorio && resumo.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4}>
                   <Typography variant="body2" color="text.secondary">
@@ -161,6 +168,11 @@ export function TurmaProfessorPage() {
             )}
           </TableBody>
         </Table>
+        <Paginacao
+          total={resumo.length}
+          pagina={paginacaoResumo.pagina}
+          onChange={paginacaoResumo.setPagina}
+        />
       </Paper>
 
       <Typography variant="subtitle1" gutterBottom>
@@ -178,7 +190,7 @@ export function TurmaProfessorPage() {
           </TableHead>
           <TableBody>
             {!carregandoRelatorio &&
-              (relatorio?.detalhado ?? []).map((linha, i) => (
+              paginacaoDetalhado.itensDaPagina.map((linha, i) => (
                 <TableRow key={i}>
                   <TableCell>{new Date(linha.data).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>{linha.materiaNome}</TableCell>
@@ -192,7 +204,7 @@ export function TurmaProfessorPage() {
                   </TableCell>
                 </TableRow>
               ))}
-            {!carregandoRelatorio && (relatorio?.detalhado.length ?? 0) === 0 && (
+            {!carregandoRelatorio && detalhado.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4}>
                   <Typography variant="body2" color="text.secondary">
@@ -203,6 +215,11 @@ export function TurmaProfessorPage() {
             )}
           </TableBody>
         </Table>
+        <Paginacao
+          total={detalhado.length}
+          pagina={paginacaoDetalhado.pagina}
+          onChange={paginacaoDetalhado.setPagina}
+        />
       </Paper>
 
       {materiasDaTurma.length > 0 && (

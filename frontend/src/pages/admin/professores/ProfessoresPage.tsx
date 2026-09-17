@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, IconButton, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
@@ -120,15 +120,17 @@ export function ProfessoresPage() {
         </Button>
       </Box>
 
-      <DataGrid
-        rows={data ?? []}
-        columns={columns}
-        loading={isLoading}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-      />
+      <Paper variant="outlined">
+        <DataGrid
+          rows={data ?? []}
+          columns={columns}
+          loading={isLoading}
+          disableRowSelectionOnClick
+          density="compact"
+          autoHeight
+          initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
+        />
+      </Paper>
 
       <FormDialog
         open={dialogAberto}

@@ -18,6 +18,8 @@ import {
 } from '../../../api/generated/aulas/aulas';
 import { useAulasControllerOverride } from '../../../api/generated/aulas/aulas';
 import type { AulaDto } from '../../../api/generated/models';
+import { usePaginacao } from '../../../components/usePaginacao';
+import { Paginacao } from '../../../components/Paginacao';
 
 interface AulasOverrideDialogProps {
   materiaId: string | null;
@@ -36,6 +38,8 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
     query: { enabled: !!materiaId },
   });
   const override = useAulasControllerOverride();
+  const aulas = data ?? [];
+  const { pagina, setPagina, itensDaPagina } = usePaginacao(aulas);
 
   const aplicarOverride = async (aula: AulaDto, valor: string) => {
     await override.mutateAsync({
@@ -64,7 +68,7 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
           </TableHead>
           <TableBody>
             {!isLoading &&
-              (data ?? []).map((aula) => (
+              itensDaPagina.map((aula) => (
                 <TableRow key={aula.id}>
                   <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>
@@ -106,6 +110,7 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
               ))}
           </TableBody>
         </Table>
+        <Paginacao total={aulas.length} pagina={pagina} onChange={setPagina} />
       </DialogContent>
     </Dialog>
   );

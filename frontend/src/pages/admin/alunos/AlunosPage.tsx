@@ -4,6 +4,7 @@ import {
   Button,
   IconButton,
   MenuItem,
+  Paper,
   Stack,
   TextField,
   Tooltip,
@@ -237,20 +238,22 @@ export function AlunosPage() {
         </Stack>
       </Box>
 
-      <DataGrid
-        rows={data ?? []}
-        columns={columns}
-        loading={isLoading}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        showToolbar
-        checkboxSelection
-        rowSelectionModel={selecionados}
-        onRowSelectionModelChange={setSelecionados}
-        processRowUpdate={salvarEdicaoInline}
-        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-      />
+      <Paper variant="outlined">
+        <DataGrid
+          rows={data ?? []}
+          columns={columns}
+          loading={isLoading}
+          disableRowSelectionOnClick
+          density="compact"
+          autoHeight
+          showToolbar
+          checkboxSelection
+          rowSelectionModel={selecionados}
+          onRowSelectionModelChange={setSelecionados}
+          processRowUpdate={salvarEdicaoInline}
+          initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
+        />
+      </Paper>
 
       <FormDialog
         open={dialogAberto}

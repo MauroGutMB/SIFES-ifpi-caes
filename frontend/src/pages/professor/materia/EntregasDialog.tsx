@@ -10,6 +10,8 @@ import {
   Typography,
 } from '@mui/material';
 import { useAtividadesControllerListarEntregas } from '../../../api/generated/atividades/atividades';
+import { usePaginacao } from '../../../components/usePaginacao';
+import { Paginacao } from '../../../components/Paginacao';
 
 interface EntregasDialogProps {
   atividadeId: string | null;
@@ -20,6 +22,8 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
   const { data, isLoading } = useAtividadesControllerListarEntregas(atividadeId ?? '', {
     query: { enabled: !!atividadeId },
   });
+  const entregas = data ?? [];
+  const { pagina, setPagina, itensDaPagina } = usePaginacao(entregas);
 
   return (
     <Dialog open={!!atividadeId} onClose={onClose} fullWidth maxWidth="sm">
@@ -35,7 +39,7 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
           </TableHead>
           <TableBody>
             {!isLoading &&
-              (data ?? []).map((entrega) => (
+              itensDaPagina.map((entrega) => (
                 <TableRow key={entrega.id}>
                   <TableCell>{entrega.aluno.nome}</TableCell>
                   <TableCell>{new Date(entrega.enviadoEm).toLocaleString('pt-BR')}</TableCell>
@@ -46,7 +50,7 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
                   </TableCell>
                 </TableRow>
               ))}
-            {!isLoading && !data?.length && (
+            {!isLoading && entregas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3}>
                   <Typography color="text.secondary" variant="body2">
@@ -57,6 +61,7 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
             )}
           </TableBody>
         </Table>
+        <Paginacao total={entregas.length} pagina={pagina} onChange={setPagina} />
       </DialogContent>
     </Dialog>
   );

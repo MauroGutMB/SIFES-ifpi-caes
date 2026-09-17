@@ -14,6 +14,8 @@ import {
 import { useAlunosControllerMeuPerfil } from '../../api/generated/alunos/alunos';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
+import { usePaginacao } from '../../components/usePaginacao';
+import { Paginacao } from '../../components/Paginacao';
 
 const LABEL_STATUS: Record<string, { label: string; color: 'success' | 'error' | 'default' }> = {
   PRESENTE: { label: 'Presente', color: 'success' },
@@ -32,6 +34,9 @@ export function FrequenciaTab() {
     { materiaId: materiaId || undefined },
     { query: { enabled: !!turmaId } },
   );
+
+  const detalhado = relatorio?.detalhado ?? [];
+  const { pagina, setPagina, itensDaPagina: detalhadoDaPagina } = usePaginacao(detalhado);
 
   if (perfil && !perfil.turmaId) {
     return (
@@ -124,7 +129,7 @@ export function FrequenciaTab() {
           </TableHead>
           <TableBody>
             {!isLoading &&
-              (relatorio?.detalhado ?? []).map((linha, i) => (
+              detalhadoDaPagina.map((linha, i) => (
                 <TableRow key={i}>
                   <TableCell>{new Date(linha.data).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>{linha.materiaNome}</TableCell>
@@ -137,7 +142,7 @@ export function FrequenciaTab() {
                   </TableCell>
                 </TableRow>
               ))}
-            {!isLoading && (relatorio?.detalhado.length ?? 0) === 0 && (
+            {!isLoading && detalhado.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3}>
                   <Typography variant="body2" color="text.secondary">
@@ -148,6 +153,7 @@ export function FrequenciaTab() {
             )}
           </TableBody>
         </Table>
+        <Paginacao total={detalhado.length} pagina={pagina} onChange={setPagina} />
       </Paper>
     </>
   );

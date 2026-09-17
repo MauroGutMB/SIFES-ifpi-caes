@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Chip, MenuItem, TextField, Typography } from '@mui/material';
+import { Box, Chip, MenuItem, Paper, TextField, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { useUsersControllerFindAll } from '../../../api/generated/users/users';
 import type { UserDto } from '../../../api/generated/models';
@@ -62,15 +62,17 @@ export function UsuariosPage() {
         </TextField>
       </Box>
 
-      <DataGrid
-        rows={data ?? []}
-        columns={columns}
-        loading={isLoading}
-        disableRowSelectionOnClick
-        density="compact"
-        autoHeight
-        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-      />
+      <Paper variant="outlined">
+        <DataGrid
+          rows={data ?? []}
+          columns={columns}
+          loading={isLoading}
+          disableRowSelectionOnClick
+          density="compact"
+          autoHeight
+          initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
+        />
+      </Paper>
     </>
   );
 }
