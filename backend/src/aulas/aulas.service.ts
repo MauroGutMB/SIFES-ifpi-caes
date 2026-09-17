@@ -71,6 +71,8 @@ export class AulasService {
       ...aula,
       estado: calcularEstadoAula({
         estadoOverride: aula.estadoOverride,
+        titulo: aula.titulo,
+        descricao: aula.descricao,
         temFrequencias: _count.frequencias > 0,
       }),
     }));
@@ -103,6 +105,8 @@ export class AulasService {
     }));
     const estado = calcularEstadoAula({
       estadoOverride: aula.estadoOverride,
+      titulo: aula.titulo,
+      descricao: aula.descricao,
       temFrequencias: existentes.length > 0,
     });
     return { ...aula, estado, frequencias };
