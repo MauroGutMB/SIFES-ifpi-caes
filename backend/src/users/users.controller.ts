@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -42,6 +42,13 @@ export class UsersController {
   @Roles(Role.ADMIN, Role.PROFESSOR)
   @Post('me/foto')
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['foto'],
+      properties: { foto: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('foto'))
   updateFoto(
     @CurrentUser() user: AuthenticatedUser,
