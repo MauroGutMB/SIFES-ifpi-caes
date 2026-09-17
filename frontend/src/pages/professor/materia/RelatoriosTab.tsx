@@ -1,20 +1,10 @@
 import { useState } from 'react';
 import { Button, Stack, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
-import { axiosInstance } from '../../../api/axios-instance';
+import { baixarArquivo } from '../../../api/download';
 
 interface RelatoriosTabProps {
   materiaId: string;
-}
-
-async function baixarRelatorio(url: string, nomeArquivo: string) {
-  const resposta = await axiosInstance.get(url, { responseType: 'blob' });
-  const objectUrl = URL.createObjectURL(resposta.data as Blob);
-  const link = document.createElement('a');
-  link.href = objectUrl;
-  link.download = nomeArquivo;
-  link.click();
-  URL.revokeObjectURL(objectUrl);
 }
 
 export function RelatoriosTab({ materiaId }: RelatoriosTabProps) {
@@ -23,7 +13,7 @@ export function RelatoriosTab({ materiaId }: RelatoriosTabProps) {
   const baixar = async (chave: string, url: string, nomeArquivo: string) => {
     setBaixando(chave);
     try {
-      await baixarRelatorio(url, nomeArquivo);
+      await baixarArquivo(url, nomeArquivo);
     } finally {
       setBaixando(null);
     }

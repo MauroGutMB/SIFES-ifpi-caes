@@ -1,29 +1,49 @@
 import { useState } from 'react';
-import { Button, Stack, Typography } from '@mui/material';
+import {
+  Button,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Chip,
+  Typography,
+} from '@mui/material';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
-import { axiosInstance } from '../../api/axios-instance';
+import { useQueries } from '@tanstack/react-query';
+import { baixarArquivo } from '../../api/download';
+import { useAlunosControllerMeuPerfil } from '../../api/generated/alunos/alunos';
+import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
+import {
+  getMateriaPlanoControllerBoletimQueryKey,
+  materiaPlanoControllerBoletim,
+} from '../../api/generated/plano-disciplina/plano-disciplina';
 
-interface BoletimTabProps {
-  alunoId: string;
-}
+const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'success' | 'error' }> = {
+  CURSANDO: { label: 'Cursando', color: 'default' },
+  APROVADO: { label: 'Aprovado', color: 'success' },
+  REPROVADO: { label: 'Reprovado', color: 'error' },
+};
 
-async function baixar(url: string, nomeArquivo: string) {
-  const resposta = await axiosInstance.get(url, { responseType: 'blob' });
-  const objectUrl = URL.createObjectURL(resposta.data as Blob);
-  const link = document.createElement('a');
-  link.href = objectUrl;
-  link.download = nomeArquivo;
-  link.click();
-  URL.revokeObjectURL(objectUrl);
-}
-
-export function BoletimTab({ alunoId }: BoletimTabProps) {
+export function BoletimTab() {
+  const { data: perfil } = useAlunosControllerMeuPerfil();
+  const { data: materias } = useMateriasControllerFindAll();
   const [baixando, setBaixando] = useState<string | null>(null);
+
+  const resultados = useQueries({
+    queries: (materias ?? []).map((materia) => ({
+      queryKey: getMateriaPlanoControllerBoletimQueryKey(materia.id),
+      queryFn: () => materiaPlanoControllerBoletim(materia.id),
+      enabled: !!materias,
+    })),
+  });
 
   const baixarComEstado = async (chave: string, url: string, nomeArquivo: string) => {
     setBaixando(chave);
     try {
-      await baixar(url, nomeArquivo);
+      await baixarArquivo(url, nomeArquivo);
     } finally {
       setBaixando(null);
     }
@@ -31,31 +51,84 @@ export function BoletimTab({ alunoId }: BoletimTabProps) {
 
   return (
     <>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Para o detalhamento por item de cada matéria, acesse a matéria em "Minhas matérias".
+      <Typography variant="h4" gutterBottom>
+        Boletim
       </Typography>
-      <Stack direction="row" spacing={1}>
-        <Button
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-          disabled={baixando === 'pdf'}
-          onClick={() =>
-            baixarComEstado('pdf', `/relatorios/boletim/${alunoId}?formato=pdf`, 'boletim.pdf')
-          }
-        >
-          PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<DownloadIcon />}
-          disabled={baixando === 'xlsx'}
-          onClick={() =>
-            baixarComEstado('xlsx', `/relatorios/boletim/${alunoId}?formato=xlsx`, 'boletim.xlsx')
-          }
-        >
-          Excel
-        </Button>
-      </Stack>
+
+      <Paper variant="outlined" sx={{ mb: 3 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Matéria</TableCell>
+              <TableCell>Média</TableCell>
+              <TableCell>Frequência</TableCell>
+              <TableCell>Situação</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {(materias ?? []).map((materia, i) => {
+              const linha = resultados[i]?.data?.[0];
+              return (
+                <TableRow key={materia.id}>
+                  <TableCell>{materia.nome}</TableCell>
+                  <TableCell>{linha ? linha.notaFinal.toFixed(1) : '—'}</TableCell>
+                  <TableCell>
+                    {linha ? `${linha.frequenciaPercentual.toFixed(0)}%` : '—'}
+                  </TableCell>
+                  <TableCell>
+                    {linha && (
+                      <Chip
+                        size="small"
+                        label={LABEL_SITUACAO[linha.situacao].label}
+                        color={LABEL_SITUACAO[linha.situacao].color}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {perfil && (
+        <>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            Para o detalhamento por item de cada matéria, acesse a matéria em "Minhas matérias".
+            Baixe o boletim completo do semestre atual:
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={baixando === 'pdf'}
+              onClick={() =>
+                baixarComEstado(
+                  'pdf',
+                  `/relatorios/boletim/${perfil.id}?formato=pdf`,
+                  'boletim.pdf',
+                )
+              }
+            >
+              PDF
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={baixando === 'xlsx'}
+              onClick={() =>
+                baixarComEstado(
+                  'xlsx',
+                  `/relatorios/boletim/${perfil.id}?formato=xlsx`,
+                  'boletim.xlsx',
+                )
+              }
+            >
+              Excel
+            </Button>
+          </Stack>
+        </>
+      )}
     </>
   );
 }

@@ -17,7 +17,11 @@ export function MateriaAlunoPage() {
 
   return (
     <>
-      <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/app/aluno')} sx={{ mb: 1 }}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate('/app/aluno/materias')}
+        sx={{ mb: 1 }}
+      >
         Minhas matérias
       </Button>
 
