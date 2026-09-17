@@ -44,6 +44,16 @@ export class MateriaPlanoController {
     return this.service.boletimMateria(materiaId, user);
   }
 
+  @Get('alunos/:alunoId/detalhamento')
+  @ApiOkResponse({ type: ItemDetalhadoDto, isArray: true })
+  detalhamentoAluno(
+    @Param('materiaId') materiaId: string,
+    @Param('alunoId') alunoId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ItemDetalhadoDto[]> {
+    return this.service.detalhamentoAluno(materiaId, alunoId, user);
+  }
+
   @Roles(Role.ALUNO)
   @Get('meu-detalhamento')
   @ApiOkResponse({ type: ItemDetalhadoDto, isArray: true })

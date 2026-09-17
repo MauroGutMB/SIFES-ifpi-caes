@@ -162,6 +162,33 @@ export class PlanoDisciplinaService {
     return linhas;
   }
 
+  /** Detalhamento de notas por item de UM aluno — usado pelo professor pra editar as notas
+   * já lançadas dele a partir do boletim, sem precisar abrir item por item. */
+  async detalhamentoAluno(
+    materiaId: string,
+    alunoId: string,
+    user: AuthenticatedUser,
+  ) {
+    await this.carregarMateria(materiaId, user);
+    const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
+      where: { alunoId_materiaId: { alunoId, materiaId } },
+    });
+    if (!vinculado) {
+      throw new NotFoundException('Aluno não vinculado a esta matéria');
+    }
+
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+      include: { notas: { where: { alunoId } } },
+    });
+    return itens.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      valorMaximo: item.valorMaximo.toString(),
+      valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+    }));
+  }
+
   async meuDetalhamento(materiaId: string, user: AuthenticatedUser) {
     await this.carregarMateria(materiaId, user);
 
