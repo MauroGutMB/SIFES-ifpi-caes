@@ -4,6 +4,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBackOutlined';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../../api/generated/materias/materias';
 import { resumoHorarios } from '../../admin/materias/dias-semana';
+import { LancarAulaTab } from './LancarAulaTab';
 import { PlanoTab } from './PlanoTab';
 import { DiarioTab } from './DiarioTab';
 import { AtividadesTab } from './AtividadesTab';
@@ -40,6 +41,7 @@ export function MateriaProfessorPage() {
       )}
 
       <Tabs value={tab} onChange={(_e, v) => setTab(v)} sx={{ mb: 2 }}>
+        <Tab label="Lançar aula" />
         <Tab label="Plano de disciplina" />
         <Tab label="Diário" />
         <Tab label="Atividades" />
@@ -48,10 +50,11 @@ export function MateriaProfessorPage() {
 
       {materia && (
         <>
-          {tab === 0 && <PlanoTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
-          {tab === 1 && <DiarioTab materiaId={materiaId} />}
-          {tab === 2 && <AtividadesTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
-          {tab === 3 && <RelatoriosTab materiaId={materiaId} />}
+          {tab === 0 && <LancarAulaTab materiaId={materiaId} />}
+          {tab === 1 && <PlanoTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
+          {tab === 2 && <DiarioTab materiaId={materiaId} />}
+          {tab === 3 && <AtividadesTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
+          {tab === 4 && <RelatoriosTab materiaId={materiaId} />}
         </>
       )}
     </>

@@ -18,6 +18,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import VisibilityIcon from '@mui/icons-material/VisibilityOutlined';
+import AttachFileIcon from '@mui/icons-material/AttachFileOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -61,6 +62,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
   const [paraExcluir, setParaExcluir] = useState<AtividadeDto | null>(null);
   const [entregasDe, setEntregasDe] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [anexo, setAnexo] = useState<File | null>(null);
 
   const {
     register,
@@ -77,6 +79,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
   const abrirNovo = () => {
     setEditando(null);
     reset({ titulo: '', descricao: '', formatoExigido: 'PDF' });
+    setAnexo(null);
     setErro(null);
     setDialogAberto(true);
   };
@@ -88,6 +91,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
       descricao: atividade.descricao ?? '',
       formatoExigido: atividade.formatoExigido,
     });
+    setAnexo(null);
     setErro(null);
     setDialogAberto(true);
   };
@@ -96,9 +100,9 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
     setErro(null);
     try {
       if (editando) {
-        await atualizar.mutateAsync({ id: editando.id, data: dados });
+        await atualizar.mutateAsync({ id: editando.id, data: { ...dados, anexo: anexo ?? undefined } });
       } else {
-        await criar.mutateAsync({ materiaId, data: dados });
+        await criar.mutateAsync({ materiaId, data: { ...dados, anexo: anexo ?? undefined } });
       }
       await invalidar();
       setDialogAberto(false);
@@ -136,6 +140,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
             <TableRow>
               <TableCell>Título</TableCell>
               <TableCell>Formato</TableCell>
+              <TableCell>Anexo</TableCell>
               <TableCell>Criada em</TableCell>
               <TableCell width={140} />
             </TableRow>
@@ -146,6 +151,15 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
                 <TableRow key={atividade.id}>
                   <TableCell>{atividade.titulo}</TableCell>
                   <TableCell>{atividade.formatoExigido}</TableCell>
+                  <TableCell>
+                    {atividade.arquivoUrl ? (
+                      <a href={atividade.arquivoUrl} target="_blank" rel="noreferrer">
+                        Abrir
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </TableCell>
                   <TableCell>{new Date(atividade.criadaEm).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>
                     <Stack direction="row">
@@ -168,7 +182,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
               ))}
             {!isLoading && !data?.length && (
               <TableRow>
-                <TableCell colSpan={4}>
+                <TableCell colSpan={5}>
                   <Typography color="text.secondary" variant="body2">
                     Nenhuma atividade cadastrada.
                   </Typography>
@@ -220,6 +234,16 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
             </MenuItem>
           ))}
         </TextField>
+        <Box>
+          <Button component="label" size="small" variant="outlined" startIcon={<AttachFileIcon />}>
+            {anexo ? anexo.name : editando?.arquivoUrl ? 'Trocar anexo' : 'Anexar arquivo (opcional)'}
+            <input
+              type="file"
+              hidden
+              onChange={(e) => setAnexo(e.target.files?.[0] ?? null)}
+            />
+          </Button>
+        </Box>
       </FormDialog>
 
       <ConfirmDialog

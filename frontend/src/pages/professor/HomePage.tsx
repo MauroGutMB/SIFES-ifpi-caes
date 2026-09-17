@@ -1,12 +1,37 @@
-import { Avatar, Box, Grid, Paper, Stack, Typography } from '@mui/material';
-import { useUsersControllerMe } from '../../api/generated/users/users';
+import { useState } from 'react';
+import { Avatar, Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import { isAxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getUsersControllerMeQueryKey,
+  useUsersControllerMe,
+  useUsersControllerUpdateFoto,
+} from '../../api/generated/users/users';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
 
 export function ProfessorHomePage() {
+  const queryClient = useQueryClient();
   const { data: me } = useUsersControllerMe();
   const { data: materias } = useMateriasControllerFindAll();
+  const atualizarFoto = useUsersControllerUpdateFoto();
+  const [erroFoto, setErroFoto] = useState<string | null>(null);
   const professor = materias?.[0]?.professor;
+
+  const trocarFoto = async (arquivo: File) => {
+    setErroFoto(null);
+    try {
+      await atualizarFoto.mutateAsync({ data: { foto: arquivo } });
+      await queryClient.invalidateQueries({ queryKey: getUsersControllerMeQueryKey() });
+    } catch (error) {
+      setErroFoto(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível trocar a foto')
+          : 'Não foi possível trocar a foto',
+      );
+    }
+  };
 
   return (
     <>
@@ -28,9 +53,26 @@ export function ProfessorHomePage() {
                 )}
               </div>
             </Stack>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
               {materias?.length ?? 0} matéria(s) atribuída(s)
             </Typography>
+            <Button component="label" variant="outlined" size="small" disabled={atualizarFoto.isPending}>
+              Trocar foto
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  const arquivo = e.target.files?.[0];
+                  if (arquivo) trocarFoto(arquivo);
+                }}
+              />
+            </Button>
+            {erroFoto && (
+              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                {erroFoto}
+              </Typography>
+            )}
           </Paper>
         </Grid>
         <Grid size={{ xs: 12, md: 7 }}>

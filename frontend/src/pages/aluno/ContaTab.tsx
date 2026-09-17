@@ -1,16 +1,5 @@
 import { useState } from 'react';
-import {
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Avatar, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUsersControllerMe } from '../../api/generated/users/users';
@@ -25,18 +14,16 @@ interface ContaTabProps {
   perfil: AlunoMeDto;
 }
 
-const LABEL_STATUS: Record<string, 'warning' | 'success' | 'error'> = {
-  PENDENTE: 'warning',
-  APROVADA: 'success',
-  REJEITADA: 'error',
-};
-
 export function ContaTab({ perfil }: ContaTabProps) {
   const queryClient = useQueryClient();
   const { data: me } = useUsersControllerMe();
   const { data: solicitacoes } = useFotoSolicitacoesControllerMinhas();
   const solicitar = useFotoSolicitacoesControllerSolicitar();
   const [erro, setErro] = useState<string | null>(null);
+
+  // O aluno não vê a lista de solicitações enviadas — só se há uma pendente agora, pra saber
+  // se o próximo envio cria uma solicitação nova ou substitui a foto da que já está em análise.
+  const pendente = solicitacoes?.some((s) => s.status === 'PENDENTE') ?? false;
 
   const enviarFoto = async (arquivo: File) => {
     setErro(null);
@@ -69,18 +56,27 @@ export function ContaTab({ perfil }: ContaTabProps) {
         </Stack>
 
         <Box sx={{ mt: 2 }}>
-          <Button component="label" variant="outlined" size="small">
-            Solicitar troca de foto
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={(e) => {
-                const arquivo = e.target.files?.[0];
-                if (arquivo) enviarFoto(arquivo);
-              }}
-            />
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Button component="label" variant="outlined" size="small">
+              {pendente ? 'Editar foto enviada' : 'Solicitar troca de foto'}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={(e) => {
+                  const arquivo = e.target.files?.[0];
+                  if (arquivo) enviarFoto(arquivo);
+                }}
+              />
+            </Button>
+            {pendente && <Chip size="small" label="Em análise" color="warning" />}
+          </Stack>
+          {pendente && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Sua foto enviada está aguardando aprovação. Você pode enviar outra pra
+              substituir, mas não pode ter duas solicitações ao mesmo tempo.
+            </Typography>
+          )}
           {erro && (
             <Typography color="error" variant="body2" sx={{ mt: 1 }}>
               {erro}
@@ -88,31 +84,6 @@ export function ContaTab({ perfil }: ContaTabProps) {
           )}
         </Box>
       </Paper>
-
-      <div>
-        <Typography variant="subtitle1" gutterBottom>
-          Solicitações de foto
-        </Typography>
-        <List dense>
-          {(solicitacoes ?? []).map((solicitacao) => (
-            <ListItem
-              key={solicitacao.id}
-              secondaryAction={
-                <Chip size="small" label={solicitacao.status} color={LABEL_STATUS[solicitacao.status]} />
-              }
-            >
-              <ListItemText
-                primary={new Date(solicitacao.criadaEm).toLocaleString('pt-BR')}
-              />
-            </ListItem>
-          ))}
-          {!solicitacoes?.length && (
-            <Typography variant="body2" color="text.secondary">
-              Nenhuma solicitação enviada ainda.
-            </Typography>
-          )}
-        </List>
-      </div>
     </Stack>
   );
 }

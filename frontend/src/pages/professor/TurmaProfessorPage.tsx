@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
+  Avatar,
   Box,
   Button,
   Chip,
@@ -29,6 +30,7 @@ interface AlunoAgrupado {
   alunoId: string;
   alunoNome: string;
   matricula: string;
+  fotoUrl: string | null;
   materias: { materiaId: string; materiaNome: string; frequenciaPercentual: number }[];
 }
 
@@ -50,7 +52,12 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
             {aberto ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
         </TableCell>
-        <TableCell>{aluno.alunoNome}</TableCell>
+        <TableCell>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Avatar src={aluno.fotoUrl ?? undefined} sx={{ width: 28, height: 28 }} />
+            <span>{aluno.alunoNome}</span>
+          </Stack>
+        </TableCell>
         <TableCell>{aluno.matricula}</TableCell>
         <TableCell>{aluno.materias.length}</TableCell>
       </TableRow>
@@ -121,6 +128,7 @@ export function TurmaProfessorPage() {
         alunoId: linha.alunoId,
         alunoNome: linha.alunoNome,
         matricula: linha.matricula,
+        fotoUrl: linha.fotoUrl,
         materias: [],
       };
       atual.materias.push({
