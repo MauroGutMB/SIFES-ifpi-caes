@@ -182,6 +182,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar atividade' : 'Nova atividade'}
+        submitLabel={editando ? 'Salvar atividade' : 'Criar atividade'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}

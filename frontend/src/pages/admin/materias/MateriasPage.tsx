@@ -37,6 +37,7 @@ import { MateriasControllerCreateBody } from '../../../api/generated/zod/materia
 import type { MateriaDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { tokens } from '../../../theme/tokens';
 import { DIAS_SEMANA, resumoHorarios } from './dias-semana';
 import { AulasOverrideDialog } from './AulasOverrideDialog';
 
@@ -64,8 +65,13 @@ export function MateriasPage() {
     control,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(MateriasControllerCreateBody) });
+    setFocus,
+    formState: { errors, isDirty },
+  } = useForm<FormValues>({
+    resolver: zodResolver(MateriasControllerCreateBody),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+  });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'horarios' });
 
@@ -225,10 +231,14 @@ export function MateriasPage() {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar matéria' : 'Nova matéria'}
+        subtitle="As mudanças valem a partir do próximo lançamento de aula."
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}
         submitting={criar.isPending || atualizar.isPending}
+        submitLabel={editando ? 'Salvar matéria' : 'Criar matéria'}
+        width={520}
+        isDirty={isDirty}
       >
         <TextField
           {...register('nome')}
@@ -278,55 +288,66 @@ export function MateriasPage() {
           fullWidth
         />
 
-        <Typography variant="subtitle2">Horários semanais</Typography>
-        <Stack spacing={1.5}>
-          {fields.map((field, index) => (
-            <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
-              <TextField
-                {...register(`horarios.${index}.diaSemana`)}
-                select
-                label="Dia"
-                error={!!errors.horarios?.[index]?.diaSemana}
-                fullWidth
-                defaultValue={field.diaSemana}
-              >
-                {DIAS_SEMANA.map((dia) => (
-                  <MenuItem key={dia.value} value={dia.value}>
-                    {dia.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                {...register(`horarios.${index}.horaInicio`)}
-                label="Início"
-                type="time"
-                slotProps={{ inputLabel: { shrink: true } }}
-                error={!!errors.horarios?.[index]?.horaInicio}
-                fullWidth
-              />
-              <IconButton
-                onClick={() => remove(index)}
-                disabled={fields.length <= 1}
-                sx={{ mt: 0.5 }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Stack>
-          ))}
-        </Stack>
-        <Button
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={() => append({ diaSemana: 'SEGUNDA', horaInicio: '08:00' })}
-          sx={{ alignSelf: 'flex-start' }}
-        >
-          Adicionar horário
-        </Button>
-        {errors.horarios?.message && (
-          <Typography color="error" variant="body2">
-            {errors.horarios.message}
-          </Typography>
-        )}
+        <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>Horários</Typography>
+        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.75, bgcolor: '#FAFBFA' }}>
+          <Stack spacing={1}>
+            {fields.map((field, index) => (
+              <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <TextField
+                  {...register(`horarios.${index}.diaSemana`)}
+                  select
+                  label="Dia"
+                  error={!!errors.horarios?.[index]?.diaSemana}
+                  sx={{ width: 170 }}
+                  defaultValue={field.diaSemana}
+                >
+                  {DIAS_SEMANA.map((dia) => (
+                    <MenuItem key={dia.value} value={dia.value}>
+                      {dia.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  {...register(`horarios.${index}.horaInicio`)}
+                  label="Início"
+                  type="time"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  error={!!errors.horarios?.[index]?.horaInicio}
+                  sx={{ width: 120 }}
+                />
+                <IconButton
+                  onClick={() => remove(index)}
+                  disabled={fields.length <= 1}
+                  aria-label="Remover horário"
+                  sx={{
+                    width: 34,
+                    height: 34,
+                    border: '1px solid',
+                    borderColor: tokens.fieldBorder,
+                    borderRadius: 1,
+                    bgcolor: '#fff',
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
+            ))}
+          </Stack>
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              append({ diaSemana: 'SEGUNDA', horaInicio: '08:00' });
+              window.setTimeout(() => setFocus(`horarios.${fields.length}.diaSemana`), 0);
+            }}
+            sx={{ mt: 1, color: 'primary.main', fontWeight: 600 }}
+          >
+            Adicionar horário
+          </Button>
+        </Box>
+        <Typography sx={{ fontSize: 12, color: tokens.textSecondary, minHeight: 18, mt: 0.75 }}>
+          {errors.horarios?.message ?? 'A última linha fica sempre disponível para um novo horário'}
+        </Typography>
       </FormDialog>
 
       <ConfirmDialog

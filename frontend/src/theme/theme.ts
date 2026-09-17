@@ -1,44 +1,55 @@
 import { createTheme } from '@mui/material/styles';
+import { tokens } from './tokens';
 
-// Paleta do SIFES — ver README.md > Identidade Visual.
-// Visual flat e compacto: cantos quase retos, sem sombra, componentes pequenos por padrão.
+// Paleta do SIFES — ver pranchas "SIFES Redesign" e "SIFES Formulários".
+// Archivo para títulos/botões, Public Sans para texto e campos. Sem sombra fora de diálogo.
+const displayFont = "'Archivo', system-ui, sans-serif";
+const bodyFont = "'Public Sans', system-ui, -apple-system, sans-serif";
+
 export const theme = createTheme({
   palette: {
     primary: {
-      main: '#1E6B41',
+      main: tokens.green,
+      dark: tokens.greenDeep,
     },
     secondary: {
-      main: '#F2C123',
-      contrastText: '#222222',
+      main: tokens.yellow,
+      contrastText: tokens.yellowText,
     },
     error: {
-      main: '#E52625',
+      main: tokens.red,
+      dark: tokens.redText,
     },
     text: {
-      primary: '#222222',
+      primary: tokens.black,
+      secondary: tokens.textSecondary,
     },
     background: {
-      default: '#F5F6F5',
+      default: tokens.appBg,
     },
-    divider: '#E0E2DF',
+    divider: tokens.border,
   },
   shape: {
     borderRadius: 4,
   },
   typography: {
-    fontFamily: ['Inter', 'Roboto', '"Segoe UI"', 'Arial', 'sans-serif'].join(','),
+    fontFamily: bodyFont,
     fontSize: 13,
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 700 },
-    h4: { fontWeight: 600, fontSize: '1.75rem' },
-    h5: { fontWeight: 600, fontSize: '1.35rem' },
-    h6: { fontWeight: 600, fontSize: '1.1rem' },
-    button: { textTransform: 'none', fontWeight: 600 },
+    h1: { fontFamily: displayFont, fontWeight: 700 },
+    h2: { fontFamily: displayFont, fontWeight: 700 },
+    h3: { fontFamily: displayFont, fontWeight: 700 },
+    h4: { fontFamily: displayFont, fontWeight: 700, fontSize: '1.75rem', letterSpacing: '-0.01em' },
+    h5: { fontFamily: displayFont, fontWeight: 700, fontSize: '1.35rem' },
+    h6: { fontFamily: displayFont, fontWeight: 700, fontSize: '1.1rem' },
+    button: { fontFamily: displayFont, textTransform: 'none', fontWeight: 600 },
   },
   components: {
     MuiButton: {
       defaultProps: { disableElevation: true, size: 'small' },
+      styleOverrides: {
+        root: { height: 44, borderRadius: 4 },
+        sizeSmall: { height: 34 },
+      },
     },
     MuiTextField: {
       defaultProps: { size: 'small' },
@@ -55,31 +66,43 @@ export const theme = createTheme({
     MuiAppBar: {
       defaultProps: { color: 'primary', elevation: 0 },
       styleOverrides: {
-        root: { borderBottom: '1px solid rgba(0,0,0,0.08)' },
+        root: { backgroundColor: tokens.greenDeep },
       },
     },
     MuiToolbar: {
       styleOverrides: {
-        root: { minHeight: '48px !important' },
+        root: { minHeight: '56px !important' },
       },
     },
     MuiPaper: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
-        root: { backgroundImage: 'none' },
-        outlined: { borderColor: '#E0E2DF' },
+        root: { backgroundImage: 'none', boxShadow: 'none' },
+        outlined: { borderColor: tokens.border },
       },
     },
     MuiCard: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
-        root: { border: '1px solid #E0E2DF' },
+        root: {
+          border: `1px solid ${tokens.border}`,
+          borderTop: `3px solid ${tokens.green}`,
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderTop: `4px solid ${tokens.green}`,
+          boxShadow: '0 24px 60px rgba(18,68,42,.28)',
+        },
       },
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { padding: '6px 12px', fontSize: '0.8125rem' },
-        head: { fontWeight: 600 },
+        root: { padding: '6px 12px', fontSize: '0.8125rem', borderColor: tokens.border },
+        head: { fontWeight: 700, fontFamily: displayFont, fontSize: '0.7rem' },
       },
     },
     MuiListItemButton: {
@@ -89,7 +112,63 @@ export const theme = createTheme({
     },
     MuiDialogTitle: {
       styleOverrides: {
-        root: { fontSize: '1.05rem', fontWeight: 600, padding: '16px 20px' },
+        root: { fontFamily: displayFont, fontSize: '1.3rem', fontWeight: 700, padding: '24px 24px 4px' },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          height: 44,
+          borderRadius: 4,
+          backgroundColor: '#fff',
+          '& .MuiOutlinedInput-notchedOutline': { borderColor: tokens.fieldBorder },
+          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: tokens.fieldBorder },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: tokens.green,
+            borderWidth: 1,
+          },
+          '&.Mui-focused': {
+            boxShadow: '0 0 0 3px rgba(30,107,65,.18)',
+          },
+          '&.Mui-error .MuiOutlinedInput-notchedOutline': { borderColor: tokens.red },
+          '&.Mui-error.Mui-focused': {
+            boxShadow: '0 0 0 3px rgba(229,38,37,.16)',
+          },
+        },
+        input: { color: tokens.black, fontSize: 15 },
+        multiline: { height: 'auto' },
+      },
+    },
+    MuiFormHelperText: {
+      styleOverrides: {
+        root: {
+          minHeight: 18,
+          marginTop: 6,
+          marginLeft: 0,
+          fontSize: 12,
+          color: tokens.textSecondary,
+          '&.Mui-error': { color: tokens.redText },
+        },
+      },
+    },
+    MuiInputLabel: {
+      defaultProps: { shrink: true },
+      styleOverrides: {
+        root: {
+          position: 'static',
+          transform: 'none',
+          fontSize: 13,
+          fontWeight: 600,
+          color: tokens.black,
+          marginBottom: 6,
+          '&.Mui-focused': { color: tokens.black },
+          '&.Mui-error': { color: tokens.black },
+        },
+      },
+    },
+    MuiFormControl: {
+      styleOverrides: {
+        root: { display: 'flex' },
       },
     },
   },

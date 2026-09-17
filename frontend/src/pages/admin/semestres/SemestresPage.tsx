@@ -149,6 +149,7 @@ export function SemestresPage() {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar semestre' : 'Novo semestre'}
+        submitLabel={editando ? 'Salvar semestre' : 'Criar semestre'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}

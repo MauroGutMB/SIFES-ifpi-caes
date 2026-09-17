@@ -133,6 +133,7 @@ export function ProfessoresPage() {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar professor' : 'Novo professor'}
+        submitLabel={editando ? 'Salvar professor' : 'Cadastrar professor'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}

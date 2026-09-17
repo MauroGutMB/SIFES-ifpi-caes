@@ -163,6 +163,7 @@ export function TurmasPage() {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar turma' : 'Nova turma'}
+        submitLabel={editando ? 'Salvar turma' : 'Criar turma'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}

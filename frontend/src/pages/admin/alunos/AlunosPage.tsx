@@ -53,7 +53,9 @@ export function AlunosPage() {
   const [paraExcluir, setParaExcluir] = useState<AlunoDto | null>(null);
   const [paraMatricular, setParaMatricular] = useState<AlunoDto | null>(null);
   const [turmaEscolhida, setTurmaEscolhida] = useState('');
-  const [senhaGerada, setSenhaGerada] = useState<{ login: string; senha: string } | null>(null);
+  const [senhaGerada, setSenhaGerada] = useState<{ nome: string; login: string; senha: string } | null>(
+    null,
+  );
   const [erro, setErro] = useState<string | null>(null);
 
   const nomeTurma = useMemo(() => {
@@ -65,8 +67,12 @@ export function AlunosPage() {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(AlunosControllerCreateBody) });
+    formState: { errors, isDirty },
+  } = useForm<FormValues>({
+    resolver: zodResolver(AlunosControllerCreateBody),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+  });
 
   const invalidar = () =>
     queryClient.invalidateQueries({ queryKey: getAlunosControllerFindAllQueryKey() });
@@ -92,7 +98,7 @@ export function AlunosPage() {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
       } else {
         const criado = await criar.mutateAsync({ data: dados });
-        setSenhaGerada({ login: criado.matricula, senha: criado.senhaInicial });
+        setSenhaGerada({ nome: criado.nome, login: criado.matricula, senha: criado.senhaInicial });
       }
       await invalidar();
       setDialogAberto(false);
@@ -207,24 +213,30 @@ export function AlunosPage() {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar aluno' : 'Novo aluno'}
+        subtitle={editando ? undefined : 'O aluno poderá acessar o SIFES assim que o cadastro for salvo.'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}
         submitting={criar.isPending || atualizar.isPending}
+        submitLabel={editando ? 'Salvar aluno' : 'Salvar aluno'}
+        submittingLabel="Salvando…"
+        isDirty={isDirty}
       >
         <TextField
           {...register('nome')}
-          label="Nome"
+          label="Nome completo"
           error={!!errors.nome}
-          helperText={errors.nome?.message}
+          helperText={errors.nome?.message ?? 'Como aparece nos documentos e no diário'}
           fullWidth
           autoFocus
         />
         <TextField
           {...register('matricula')}
-          label="Matrícula (também usada como login)"
+          label="Matrícula"
           error={!!errors.matricula}
-          helperText={errors.matricula?.message}
+          helperText={
+            errors.matricula?.message ?? '8 dígitos — também será o login do aluno'
+          }
           fullWidth
         />
       </FormDialog>
@@ -237,6 +249,7 @@ export function AlunosPage() {
         error={erro}
         submitting={vincularTurma.isPending}
         submitLabel="Matricular"
+        submittingLabel="Matriculando…"
       >
         <TextField
           select
@@ -255,18 +268,20 @@ export function AlunosPage() {
 
       <ConfirmDialog
         open={!!paraExcluir}
-        title="Excluir aluno"
-        description={`Tem certeza que deseja excluir "${paraExcluir?.nome}"? Isso remove o login e todo o histórico dele.`}
-        confirmLabel="Excluir"
+        title={`Excluir ${paraExcluir?.nome}?`}
+        description="Isso remove o login e todo o histórico dele — notas, frequência e atividades entregues. Não pode ser desfeito."
+        confirmLabel="Excluir aluno"
         confirmColor="error"
         loading={remover.isPending}
         onConfirm={excluir}
         onClose={() => setParaExcluir(null)}
+        confirmValue={paraExcluir?.matricula}
       />
 
       {senhaGerada && (
         <SenhaGeradaDialog
           open
+          nome={senhaGerada.nome}
           login={senhaGerada.login}
           senha={senhaGerada.senha}
           onClose={() => setSenhaGerada(null)}

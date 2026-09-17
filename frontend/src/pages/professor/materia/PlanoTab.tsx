@@ -245,6 +245,7 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
       <FormDialog
         open={dialogAberto}
         title={editando ? 'Editar item' : 'Novo item de avaliação'}
+        submitLabel={editando ? 'Salvar item' : 'Criar item'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}
