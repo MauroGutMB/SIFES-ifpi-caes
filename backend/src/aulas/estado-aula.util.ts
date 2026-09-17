@@ -13,11 +13,13 @@ interface AulaComoHorario {
  * Estado lançado/não lançado: automático pela janela [horaInicio, horaFim), a menos que o
  * admin tenha sobreposto manualmente (ver regras-negocio.md — Janela de lançamento e estado da Aula).
  */
-export function calcularEstadoAula(aula: AulaComoHorario): EstadoAula {
+export function calcularEstadoAula(
+  aula: AulaComoHorario,
+  agora: Date = agoraComoBrasiliaFake(),
+): EstadoAula {
   if (aula.estadoOverride) {
     return aula.estadoOverride;
   }
-  const agora = agoraComoBrasiliaFake();
   return agora >= aula.horaInicio && agora < aula.horaFim
     ? 'LANCADO'
     : 'NAO_LANCADO';
