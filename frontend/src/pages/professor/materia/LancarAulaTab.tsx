@@ -72,7 +72,7 @@ export function LancarAulaTab({ materiaId }: LancarAulaTabProps) {
                       color={aula.estado === 'LANCADO' ? 'success' : 'default'}
                     />
                     <Button variant="contained" size="small" onClick={() => setAulaSelecionada(aula.id)}>
-                      Editar aula
+                      {aula.estado === 'LANCADO' ? 'Editar aula' : 'Lançar aula'}
                     </Button>
                   </Stack>
                 </Stack>
