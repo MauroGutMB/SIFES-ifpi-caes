@@ -1,0 +1,304 @@
+import { useState } from 'react';
+import {
+  Box,
+  Button,
+  Chip,
+  IconButton,
+  MenuItem,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import EventNoteIcon from '@mui/icons-material/EventNoteOutlined';
+import LockIcon from '@mui/icons-material/LockOutlined';
+import LockOpenIcon from '@mui/icons-material/LockOpenOutlined';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
+import { isAxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getMateriasControllerFindAllQueryKey,
+  useMateriasControllerCreate,
+  useMateriasControllerEncerrar,
+  useMateriasControllerFindAll,
+  useMateriasControllerReabrir,
+  useMateriasControllerRemove,
+  useMateriasControllerUpdate,
+} from '../../../api/generated/materias/materias';
+import { useTurmasControllerFindAll } from '../../../api/generated/turmas/turmas';
+import { useProfessoresControllerFindAll } from '../../../api/generated/professores/professores';
+import { MateriasControllerCreateBody } from '../../../api/generated/zod/materias/materias';
+import type { MateriaDto } from '../../../api/generated/models';
+import { FormDialog } from '../../../components/FormDialog';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { DIAS_SEMANA, labelDiaSemana } from './dias-semana';
+import { AulasOverrideDialog } from './AulasOverrideDialog';
+
+type FormValues = z.infer<typeof MateriasControllerCreateBody>;
+
+export function MateriasPage() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useMateriasControllerFindAll();
+  const { data: turmas } = useTurmasControllerFindAll();
+  const { data: professores } = useProfessoresControllerFindAll();
+  const criar = useMateriasControllerCreate();
+  const atualizar = useMateriasControllerUpdate();
+  const remover = useMateriasControllerRemove();
+  const encerrar = useMateriasControllerEncerrar();
+  const reabrir = useMateriasControllerReabrir();
+
+  const [editando, setEditando] = useState<MateriaDto | null>(null);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [paraExcluir, setParaExcluir] = useState<MateriaDto | null>(null);
+  const [aulasDe, setAulasDe] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({ resolver: zodResolver(MateriasControllerCreateBody) });
+
+  const invalidar = () =>
+    queryClient.invalidateQueries({ queryKey: getMateriasControllerFindAllQueryKey() });
+
+  const abrirNovo = () => {
+    setEditando(null);
+    reset({
+      turmaId: '',
+      professorId: '',
+      cargaHorariaReferencia: 60,
+      diaSemana: 'SEGUNDA',
+      horaInicio: '08:00',
+    });
+    setErro(null);
+    setDialogAberto(true);
+  };
+
+  const abrirEdicao = (materia: MateriaDto) => {
+    setEditando(materia);
+    reset({
+      turmaId: materia.turmaId,
+      professorId: materia.professorId,
+      cargaHorariaReferencia: materia.cargaHorariaReferencia,
+      diaSemana: materia.diaSemana,
+      horaInicio: materia.horaInicio,
+    });
+    setErro(null);
+    setDialogAberto(true);
+  };
+
+  const salvar = handleSubmit(async (dados) => {
+    setErro(null);
+    try {
+      if (editando) {
+        await atualizar.mutateAsync({ id: editando.id, data: dados });
+      } else {
+        await criar.mutateAsync({ data: dados });
+      }
+      await invalidar();
+      setDialogAberto(false);
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível salvar')
+          : 'Não foi possível salvar',
+      );
+    }
+  });
+
+  const excluir = async () => {
+    if (!paraExcluir) return;
+    await remover.mutateAsync({ id: paraExcluir.id });
+    await invalidar();
+    setParaExcluir(null);
+  };
+
+  const alternarEstado = async (materia: MateriaDto) => {
+    if (materia.estado === 'ABERTA') {
+      await encerrar.mutateAsync({ id: materia.id });
+    } else {
+      await reabrir.mutateAsync({ id: materia.id });
+    }
+    await invalidar();
+  };
+
+  const columns: GridColDef<MateriaDto>[] = [
+    {
+      field: 'turma',
+      headerName: 'Turma',
+      flex: 1,
+      valueGetter: (_value, row) => `${row.turma.cursoTecnico} — ${row.turma.anoSerie}`,
+    },
+    {
+      field: 'professor',
+      headerName: 'Professor',
+      flex: 1,
+      valueGetter: (_value, row) => row.professor.nome,
+    },
+    {
+      field: 'diaSemana',
+      headerName: 'Dia',
+      width: 110,
+      valueFormatter: (value: string) => labelDiaSemana(value),
+    },
+    { field: 'horaInicio', headerName: 'Início', width: 90 },
+    { field: 'cargaHorariaReferencia', headerName: 'Carga (h)', width: 100 },
+    {
+      field: 'estado',
+      headerName: 'Estado',
+      width: 130,
+      renderCell: (params) => (
+        <Chip
+          size="small"
+          label={params.value === 'ABERTA' ? 'Aberta' : 'Encerrada'}
+          color={params.value === 'ABERTA' ? 'success' : 'default'}
+        />
+      ),
+    },
+    {
+      field: 'acoes',
+      headerName: '',
+      sortable: false,
+      filterable: false,
+      width: 180,
+      renderCell: (params) => (
+        <Stack direction="row">
+          <Tooltip title="Aulas / override de estado">
+            <IconButton size="small" onClick={() => setAulasDe(params.row.id)}>
+              <EventNoteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={params.row.estado === 'ABERTA' ? 'Encerrar matéria' : 'Reabrir matéria'}>
+            <IconButton size="small" onClick={() => alternarEstado(params.row)}>
+              {params.row.estado === 'ABERTA' ? (
+                <LockIcon fontSize="small" />
+              ) : (
+                <LockOpenIcon fontSize="small" />
+              )}
+            </IconButton>
+          </Tooltip>
+          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">Matérias</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
+          Nova matéria
+        </Button>
+      </Box>
+
+      <DataGrid
+        rows={data ?? []}
+        columns={columns}
+        loading={isLoading}
+        disableRowSelectionOnClick
+        autoHeight
+        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+      />
+
+      <FormDialog
+        open={dialogAberto}
+        title={editando ? 'Editar matéria' : 'Nova matéria'}
+        onClose={() => setDialogAberto(false)}
+        onSubmit={salvar}
+        error={erro}
+        submitting={criar.isPending || atualizar.isPending}
+      >
+        <TextField
+          {...register('turmaId')}
+          select
+          label="Turma"
+          error={!!errors.turmaId}
+          helperText={errors.turmaId?.message}
+          fullWidth
+          defaultValue=""
+        >
+          {(turmas ?? []).map((turma) => (
+            <MenuItem key={turma.id} value={turma.id}>
+              {turma.cursoTecnico} — {turma.anoSerie} ({turma.semestre.nome})
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          {...register('professorId')}
+          select
+          label="Professor"
+          error={!!errors.professorId}
+          helperText={errors.professorId?.message}
+          fullWidth
+          defaultValue=""
+        >
+          {(professores ?? []).map((professor) => (
+            <MenuItem key={professor.id} value={professor.id}>
+              {professor.nome}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          {...register('cargaHorariaReferencia', { valueAsNumber: true })}
+          label="Carga horária de referência (horas)"
+          type="number"
+          error={!!errors.cargaHorariaReferencia}
+          helperText={errors.cargaHorariaReferencia?.message}
+          fullWidth
+        />
+        <TextField
+          {...register('diaSemana')}
+          select
+          label="Dia da semana"
+          error={!!errors.diaSemana}
+          helperText={errors.diaSemana?.message}
+          fullWidth
+          defaultValue="SEGUNDA"
+        >
+          {DIAS_SEMANA.map((dia) => (
+            <MenuItem key={dia.value} value={dia.value}>
+              {dia.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          {...register('horaInicio')}
+          label="Horário de início"
+          type="time"
+          slotProps={{ inputLabel: { shrink: true } }}
+          error={!!errors.horaInicio}
+          helperText={errors.horaInicio?.message}
+          fullWidth
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={!!paraExcluir}
+        title="Excluir matéria"
+        description="Tem certeza que deseja excluir esta matéria? Isso remove aulas, plano de disciplina e atividades vinculadas."
+        confirmLabel="Excluir"
+        confirmColor="error"
+        loading={remover.isPending}
+        onConfirm={excluir}
+        onClose={() => setParaExcluir(null)}
+      />
+
+      <AulasOverrideDialog materiaId={aulasDe} onClose={() => setAulasDe(null)} />
+    </>
+  );
+}

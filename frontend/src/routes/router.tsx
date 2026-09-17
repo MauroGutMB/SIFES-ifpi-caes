@@ -1,8 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
+import { AdminLayout } from '../layouts/AdminLayout';
 import { LoginPage } from '../pages/LoginPage';
 import { ChangePasswordPage } from '../pages/ChangePasswordPage';
 import { AdminDashboardPage } from '../pages/admin/DashboardPage';
+import { SemestresPage } from '../pages/admin/semestres/SemestresPage';
+import { TurmasPage } from '../pages/admin/turmas/TurmasPage';
+import { ProfessoresPage } from '../pages/admin/professores/ProfessoresPage';
+import { AlunosPage } from '../pages/admin/alunos/AlunosPage';
+import { MateriasPage } from '../pages/admin/materias/MateriasPage';
+import { UsuariosPage } from '../pages/admin/usuarios/UsuariosPage';
+import { SolicitacoesFotoPage } from '../pages/admin/solicitacoes-foto/SolicitacoesFotoPage';
 import { ProfessorDashboardPage } from '../pages/professor/DashboardPage';
 import { AlunoDashboardPage } from '../pages/aluno/DashboardPage';
 import { SessionGate } from '../auth/SessionGate';
@@ -23,7 +31,21 @@ export const router = createBrowserRouter([
           {
             path: 'admin',
             element: <RoleGate allow={['ADMIN']} />,
-            children: [{ index: true, element: <AdminDashboardPage /> }],
+            children: [
+              {
+                element: <AdminLayout />,
+                children: [
+                  { index: true, element: <AdminDashboardPage /> },
+                  { path: 'alunos', element: <AlunosPage /> },
+                  { path: 'professores', element: <ProfessoresPage /> },
+                  { path: 'turmas', element: <TurmasPage /> },
+                  { path: 'semestres', element: <SemestresPage /> },
+                  { path: 'materias', element: <MateriasPage /> },
+                  { path: 'solicitacoes-foto', element: <SolicitacoesFotoPage /> },
+                  { path: 'usuarios', element: <UsuariosPage /> },
+                ],
+              },
+            ],
           },
           {
             path: 'professor',

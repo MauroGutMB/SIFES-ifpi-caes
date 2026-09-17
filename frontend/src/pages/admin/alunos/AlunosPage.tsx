@@ -1,0 +1,276 @@
+import { useMemo, useState } from 'react';
+import {
+  Box,
+  Button,
+  IconButton,
+  MenuItem,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import GroupAddIcon from '@mui/icons-material/GroupAddOutlined';
+import GroupRemoveIcon from '@mui/icons-material/GroupRemoveOutlined';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import type { z } from 'zod';
+import { isAxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getAlunosControllerFindAllQueryKey,
+  useAlunosControllerCreate,
+  useAlunosControllerDesligarTurma,
+  useAlunosControllerFindAll,
+  useAlunosControllerRemove,
+  useAlunosControllerUpdate,
+  useAlunosControllerVincularTurma,
+} from '../../../api/generated/alunos/alunos';
+import { useTurmasControllerFindAll } from '../../../api/generated/turmas/turmas';
+import { AlunosControllerCreateBody } from '../../../api/generated/zod/alunos/alunos';
+import type { AlunoDto } from '../../../api/generated/models';
+import { FormDialog } from '../../../components/FormDialog';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+
+type FormValues = z.infer<typeof AlunosControllerCreateBody>;
+
+export function AlunosPage() {
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useAlunosControllerFindAll();
+  const { data: turmas } = useTurmasControllerFindAll();
+  const criar = useAlunosControllerCreate();
+  const atualizar = useAlunosControllerUpdate();
+  const remover = useAlunosControllerRemove();
+  const vincularTurma = useAlunosControllerVincularTurma();
+  const desligarTurma = useAlunosControllerDesligarTurma();
+
+  const [editando, setEditando] = useState<AlunoDto | null>(null);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [paraExcluir, setParaExcluir] = useState<AlunoDto | null>(null);
+  const [paraMatricular, setParaMatricular] = useState<AlunoDto | null>(null);
+  const [turmaEscolhida, setTurmaEscolhida] = useState('');
+  const [senhaGerada, setSenhaGerada] = useState<{ login: string; senha: string } | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const nomeTurma = useMemo(() => {
+    const mapa = new Map((turmas ?? []).map((t) => [t.id, `${t.cursoTecnico} — ${t.anoSerie}`]));
+    return (turmaId: string | null) => (turmaId ? (mapa.get(turmaId) ?? turmaId) : '—');
+  }, [turmas]);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormValues>({ resolver: zodResolver(AlunosControllerCreateBody) });
+
+  const invalidar = () =>
+    queryClient.invalidateQueries({ queryKey: getAlunosControllerFindAllQueryKey() });
+
+  const abrirNovo = () => {
+    setEditando(null);
+    reset({ nome: '', matricula: '' });
+    setErro(null);
+    setDialogAberto(true);
+  };
+
+  const abrirEdicao = (aluno: AlunoDto) => {
+    setEditando(aluno);
+    reset({ nome: aluno.nome, matricula: aluno.matricula });
+    setErro(null);
+    setDialogAberto(true);
+  };
+
+  const salvar = handleSubmit(async (dados) => {
+    setErro(null);
+    try {
+      if (editando) {
+        await atualizar.mutateAsync({ id: editando.id, data: dados });
+      } else {
+        const criado = await criar.mutateAsync({ data: dados });
+        setSenhaGerada({ login: criado.matricula, senha: criado.senhaInicial });
+      }
+      await invalidar();
+      setDialogAberto(false);
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível salvar')
+          : 'Não foi possível salvar',
+      );
+    }
+  });
+
+  const excluir = async () => {
+    if (!paraExcluir) return;
+    await remover.mutateAsync({ id: paraExcluir.id });
+    await invalidar();
+    setParaExcluir(null);
+  };
+
+  const abrirMatricula = (aluno: AlunoDto) => {
+    setParaMatricular(aluno);
+    setTurmaEscolhida('');
+    setErro(null);
+  };
+
+  const confirmarMatricula = async () => {
+    if (!paraMatricular || !turmaEscolhida) return;
+    setErro(null);
+    try {
+      await vincularTurma.mutateAsync({
+        id: paraMatricular.id,
+        data: { turmaId: turmaEscolhida },
+      });
+      await invalidar();
+      setParaMatricular(null);
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível matricular')
+          : 'Não foi possível matricular',
+      );
+    }
+  };
+
+  const desligar = async (aluno: AlunoDto) => {
+    await desligarTurma.mutateAsync({ id: aluno.id });
+    await invalidar();
+  };
+
+  const columns: GridColDef<AlunoDto>[] = [
+    { field: 'nome', headerName: 'Nome', flex: 1 },
+    { field: 'matricula', headerName: 'Matrícula', flex: 1 },
+    {
+      field: 'turmaId',
+      headerName: 'Turma',
+      flex: 1,
+      valueFormatter: (value: string | null) => nomeTurma(value),
+    },
+    {
+      field: 'acoes',
+      headerName: '',
+      sortable: false,
+      filterable: false,
+      width: 170,
+      renderCell: (params) => (
+        <Stack direction="row">
+          {params.row.turmaId ? (
+            <Tooltip title="Desligar da turma">
+              <IconButton size="small" onClick={() => desligar(params.row)}>
+                <GroupRemoveIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip title="Matricular em turma">
+              <IconButton size="small" onClick={() => abrirMatricula(params.row)}>
+                <GroupAddIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">Alunos</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
+          Novo aluno
+        </Button>
+      </Box>
+
+      <DataGrid
+        rows={data ?? []}
+        columns={columns}
+        loading={isLoading}
+        disableRowSelectionOnClick
+        autoHeight
+        initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+      />
+
+      <FormDialog
+        open={dialogAberto}
+        title={editando ? 'Editar aluno' : 'Novo aluno'}
+        onClose={() => setDialogAberto(false)}
+        onSubmit={salvar}
+        error={erro}
+        submitting={criar.isPending || atualizar.isPending}
+      >
+        <TextField
+          {...register('nome')}
+          label="Nome"
+          error={!!errors.nome}
+          helperText={errors.nome?.message}
+          fullWidth
+          autoFocus
+        />
+        <TextField
+          {...register('matricula')}
+          label="Matrícula (também usada como login)"
+          error={!!errors.matricula}
+          helperText={errors.matricula?.message}
+          fullWidth
+        />
+      </FormDialog>
+
+      <FormDialog
+        open={!!paraMatricular}
+        title={`Matricular ${paraMatricular?.nome ?? ''}`}
+        onClose={() => setParaMatricular(null)}
+        onSubmit={confirmarMatricula}
+        error={erro}
+        submitting={vincularTurma.isPending}
+        submitLabel="Matricular"
+      >
+        <TextField
+          select
+          label="Turma"
+          value={turmaEscolhida}
+          onChange={(e) => setTurmaEscolhida(e.target.value)}
+          fullWidth
+        >
+          {(turmas ?? []).map((turma) => (
+            <MenuItem key={turma.id} value={turma.id}>
+              {turma.cursoTecnico} — {turma.anoSerie} ({turma.semestre.nome})
+            </MenuItem>
+          ))}
+        </TextField>
+      </FormDialog>
+
+      <ConfirmDialog
+        open={!!paraExcluir}
+        title="Excluir aluno"
+        description={`Tem certeza que deseja excluir "${paraExcluir?.nome}"? Isso remove o login e todo o histórico dele.`}
+        confirmLabel="Excluir"
+        confirmColor="error"
+        loading={remover.isPending}
+        onConfirm={excluir}
+        onClose={() => setParaExcluir(null)}
+      />
+
+      {senhaGerada && (
+        <SenhaGeradaDialog
+          open
+          login={senhaGerada.login}
+          senha={senhaGerada.senha}
+          onClose={() => setSenhaGerada(null)}
+        />
+      )}
+    </>
+  );
+}
