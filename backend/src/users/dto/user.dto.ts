@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../../generated/prisma/client';
 
-class ProfessorResumoDto {
+class UserProfessorResumoDto {
   @ApiProperty()
   id: string;
 
@@ -9,7 +9,7 @@ class ProfessorResumoDto {
   nome: string;
 }
 
-class AlunoResumoDto {
+class UserAlunoResumoDto {
   @ApiProperty()
   id: string;
 
@@ -42,9 +42,9 @@ export class UserDto {
   @ApiProperty()
   criadoEm: Date;
 
-  @ApiProperty({ type: ProfessorResumoDto, nullable: true })
-  professor: ProfessorResumoDto | null;
+  @ApiProperty({ type: UserProfessorResumoDto, nullable: true })
+  professor: UserProfessorResumoDto | null;
 
-  @ApiProperty({ type: AlunoResumoDto, nullable: true })
-  aluno: AlunoResumoDto | null;
+  @ApiProperty({ type: UserAlunoResumoDto, nullable: true })
+  aluno: UserAlunoResumoDto | null;
 }

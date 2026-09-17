@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StatusSolicitacaoFoto } from '../../../generated/prisma/client';
 
-class AlunoResumoDto {
+class SolicitacaoFotoAlunoResumoDto {
   @ApiProperty()
   id: string;
 
@@ -28,6 +28,6 @@ export class SolicitacaoFotoDto {
   @ApiProperty({ nullable: true, type: Date })
   resolvidaEm: Date | null;
 
-  @ApiProperty({ type: AlunoResumoDto })
-  aluno: AlunoResumoDto;
+  @ApiProperty({ type: SolicitacaoFotoAlunoResumoDto })
+  aluno: SolicitacaoFotoAlunoResumoDto;
 }

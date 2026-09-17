@@ -1,11 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { AtividadesService } from './atividades.service';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
+import { EntregaDto } from './dto/entrega.dto';
 
 @ApiTags('atividades')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -28,10 +29,11 @@ export class AtividadesController {
   }
 
   @Get(':id/entregas')
+  @ApiOkResponse({ type: EntregaDto, isArray: true })
   listarEntregas(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<EntregaDto[]> {
     return this.service.listarEntregas(id, user);
   }
 }

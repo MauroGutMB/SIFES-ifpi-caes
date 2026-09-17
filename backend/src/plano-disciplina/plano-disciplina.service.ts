@@ -71,7 +71,13 @@ export class PlanoDisciplinaService {
 
   async listarItens(materiaId: string, user: AuthenticatedUser) {
     await this.carregarMateriaComPosse(materiaId, user);
-    return this.prisma.itemAvaliacao.findMany({ where: { materiaId } });
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+    });
+    return itens.map((item) => ({
+      ...item,
+      valorMaximo: item.valorMaximo.toString(),
+    }));
   }
 
   async atualizarItem(

@@ -1,11 +1,13 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { PlanoDisciplinaService } from './plano-disciplina.service';
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
+import { ItemAvaliacaoDto } from './dto/item-avaliacao.dto';
+import { BoletimLinhaDto } from './dto/boletim-linha.dto';
 
 @ApiTags('plano-disciplina')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -23,18 +25,20 @@ export class MateriaPlanoController {
   }
 
   @Get('itens-avaliacao')
+  @ApiOkResponse({ type: ItemAvaliacaoDto, isArray: true })
   listarItens(
     @Param('materiaId') materiaId: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<ItemAvaliacaoDto[]> {
     return this.service.listarItens(materiaId, user);
   }
 
   @Get('boletim')
+  @ApiOkResponse({ type: BoletimLinhaDto, isArray: true })
   boletim(
     @Param('materiaId') materiaId: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<BoletimLinhaDto[]> {
     return this.service.boletimMateria(materiaId, user);
   }
 }

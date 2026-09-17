@@ -29,13 +29,18 @@ export class MateriasController {
     return this.service.create(dto);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR)
   @Get()
   @ApiOkResponse({ type: MateriaDto, isArray: true })
   findAll(
+    @CurrentUser() user: AuthenticatedUser,
     @Query('turmaId') turmaId?: string,
     @Query('professorId') professorId?: string,
   ): Promise<MateriaDto[]> {
-    return this.service.findAll({ turmaId, professorId });
+    // Professor só enxerga as próprias matérias — ignora professorId vindo da query.
+    const professorIdEfetivo =
+      user.role === Role.PROFESSOR ? user.professorId : professorId;
+    return this.service.findAll({ turmaId, professorId: professorIdEfetivo });
   }
 
   @Get(':id')

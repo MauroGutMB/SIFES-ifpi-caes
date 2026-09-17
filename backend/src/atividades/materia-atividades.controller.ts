@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { AtividadesService } from './atividades.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
+import { AtividadeDto } from './dto/atividade.dto';
 
 @ApiTags('atividades')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -23,10 +24,11 @@ export class MateriaAtividadesController {
   }
 
   @Get()
+  @ApiOkResponse({ type: AtividadeDto, isArray: true })
   listar(
     @Param('materiaId') materiaId: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<AtividadeDto[]> {
     return this.service.listarPorMateria(materiaId, user);
   }
 }
