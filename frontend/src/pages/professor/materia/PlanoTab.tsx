@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -24,9 +24,11 @@ import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getMateriaPlanoControllerBoletimQueryKey,
+  getMateriaPlanoControllerDetalhamentoAlunoQueryKey,
   getMateriaPlanoControllerListarItensQueryKey,
   useMateriaPlanoControllerBoletim,
   useMateriaPlanoControllerCriarItem,
+  useMateriaPlanoControllerDetalhamentoAluno,
   useMateriaPlanoControllerListarItens,
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
 import {
@@ -35,7 +37,7 @@ import {
   useItensAvaliacaoControllerSetNotas,
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
 import { MateriaPlanoControllerCriarItemBody } from '../../../api/generated/zod/plano-disciplina/plano-disciplina';
-import type { ItemAvaliacaoDto } from '../../../api/generated/models';
+import type { BoletimLinhaDto, ItemAvaliacaoDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 
@@ -50,6 +52,88 @@ const LABEL_SITUACAO: Record<string, string> = {
 interface PlanoTabProps {
   materiaId: string;
   materiaAberta: boolean;
+}
+
+interface EditarNotasAlunoDialogProps {
+  materiaId: string;
+  aluno: BoletimLinhaDto['aluno'] | null;
+  onClose: () => void;
+  onSalvo: () => void;
+}
+
+function EditarNotasAlunoDialog({
+  materiaId,
+  aluno,
+  onClose,
+  onSalvo,
+}: EditarNotasAlunoDialogProps) {
+  const { data: itens, isLoading } = useMateriaPlanoControllerDetalhamentoAluno(
+    materiaId,
+    aluno?.id ?? '',
+    { query: { enabled: !!aluno } },
+  );
+  const setNotas = useItensAvaliacaoControllerSetNotas();
+  const [valores, setValores] = useState<Record<string, string>>({});
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (itens) {
+      setValores(Object.fromEntries(itens.map((item) => [item.id, item.valorObtido])));
+    }
+  }, [itens]);
+
+  const salvar = async () => {
+    if (!aluno || !itens) return;
+    setErro(null);
+    try {
+      await Promise.all(
+        itens.map((item) =>
+          setNotas.mutateAsync({
+            id: item.id,
+            data: { notas: [{ alunoId: aluno.id, valorObtido: Number(valores[item.id]) || 0 }] },
+          }),
+        ),
+      );
+      onSalvo();
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível salvar as notas')
+          : 'Não foi possível salvar as notas',
+      );
+    }
+  };
+
+  return (
+    <FormDialog
+      open={!!aluno}
+      title={`Editar notas — ${aluno?.nome ?? ''}`}
+      onClose={onClose}
+      onSubmit={salvar}
+      error={erro}
+      submitting={setNotas.isPending}
+      submitLabel="Salvar notas"
+    >
+      {isLoading || !itens ? (
+        <Typography color="text.secondary">Carregando…</Typography>
+      ) : itens.length === 0 ? (
+        <Typography color="text.secondary">Nenhum item de avaliação cadastrado ainda.</Typography>
+      ) : (
+        itens.map((item) => (
+          <TextField
+            key={item.id}
+            label={`${item.nome} (máx. ${item.valorMaximo})`}
+            type="number"
+            size="small"
+            fullWidth
+            value={valores[item.id] ?? ''}
+            onChange={(e) => setValores((atual) => ({ ...atual, [item.id]: e.target.value }))}
+          />
+        ))
+      )}
+    </FormDialog>
+  );
 }
 
 export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
@@ -67,6 +151,9 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
   const [paraExcluir, setParaExcluir] = useState<ItemAvaliacaoDto | null>(null);
   const [paraNotas, setParaNotas] = useState<ItemAvaliacaoDto | null>(null);
   const [notasEditadas, setNotasEditadas] = useState<Record<string, string>>({});
+  const [alunoParaEditarNotas, setAlunoParaEditarNotas] = useState<BoletimLinhaDto['aluno'] | null>(
+    null,
+  );
   const [erro, setErro] = useState<string | null>(null);
 
   const {
@@ -225,6 +312,7 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
               <TableCell>Média</TableCell>
               <TableCell>Frequência</TableCell>
               <TableCell>Situação</TableCell>
+              <TableCell width={60} />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -236,6 +324,11 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
                   <TableCell>{linha.notaFinal.toFixed(1)}</TableCell>
                   <TableCell>{linha.frequenciaPercentual.toFixed(0)}%</TableCell>
                   <TableCell>{LABEL_SITUACAO[linha.situacao]}</TableCell>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => setAlunoParaEditarNotas(linha.aluno)}>
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </TableCell>
                 </TableRow>
               ))}
           </TableBody>
@@ -306,6 +399,26 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
           />
         ))}
       </FormDialog>
+
+      <EditarNotasAlunoDialog
+        materiaId={materiaId}
+        aluno={alunoParaEditarNotas}
+        onClose={() => setAlunoParaEditarNotas(null)}
+        onSalvo={async () => {
+          await queryClient.invalidateQueries({
+            queryKey: getMateriaPlanoControllerBoletimQueryKey(materiaId),
+          });
+          if (alunoParaEditarNotas) {
+            await queryClient.invalidateQueries({
+              queryKey: getMateriaPlanoControllerDetalhamentoAlunoQueryKey(
+                materiaId,
+                alunoParaEditarNotas.id,
+              ),
+            });
+          }
+          setAlunoParaEditarNotas(null);
+        }}
+      />
     </>
   );
 }
