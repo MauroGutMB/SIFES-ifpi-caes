@@ -1,7 +1,7 @@
 import { Box, Card, CardActionArea, CardContent, Chip, Grid, Skeleton, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
-import { labelDiaSemana } from '../admin/materias/dias-semana';
+import { resumoHorarios } from '../admin/materias/dias-semana';
 
 export function ProfessorDashboardPage() {
   const { data, isLoading } = useMateriasControllerFindAll();
@@ -30,11 +30,12 @@ export function ProfessorDashboardPage() {
               <Card>
                 <CardActionArea onClick={() => navigate(`/app/professor/materias/${materia.id}`)}>
                   <CardContent>
-                    <Typography variant="h6">
+                    <Typography variant="h6">{materia.nome}</Typography>
+                    <Typography variant="body2" color="text.secondary">
                       {materia.turma.cursoTecnico} — {materia.turma.anoSerie}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {labelDiaSemana(materia.diaSemana)} às {materia.horaInicio} ·{' '}
+                      {resumoHorarios(materia.horarios)} ·{' '}
                       {materia.turma.turno === 'MANHA' ? 'Manhã' : 'Tarde'}
                     </Typography>
                     <Box sx={{ mt: 1 }}>

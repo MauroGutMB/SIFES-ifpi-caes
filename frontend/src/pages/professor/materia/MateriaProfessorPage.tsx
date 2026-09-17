@@ -3,7 +3,7 @@ import { Box, Button, Chip, Tab, Tabs, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackOutlined';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../../api/generated/materias/materias';
-import { labelDiaSemana } from '../../admin/materias/dias-semana';
+import { resumoHorarios } from '../../admin/materias/dias-semana';
 import { PlanoTab } from './PlanoTab';
 import { DiarioTab } from './DiarioTab';
 import { AtividadesTab } from './AtividadesTab';
@@ -24,11 +24,12 @@ export function MateriaProfessorPage() {
 
       {materia && (
         <Box sx={{ mb: 2 }}>
-          <Typography variant="h4">
+          <Typography variant="h4">{materia.nome}</Typography>
+          <Typography variant="body2" color="text.secondary">
             {materia.turma.cursoTecnico} — {materia.turma.anoSerie}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            {labelDiaSemana(materia.diaSemana)} às {materia.horaInicio}
+            {resumoHorarios(materia.horarios)}
             <Chip
               size="small"
               label={materia.estado === 'ABERTA' ? 'Aberta' : 'Encerrada'}

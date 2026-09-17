@@ -18,7 +18,7 @@ import EventNoteIcon from '@mui/icons-material/EventNoteOutlined';
 import LockIcon from '@mui/icons-material/LockOutlined';
 import LockOpenIcon from '@mui/icons-material/LockOpenOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,7 +37,7 @@ import { MateriasControllerCreateBody } from '../../../api/generated/zod/materia
 import type { MateriaDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { DIAS_SEMANA, labelDiaSemana } from './dias-semana';
+import { DIAS_SEMANA, resumoHorarios } from './dias-semana';
 import { AulasOverrideDialog } from './AulasOverrideDialog';
 
 type FormValues = z.infer<typeof MateriasControllerCreateBody>;
@@ -61,10 +61,13 @@ export function MateriasPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(MateriasControllerCreateBody) });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'horarios' });
 
   const invalidar = () =>
     queryClient.invalidateQueries({ queryKey: getMateriasControllerFindAllQueryKey() });
@@ -72,11 +75,11 @@ export function MateriasPage() {
   const abrirNovo = () => {
     setEditando(null);
     reset({
+      nome: '',
       turmaId: '',
       professorId: '',
       cargaHorariaReferencia: 60,
-      diaSemana: 'SEGUNDA',
-      horaInicio: '08:00',
+      horarios: [{ diaSemana: 'SEGUNDA', horaInicio: '08:00' }],
     });
     setErro(null);
     setDialogAberto(true);
@@ -85,11 +88,14 @@ export function MateriasPage() {
   const abrirEdicao = (materia: MateriaDto) => {
     setEditando(materia);
     reset({
+      nome: materia.nome,
       turmaId: materia.turmaId,
       professorId: materia.professorId,
       cargaHorariaReferencia: materia.cargaHorariaReferencia,
-      diaSemana: materia.diaSemana,
-      horaInicio: materia.horaInicio,
+      horarios: materia.horarios.map((h) => ({
+        diaSemana: h.diaSemana,
+        horaInicio: h.horaInicio,
+      })),
     });
     setErro(null);
     setDialogAberto(true);
@@ -132,6 +138,7 @@ export function MateriasPage() {
   };
 
   const columns: GridColDef<MateriaDto>[] = [
+    { field: 'nome', headerName: 'Nome', flex: 1 },
     {
       field: 'turma',
       headerName: 'Turma',
@@ -145,12 +152,11 @@ export function MateriasPage() {
       valueGetter: (_value, row) => row.professor.nome,
     },
     {
-      field: 'diaSemana',
-      headerName: 'Dia',
-      width: 110,
-      valueFormatter: (value: string) => labelDiaSemana(value),
+      field: 'horarios',
+      headerName: 'Horários',
+      flex: 1,
+      valueGetter: (_value, row) => resumoHorarios(row.horarios),
     },
-    { field: 'horaInicio', headerName: 'Início', width: 90 },
     { field: 'cargaHorariaReferencia', headerName: 'Carga (h)', width: 100 },
     {
       field: 'estado',
@@ -225,6 +231,15 @@ export function MateriasPage() {
         submitting={criar.isPending || atualizar.isPending}
       >
         <TextField
+          {...register('nome')}
+          label="Nome"
+          placeholder="Matemática"
+          error={!!errors.nome}
+          helperText={errors.nome?.message}
+          fullWidth
+          autoFocus
+        />
+        <TextField
           {...register('turmaId')}
           select
           label="Turma"
@@ -262,30 +277,56 @@ export function MateriasPage() {
           helperText={errors.cargaHorariaReferencia?.message}
           fullWidth
         />
-        <TextField
-          {...register('diaSemana')}
-          select
-          label="Dia da semana"
-          error={!!errors.diaSemana}
-          helperText={errors.diaSemana?.message}
-          fullWidth
-          defaultValue="SEGUNDA"
-        >
-          {DIAS_SEMANA.map((dia) => (
-            <MenuItem key={dia.value} value={dia.value}>
-              {dia.label}
-            </MenuItem>
+
+        <Typography variant="subtitle2">Horários semanais</Typography>
+        <Stack spacing={1.5}>
+          {fields.map((field, index) => (
+            <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+              <TextField
+                {...register(`horarios.${index}.diaSemana`)}
+                select
+                label="Dia"
+                error={!!errors.horarios?.[index]?.diaSemana}
+                fullWidth
+                defaultValue={field.diaSemana}
+              >
+                {DIAS_SEMANA.map((dia) => (
+                  <MenuItem key={dia.value} value={dia.value}>
+                    {dia.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                {...register(`horarios.${index}.horaInicio`)}
+                label="Início"
+                type="time"
+                slotProps={{ inputLabel: { shrink: true } }}
+                error={!!errors.horarios?.[index]?.horaInicio}
+                fullWidth
+              />
+              <IconButton
+                onClick={() => remove(index)}
+                disabled={fields.length <= 1}
+                sx={{ mt: 0.5 }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Stack>
           ))}
-        </TextField>
-        <TextField
-          {...register('horaInicio')}
-          label="Horário de início"
-          type="time"
-          slotProps={{ inputLabel: { shrink: true } }}
-          error={!!errors.horaInicio}
-          helperText={errors.horaInicio?.message}
-          fullWidth
-        />
+        </Stack>
+        <Button
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={() => append({ diaSemana: 'SEGUNDA', horaInicio: '08:00' })}
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          Adicionar horário
+        </Button>
+        {errors.horarios?.message && (
+          <Typography color="error" variant="body2">
+            {errors.horarios.message}
+          </Typography>
+        )}
       </FormDialog>
 
       <ConfirmDialog
