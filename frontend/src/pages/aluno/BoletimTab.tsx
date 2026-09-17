@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Box,
   Button,
   Paper,
   Stack,
@@ -12,6 +13,10 @@ import {
   Typography,
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
+import AssessmentIcon from '@mui/icons-material/AssessmentOutlined';
+import ChevronRightIcon from '@mui/icons-material/ChevronRightOutlined';
+import InboxIcon from '@mui/icons-material/InboxOutlined';
+import { useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import { baixarArquivo } from '../../api/download';
 import { useAlunosControllerMeuPerfil } from '../../api/generated/alunos/alunos';
@@ -20,6 +25,7 @@ import {
   getMateriaPlanoControllerBoletimQueryKey,
   materiaPlanoControllerBoletim,
 } from '../../api/generated/plano-disciplina/plano-disciplina';
+import { tokens } from '../../theme/tokens';
 
 const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'success' | 'error' }> = {
   CURSANDO: { label: 'Cursando', color: 'default' },
@@ -27,7 +33,11 @@ const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'succes
   REPROVADO: { label: 'Reprovado', color: 'error' },
 };
 
+const NOTA_CORTE = 7;
+const FREQUENCIA_MINIMA = 75;
+
 export function BoletimTab() {
+  const navigate = useNavigate();
   const { data: perfil } = useAlunosControllerMeuPerfil();
   const { data: materias } = useMateriasControllerFindAll();
   const [baixando, setBaixando] = useState<string | null>(null);
@@ -51,50 +61,74 @@ export function BoletimTab() {
 
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Boletim
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+        <AssessmentIcon color="primary" />
+        <Typography variant="h4">Boletim</Typography>
+      </Stack>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Toque em uma matéria para ver o detalhamento nota a nota.
       </Typography>
 
       <Paper variant="outlined" sx={{ mb: 3 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Matéria</TableCell>
-              <TableCell>Média</TableCell>
-              <TableCell>Frequência</TableCell>
-              <TableCell>Situação</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(materias ?? []).map((materia, i) => {
-              const linha = resultados[i]?.data?.[0];
-              return (
-                <TableRow key={materia.id}>
-                  <TableCell>{materia.nome}</TableCell>
-                  <TableCell>{linha ? linha.notaFinal.toFixed(1) : '—'}</TableCell>
-                  <TableCell>
-                    {linha ? `${linha.frequenciaPercentual.toFixed(0)}%` : '—'}
-                  </TableCell>
-                  <TableCell>
-                    {linha && (
-                      <Chip
-                        size="small"
-                        label={LABEL_SITUACAO[linha.situacao].label}
-                        color={LABEL_SITUACAO[linha.situacao].color}
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        {materias?.length ? (
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Matéria</TableCell>
+                <TableCell>Média</TableCell>
+                <TableCell>Frequência</TableCell>
+                <TableCell>Situação</TableCell>
+                <TableCell width={40} />
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {materias.map((materia, i) => {
+                const linha = resultados[i]?.data?.[0];
+                const mediaBaixa = !!linha && linha.notaFinal < NOTA_CORTE;
+                const frequenciaBaixa = !!linha && linha.frequenciaPercentual < FREQUENCIA_MINIMA;
+                return (
+                  <TableRow
+                    key={materia.id}
+                    hover
+                    onClick={() => navigate(`/app/aluno/materias/${materia.id}`)}
+                  >
+                    <TableCell>{materia.nome}</TableCell>
+                    <TableCell sx={{ color: mediaBaixa ? tokens.redText : undefined, fontWeight: mediaBaixa ? 600 : undefined }}>
+                      {linha ? linha.notaFinal.toFixed(1) : '—'}
+                    </TableCell>
+                    <TableCell sx={{ color: frequenciaBaixa ? tokens.redText : undefined, fontWeight: frequenciaBaixa ? 600 : undefined }}>
+                      {linha ? `${linha.frequenciaPercentual.toFixed(0)}%` : '—'}
+                    </TableCell>
+                    <TableCell>
+                      {linha && (
+                        <Chip
+                          size="small"
+                          label={LABEL_SITUACAO[linha.situacao].label}
+                          color={LABEL_SITUACAO[linha.situacao].color}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ChevronRightIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <Stack spacing={1} sx={{ alignItems: 'center', py: 4, color: tokens.textSecondary }}>
+            <InboxIcon fontSize="small" />
+            <Typography variant="body2" color="text.secondary">
+              Você ainda não está vinculado a nenhuma matéria.
+            </Typography>
+          </Stack>
+        )}
       </Paper>
 
       {perfil && (
-        <>
+        <Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-            Para o detalhamento por item de cada matéria, acesse a matéria em "Minhas matérias".
             Baixe o boletim completo do semestre atual:
           </Typography>
           <Stack direction="row" spacing={1}>
@@ -127,7 +161,7 @@ export function BoletimTab() {
               Excel
             </Button>
           </Stack>
-        </>
+        </Box>
       )}
     </>
   );
