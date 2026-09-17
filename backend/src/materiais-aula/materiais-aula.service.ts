@@ -5,7 +5,10 @@ import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { MATERIAIS_AULA_DIR } from '../common/foto.util';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 
 @Injectable()
@@ -66,8 +69,28 @@ export class MateriaisAulaService {
     });
   }
 
+  private async carregarAulaComAcessoLeitura(
+    aulaId: string,
+    user: AuthenticatedUser,
+  ) {
+    const aula = await this.prisma.aula.findUnique({
+      where: { id: aulaId },
+      include: { materia: true },
+    });
+    if (!aula) {
+      throw new NotFoundException('Aula não encontrada');
+    }
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      aula.materia,
+      'Aula não encontrada',
+    );
+    return aula;
+  }
+
   async listar(aulaId: string, user: AuthenticatedUser) {
-    await this.carregarAulaComPosse(aulaId, user);
+    await this.carregarAulaComAcessoLeitura(aulaId, user);
     return this.prisma.materialAula.findMany({
       where: { aulaId },
       orderBy: { postadoEm: 'desc' },

@@ -48,6 +48,13 @@ export class AlunosService {
     });
   }
 
+  meuPerfil(alunoId: string) {
+    return this.prisma.aluno.findUniqueOrThrow({
+      where: { id: alunoId },
+      include: { turma: { include: { semestre: true } } },
+    });
+  }
+
   async update(id: string, dto: UpdateAlunoDto) {
     try {
       return await this.prisma.aluno.update({

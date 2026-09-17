@@ -10,7 +10,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { EstadoMateria } from '../../generated/prisma/client';
 import { ENTREGAS_DIR } from '../common/foto.util';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { extensaoPorMime, mimeRegexParaFormato } from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
@@ -77,8 +80,27 @@ export class AtividadesService {
     });
   }
 
+  private async carregarMateriaComAcessoLeitura(
+    materiaId: string,
+    user: AuthenticatedUser,
+  ) {
+    const materia = await this.prisma.materia.findUnique({
+      where: { id: materiaId },
+    });
+    if (!materia) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
+    return materia;
+  }
+
   async listarPorMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
+    await this.carregarMateriaComAcessoLeitura(materiaId, user);
     return this.prisma.atividade.findMany({
       where: { materiaId },
       orderBy: { criadaEm: 'desc' },

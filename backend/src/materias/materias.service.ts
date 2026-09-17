@@ -156,11 +156,18 @@ export class MateriasService {
     });
   }
 
-  findAll(filtros: { turmaId?: string; professorId?: string }) {
+  findAll(filtros: {
+    turmaId?: string;
+    professorId?: string;
+    vinculadoAlunoId?: string;
+  }) {
     return this.prisma.materia.findMany({
       where: {
         turmaId: filtros.turmaId,
         professorId: filtros.professorId,
+        vinculos: filtros.vinculadoAlunoId
+          ? { some: { alunoId: filtros.vinculadoAlunoId } }
+          : undefined,
       },
       include: { turma: true, professor: true },
       orderBy: { diaSemana: 'asc' },

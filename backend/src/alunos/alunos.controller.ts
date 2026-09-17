@@ -10,12 +10,14 @@ import {
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { AlunosService } from './alunos.service';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { VincularTurmaDto } from './dto/vincular-turma.dto';
-import { AlunoCriadoDto, AlunoDto } from './dto/aluno.dto';
+import { AlunoCriadoDto, AlunoDto, AlunoMeDto } from './dto/aluno.dto';
 
 @ApiTags('alunos')
 @Roles(Role.ADMIN)
@@ -33,6 +35,13 @@ export class AlunosController {
   @ApiOkResponse({ type: AlunoDto, isArray: true })
   findAll(@Query('turmaId') turmaId?: string): Promise<AlunoDto[]> {
     return this.service.findAll(turmaId);
+  }
+
+  @Roles(Role.ALUNO)
+  @Get('me')
+  @ApiOkResponse({ type: AlunoMeDto })
+  meuPerfil(@CurrentUser() user: AuthenticatedUser): Promise<AlunoMeDto> {
+    return this.service.meuPerfil(user.alunoId!);
   }
 
   @Get(':id')

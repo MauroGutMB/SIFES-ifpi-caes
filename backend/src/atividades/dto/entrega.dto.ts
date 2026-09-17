@@ -30,3 +30,20 @@ export class EntregaDto {
   @ApiProperty({ type: EntregaAlunoResumoDto })
   aluno: EntregaAlunoResumoDto;
 }
+
+export class MinhaEntregaDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  atividadeId: string;
+
+  @ApiProperty()
+  alunoId: string;
+
+  @ApiProperty()
+  arquivoUrl: string;
+
+  @ApiProperty()
+  enviadoEm: Date;
+}

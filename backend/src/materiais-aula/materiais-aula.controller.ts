@@ -53,6 +53,7 @@ export class MateriaisAulaController {
     return this.service.criar(aulaId, dto, file, user);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
   @ApiOkResponse({ type: MaterialAulaDto, isArray: true })
   listar(

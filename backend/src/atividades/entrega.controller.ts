@@ -8,13 +8,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { AtividadesService } from './atividades.service';
 import { MAX_ENTREGA_BYTES } from './formato-entrega.util';
+import { MinhaEntregaDto } from './dto/entrega.dto';
 
 @ApiTags('atividades')
 @Roles(Role.ALUNO)
@@ -24,6 +25,13 @@ export class EntregaController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['arquivo'],
+      properties: { arquivo: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('arquivo'))
   entregar(
     @Param('id') id: string,
@@ -39,10 +47,11 @@ export class EntregaController {
   }
 
   @Get()
+  @ApiOkResponse({ type: MinhaEntregaDto })
   minhaEntrega(
     @Param('id') id: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<MinhaEntregaDto | null> {
     return this.service.minhaEntrega(id, user);
   }
 }

@@ -23,6 +23,7 @@ export class MateriaAtividadesController {
     return this.service.criar(materiaId, dto, user);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
   @ApiOkResponse({ type: AtividadeDto, isArray: true })
   listar(

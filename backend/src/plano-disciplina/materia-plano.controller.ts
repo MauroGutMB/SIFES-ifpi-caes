@@ -8,6 +8,7 @@ import { PlanoDisciplinaService } from './plano-disciplina.service';
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { ItemAvaliacaoDto } from './dto/item-avaliacao.dto';
 import { BoletimLinhaDto } from './dto/boletim-linha.dto';
+import { ItemDetalhadoDto } from './dto/item-detalhado.dto';
 
 @ApiTags('plano-disciplina')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -33,6 +34,7 @@ export class MateriaPlanoController {
     return this.service.listarItens(materiaId, user);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get('boletim')
   @ApiOkResponse({ type: BoletimLinhaDto, isArray: true })
   boletim(
@@ -40,5 +42,15 @@ export class MateriaPlanoController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<BoletimLinhaDto[]> {
     return this.service.boletimMateria(materiaId, user);
+  }
+
+  @Roles(Role.ALUNO)
+  @Get('meu-detalhamento')
+  @ApiOkResponse({ type: ItemDetalhadoDto, isArray: true })
+  meuDetalhamento(
+    @Param('materiaId') materiaId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ItemDetalhadoDto[]> {
+    return this.service.meuDetalhamento(materiaId, user);
   }
 }

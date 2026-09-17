@@ -6,8 +6,12 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { EstadoMateria } from '../../generated/prisma/client';
+import { Role } from '../../generated/prisma/client';
 import { BoletimService } from '../boletim/boletim.service';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
@@ -147,7 +151,49 @@ export class PlanoDisciplinaService {
   }
 
   async boletimMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
-    return this.boletim.calcularBoletimMateria(materiaId);
+    const materia = await this.prisma.materia.findUnique({
+      where: { id: materiaId },
+    });
+    if (!materia) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
+    const linhas = await this.boletim.calcularBoletimMateria(materiaId);
+    // Aluno só vê a própria linha do boletim, nunca a da turma inteira.
+    if (user.role === Role.ALUNO) {
+      return linhas.filter((linha) => linha.aluno.id === user.alunoId);
+    }
+    return linhas;
+  }
+
+  async meuDetalhamento(materiaId: string, user: AuthenticatedUser) {
+    const materia = await this.prisma.materia.findUnique({
+      where: { id: materiaId },
+    });
+    if (!materia) {
+      throw new NotFoundException('Matéria não encontrada');
+    }
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
+
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+      include: { notas: { where: { alunoId: user.alunoId! } } },
+    });
+    return itens.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      valorMaximo: item.valorMaximo.toString(),
+      valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+    }));
   }
 }

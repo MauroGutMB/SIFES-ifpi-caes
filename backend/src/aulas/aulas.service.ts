@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { calcularEstadoAula } from './estado-aula.util';
 import { UpdateAulaDto } from './dto/update-aula.dto';
 import { SetFrequenciasDto } from './dto/set-frequencias.dto';
@@ -32,7 +35,7 @@ export class AulasService {
     return aula;
   }
 
-  private async carregarMateriaComPosse(
+  private async carregarMateriaComAcessoLeitura(
     materiaId: string,
     user: AuthenticatedUser,
   ) {
@@ -42,12 +45,17 @@ export class AulasService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
   async findAllPorMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
+    await this.carregarMateriaComAcessoLeitura(materiaId, user);
     const aulas = await this.prisma.aula.findMany({
       where: { materiaId },
       orderBy: { data: 'asc' },

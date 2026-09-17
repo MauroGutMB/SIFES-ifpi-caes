@@ -8,7 +8,7 @@ import { AulasService } from './aulas.service';
 import { AulaDto } from './dto/aula.dto';
 
 @ApiTags('aulas')
-@Roles(Role.ADMIN, Role.PROFESSOR)
+@Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
 @Controller('materias/:materiaId/aulas')
 export class MateriaAulasController {
   constructor(private readonly service: AulasService) {}
