@@ -35,13 +35,26 @@ export async function refreshAccessToken(): Promise<string> {
   return data.accessToken;
 }
 
+// Rotas de auth cujo 401 é uma resposta de negócio (credenciais inválidas, sem sessão) — nunca
+// deve disparar o fluxo de refresh, senão a mensagem de erro real vira "Refresh token ausente".
+const ROTAS_SEM_RETRY_DE_REFRESH = ['/auth/login', '/auth/refresh'];
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config as InternalAxiosRequestConfig | undefined;
     const status = error.response?.status;
+    const ehRotaDeAuth = ROTAS_SEM_RETRY_DE_REFRESH.some((rota) =>
+      originalRequest?.url?.includes(rota),
+    );
 
-    if (status !== 401 || !originalRequest || originalRequest._retry || originalRequest._skipAuth) {
+    if (
+      status !== 401 ||
+      !originalRequest ||
+      originalRequest._retry ||
+      originalRequest._skipAuth ||
+      ehRotaDeAuth
+    ) {
       return Promise.reject(error);
     }
     originalRequest._retry = true;
