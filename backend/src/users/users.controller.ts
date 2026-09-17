@@ -10,13 +10,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { FOTO_MIME_REGEX, MAX_FOTO_BYTES } from '../common/foto.util';
 import { UsersService } from './users.service';
+import { UserMeDto } from './dto/user-me.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -30,7 +31,8 @@ export class UsersController {
   }
 
   @Get('me')
-  me(@CurrentUser() user: AuthenticatedUser) {
+  @ApiOkResponse({ type: UserMeDto })
+  me(@CurrentUser() user: AuthenticatedUser): Promise<UserMeDto> {
     return this.usersService.findMe(user.id);
   }
 

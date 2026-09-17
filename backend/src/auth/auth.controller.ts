@@ -7,12 +7,14 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
+import { RefreshResponseDto } from './dto/refresh-response.dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { AuthenticatedUser } from './auth.types';
@@ -46,10 +48,11 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: LoginResponseDto })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<LoginResponseDto> {
     const {
       accessToken,
       refreshToken,
@@ -64,10 +67,11 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: RefreshResponseDto })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ) {
+  ): Promise<RefreshResponseDto> {
     const rawToken = getRefreshCookie(req);
     const { accessToken, refreshToken, refreshExpiresAt } =
       await this.authService.refresh(rawToken);
