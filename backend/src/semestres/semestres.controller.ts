@@ -7,12 +7,13 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
 import { SemestresService } from './semestres.service';
 import { CreateSemestreDto } from './dto/create-semestre.dto';
 import { UpdateSemestreDto } from './dto/update-semestre.dto';
+import { SemestreDto } from './dto/semestre.dto';
 
 @ApiTags('semestres')
 @Roles(Role.ADMIN)
@@ -21,12 +22,14 @@ export class SemestresController {
   constructor(private readonly service: SemestresService) {}
 
   @Post()
-  create(@Body() dto: CreateSemestreDto) {
+  @ApiOkResponse({ type: SemestreDto })
+  create(@Body() dto: CreateSemestreDto): Promise<SemestreDto> {
     return this.service.create(dto);
   }
 
   @Get()
-  findAll() {
+  @ApiOkResponse({ type: SemestreDto, isArray: true })
+  findAll(): Promise<SemestreDto[]> {
     return this.service.findAll();
   }
 

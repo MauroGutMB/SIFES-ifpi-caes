@@ -1,8 +1,9 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
 import { AdminDashboardService } from './admin-dashboard.service';
+import { ContagensDto } from './dto/contagens.dto';
 
 @ApiTags('admin-dashboard')
 @Roles(Role.ADMIN)
@@ -11,7 +12,8 @@ export class AdminDashboardController {
   constructor(private readonly service: AdminDashboardService) {}
 
   @Get()
-  contagens() {
+  @ApiOkResponse({ type: ContagensDto })
+  contagens(): Promise<ContagensDto> {
     return this.service.contagens();
   }
 }

@@ -8,13 +8,14 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
 import { AlunosService } from './alunos.service';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { VincularTurmaDto } from './dto/vincular-turma.dto';
+import { AlunoCriadoDto, AlunoDto } from './dto/aluno.dto';
 
 @ApiTags('alunos')
 @Roles(Role.ADMIN)
@@ -23,12 +24,14 @@ export class AlunosController {
   constructor(private readonly service: AlunosService) {}
 
   @Post()
-  create(@Body() dto: CreateAlunoDto) {
+  @ApiOkResponse({ type: AlunoCriadoDto })
+  create(@Body() dto: CreateAlunoDto): Promise<AlunoCriadoDto> {
     return this.service.create(dto);
   }
 
   @Get()
-  findAll(@Query('turmaId') turmaId?: string) {
+  @ApiOkResponse({ type: AlunoDto, isArray: true })
+  findAll(@Query('turmaId') turmaId?: string): Promise<AlunoDto[]> {
     return this.service.findAll(turmaId);
   }
 

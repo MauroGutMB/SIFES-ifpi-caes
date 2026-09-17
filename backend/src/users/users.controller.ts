@@ -18,6 +18,7 @@ import { Role } from '../../generated/prisma/client';
 import { FOTO_MIME_REGEX, MAX_FOTO_BYTES } from '../common/foto.util';
 import { UsersService } from './users.service';
 import { UserMeDto } from './dto/user-me.dto';
+import { UserDto } from './dto/user.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -26,7 +27,8 @@ export class UsersController {
 
   @Roles(Role.ADMIN)
   @Get()
-  findAll(@Query('role') role?: Role) {
+  @ApiOkResponse({ type: UserDto, isArray: true })
+  findAll(@Query('role') role?: Role): Promise<UserDto[]> {
     return this.usersService.findAll(role);
   }
 

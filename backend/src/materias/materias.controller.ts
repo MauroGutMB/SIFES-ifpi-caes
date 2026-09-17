@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -16,6 +16,7 @@ import { Role } from '../../generated/prisma/client';
 import { MateriasService } from './materias.service';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
+import { MateriaDto } from './dto/materia.dto';
 
 @ApiTags('materias')
 @Roles(Role.ADMIN)
@@ -29,10 +30,11 @@ export class MateriasController {
   }
 
   @Get()
+  @ApiOkResponse({ type: MateriaDto, isArray: true })
   findAll(
     @Query('turmaId') turmaId?: string,
     @Query('professorId') professorId?: string,
-  ) {
+  ): Promise<MateriaDto[]> {
     return this.service.findAll({ turmaId, professorId });
   }
 
