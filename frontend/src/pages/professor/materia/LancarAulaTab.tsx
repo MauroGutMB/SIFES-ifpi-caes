@@ -1,14 +1,27 @@
 import { useState } from 'react';
 import { Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import { useMateriaAulasControllerFindAll } from '../../../api/generated/aulas/aulas';
+import type { AulaDto } from '../../../api/generated/models';
 import { AulaDialog } from './AulaDialog';
 
 interface LancarAulaTabProps {
   materiaId: string;
 }
 
+const ULTIMAS_AULAS_LIMITE = 5;
+
 function hojeBrasiliaISO(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+}
+
+function formatarDataHora(aula: AulaDto): string {
+  const data = new Date(aula.data).toLocaleDateString('pt-BR');
+  const hora = new Date(aula.horaInicio).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+  return `${data} - ${hora}`;
 }
 
 export function LancarAulaTab({ materiaId }: LancarAulaTabProps) {
@@ -17,8 +30,13 @@ export function LancarAulaTab({ materiaId }: LancarAulaTabProps) {
 
   const aulas = data ?? [];
   const hoje = hojeBrasiliaISO();
-  const aulaDeHoje = aulas.find((a) => a.data.slice(0, 10) === hoje);
-  const ultimaLancada = [...aulas].reverse().find((a) => a.estado === 'LANCADO');
+  // O horário só serve pra decidir QUAL aula é a de hoje — o estado dela (lançada ou não)
+  // continua vindo só de ter frequência registrada, nunca do horário em si.
+  const aulasDeHoje = aulas.filter((a) => a.data.slice(0, 10) === hoje);
+  const ultimasAulas = aulas
+    .filter((a) => a.data.slice(0, 10) < hoje)
+    .slice(-ULTIMAS_AULAS_LIMITE)
+    .reverse();
 
   if (isLoading) return null;
 
@@ -26,52 +44,68 @@ export function LancarAulaTab({ materiaId }: LancarAulaTabProps) {
     <Stack spacing={3} sx={{ maxWidth: 560 }}>
       <div>
         <Typography variant="subtitle1" gutterBottom>
-          Aula de hoje
+          Aulas de hoje
         </Typography>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          {aulaDeHoje ? (
-            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 1 }}>
-              <div>
-                <Typography>{new Date(aulaDeHoje.data).toLocaleDateString('pt-BR')}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {aulaDeHoje.titulo ?? 'Sem título ainda'}
-                </Typography>
-              </div>
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                <Chip
-                  size="small"
-                  label={aulaDeHoje.estado === 'LANCADO' ? 'Lançada' : 'Não lançada'}
-                  color={aulaDeHoje.estado === 'LANCADO' ? 'success' : 'default'}
-                />
-                <Button variant="contained" size="small" onClick={() => setAulaSelecionada(aulaDeHoje.id)}>
-                  Lançar aula
-                </Button>
-              </Stack>
-            </Stack>
-          ) : (
-            <Typography color="text.secondary" variant="body2">
+        <Paper variant="outlined">
+          {aulasDeHoje.length === 0 ? (
+            <Typography color="text.secondary" variant="body2" sx={{ p: 2 }}>
               Não há aula prevista para hoje neste horário.
             </Typography>
+          ) : (
+            <Stack divider={<Stack sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+              {aulasDeHoje.map((aula) => (
+                <Stack
+                  key={aula.id}
+                  direction="row"
+                  sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 1, p: 2 }}
+                >
+                  <div>
+                    <Typography>{formatarDataHora(aula)}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {aula.titulo ?? 'Sem título ainda'}
+                    </Typography>
+                  </div>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Chip
+                      size="small"
+                      label={aula.estado === 'LANCADO' ? 'Lançada' : 'Não lançada'}
+                      color={aula.estado === 'LANCADO' ? 'success' : 'default'}
+                    />
+                    <Button variant="contained" size="small" onClick={() => setAulaSelecionada(aula.id)}>
+                      Editar aula
+                    </Button>
+                  </Stack>
+                </Stack>
+              ))}
+            </Stack>
           )}
         </Paper>
       </div>
 
       <div>
         <Typography variant="subtitle1" gutterBottom>
-          Última aula lançada
+          Últimas aulas
         </Typography>
-        <Paper variant="outlined" sx={{ p: 2 }}>
-          {ultimaLancada ? (
-            <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography>{new Date(ultimaLancada.data).toLocaleDateString('pt-BR')}</Typography>
-              <Button variant="outlined" size="small" onClick={() => setAulaSelecionada(ultimaLancada.id)}>
-                Abrir
-              </Button>
-            </Stack>
-          ) : (
-            <Typography color="text.secondary" variant="body2">
-              Nenhuma aula lançada ainda.
+        <Paper variant="outlined">
+          {ultimasAulas.length === 0 ? (
+            <Typography color="text.secondary" variant="body2" sx={{ p: 2 }}>
+              Nenhuma aula anterior ainda.
             </Typography>
+          ) : (
+            <Stack divider={<Stack sx={{ borderTop: 1, borderColor: 'divider' }} />}>
+              {ultimasAulas.map((aula) => (
+                <Stack
+                  key={aula.id}
+                  direction="row"
+                  sx={{ alignItems: 'center', justifyContent: 'space-between', p: 2 }}
+                >
+                  <Typography>{formatarDataHora(aula)}</Typography>
+                  <Button variant="outlined" size="small" onClick={() => setAulaSelecionada(aula.id)}>
+                    Abrir
+                  </Button>
+                </Stack>
+              ))}
+            </Stack>
           )}
         </Paper>
       </div>
