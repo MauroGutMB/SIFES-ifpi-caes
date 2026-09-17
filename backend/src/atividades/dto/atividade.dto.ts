@@ -17,6 +17,9 @@ export class AtividadeDto {
   @ApiProperty({ enum: FormatoArquivo })
   formatoExigido: FormatoArquivo;
 
+  @ApiProperty({ nullable: true, type: String })
+  arquivoUrl: string | null;
+
   @ApiProperty()
   criadaEm: Date;
 }

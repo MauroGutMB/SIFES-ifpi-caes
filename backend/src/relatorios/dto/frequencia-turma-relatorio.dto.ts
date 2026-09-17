@@ -45,6 +45,9 @@ export class FrequenciaResumoLinhaDto {
   @ApiProperty()
   matricula: string;
 
+  @ApiProperty({ nullable: true, type: String })
+  fotoUrl: string | null;
+
   @ApiProperty()
   materiaId: string;
 

@@ -355,7 +355,16 @@ export class RelatoriosService {
         materiaId: { in: materiaIds },
         alunoId: alunoIdFiltro,
       },
-      include: { aluno: { select: { id: true, nome: true, matricula: true } } },
+      include: {
+        aluno: {
+          select: {
+            id: true,
+            nome: true,
+            matricula: true,
+            user: { select: { fotoUrl: true } },
+          },
+        },
+      },
     });
 
     const resumo: RelatorioFrequenciaTurmaDto['resumo'] = vinculados.map(
@@ -368,6 +377,7 @@ export class RelatoriosService {
           alunoId: vinculo.alunoId,
           alunoNome: vinculo.aluno.nome,
           matricula: vinculo.aluno.matricula,
+          fotoUrl: vinculo.aluno.user.fotoUrl,
           materiaId: vinculo.materiaId,
           materiaNome: nomePorMateria.get(vinculo.materiaId) ?? '',
           frequenciaPercentual: Number(

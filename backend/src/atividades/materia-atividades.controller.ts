@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -15,12 +24,27 @@ export class MateriaAtividadesController {
   constructor(private readonly service: AtividadesService) {}
 
   @Post()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['titulo', 'formatoExigido'],
+      properties: {
+        titulo: { type: 'string' },
+        descricao: { type: 'string' },
+        formatoExigido: { type: 'string', enum: ['PDF', 'WORD', 'FOTO'] },
+        anexo: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('anexo'))
   criar(
     @Param('materiaId') materiaId: string,
     @Body() dto: CreateAtividadeDto,
     @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() anexo?: Express.Multer.File,
   ) {
-    return this.service.criar(materiaId, dto, user);
+    return this.service.criar(materiaId, dto, user, anexo);
   }
 
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
