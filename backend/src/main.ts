@@ -1,17 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
-import { join } from 'path';
 import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), 'uploads');
-  app.useStaticAssets(uploadsDir, { prefix: '/uploads' });
+  const app = await NestFactory.create(AppModule);
 
   app.use(cookieParser());
   app.useGlobalFilters(new PrismaExceptionFilter());

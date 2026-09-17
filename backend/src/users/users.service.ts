@@ -1,7 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { mkdir, readdir, unlink, writeFile } from 'fs/promises';
-import { join } from 'path';
-import { EXT_BY_MIME, FOTOS_DIR } from '../common/foto.util';
+import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../../generated/prisma/client';
 
@@ -41,24 +39,15 @@ export class UsersService {
     });
   }
 
-  private async limparFotoAtual(userId: string) {
-    const existentes = await readdir(FOTOS_DIR).catch(() => [] as string[]);
-    await Promise.all(
-      existentes
-        .filter((nome) => nome.startsWith(`${userId}.`))
-        .map((nome) => unlink(join(FOTOS_DIR, nome)).catch(() => undefined)),
-    );
-  }
-
   /** Grava a foto de um usuário a partir de um buffer já validado (upload direto ou aprovação de solicitação). */
-  async setFoto(userId: string, buffer: Buffer, ext: string) {
-    await mkdir(FOTOS_DIR, { recursive: true });
-    await this.limparFotoAtual(userId);
+  async setFoto(userId: string, buffer: Buffer, mimeType: string) {
+    const atual = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { fotoUrl: true },
+    });
+    await removerArquivo(this.prisma, atual?.fotoUrl);
 
-    const nomeArquivo = `${userId}.${ext}`;
-    await writeFile(join(FOTOS_DIR, nomeArquivo), buffer);
-
-    const fotoUrl = `/uploads/fotos/${nomeArquivo}`;
+    const fotoUrl = await salvarArquivo(this.prisma, buffer, mimeType);
     return this.prisma.user.update({
       where: { id: userId },
       data: { fotoUrl },
@@ -67,8 +56,7 @@ export class UsersService {
   }
 
   updateFotoFromUpload(userId: string, file: Express.Multer.File) {
-    const ext = EXT_BY_MIME[file.mimetype];
-    return this.setFoto(userId, file.buffer, ext);
+    return this.setFoto(userId, file.buffer, file.mimetype);
   }
 
   async removerFoto(userId: string) {
@@ -77,7 +65,7 @@ export class UsersService {
       throw new NotFoundException('Usuário não encontrado');
     }
 
-    await this.limparFotoAtual(userId);
+    await removerArquivo(this.prisma, user.fotoUrl);
     return this.prisma.user.update({
       where: { id: userId },
       data: { fotoUrl: null },

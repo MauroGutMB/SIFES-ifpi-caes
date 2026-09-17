@@ -1,9 +1,3 @@
-jest.mock('fs/promises', () => ({
-  mkdir: jest.fn().mockResolvedValue(undefined),
-  writeFile: jest.fn().mockResolvedValue(undefined),
-  unlink: jest.fn().mockResolvedValue(undefined),
-}));
-
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AtividadesService } from './atividades.service';
 import { AuthenticatedUser } from '../auth/auth.types';
@@ -35,6 +29,10 @@ function criarServico(atividadeEncontrada: unknown) {
     entrega: {
       findUnique: jest.fn().mockResolvedValue(null),
       upsert: jest.fn().mockResolvedValue({ id: 'entrega-1' }),
+    },
+    arquivo: {
+      create: jest.fn().mockResolvedValue({ id: 'arquivo-1' }),
+      delete: jest.fn().mockResolvedValue({}),
     },
   };
   return { service: new AtividadesService(prisma as never), prisma };

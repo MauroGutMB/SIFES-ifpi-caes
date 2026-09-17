@@ -1,10 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import { randomUUID } from 'crypto';
-import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { MATERIAIS_AULA_DIR } from '../common/foto.util';
+import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
 import {
   garantirAcessoLeituraMateria,
   garantirPosseProfessor,
@@ -56,17 +53,14 @@ export class MateriaisAulaService {
   ) {
     await this.carregarAula(aulaId, user);
 
-    await mkdir(MATERIAIS_AULA_DIR, { recursive: true });
-    const ext = extname(file.originalname) || '';
-    const nomeArquivo = `${randomUUID()}${ext}`;
-    await writeFile(join(MATERIAIS_AULA_DIR, nomeArquivo), file.buffer);
+    const arquivoUrl = await salvarArquivo(
+      this.prisma,
+      file.buffer,
+      file.mimetype,
+    );
 
     return this.prisma.materialAula.create({
-      data: {
-        aulaId,
-        titulo: dto.titulo,
-        arquivoUrl: `/uploads/materiais-aula/${nomeArquivo}`,
-      },
+      data: { aulaId, titulo: dto.titulo, arquivoUrl },
     });
   }
 
@@ -80,12 +74,7 @@ export class MateriaisAulaService {
 
   async remover(id: string, user: AuthenticatedUser) {
     const material = await this.carregarMaterialComPosse(id, user);
-    const nomeArquivo = material.arquivoUrl.split('/').pop();
-    if (nomeArquivo) {
-      await unlink(join(MATERIAIS_AULA_DIR, nomeArquivo)).catch(
-        () => undefined,
-      );
-    }
+    await removerArquivo(this.prisma, material.arquivoUrl);
     return this.prisma.materialAula.delete({ where: { id } });
   }
 }

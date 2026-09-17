@@ -144,6 +144,18 @@ enum StatusSolicitacaoFoto {
   REJEITADA
 }
 
+/** Guarda o conteúdo binário de qualquer upload (foto, material de aula, anexo, entrega) direto
+ * no Postgres — evita depender do filesystem local do servidor, que é efêmero em produção
+ * (Render reseta a cada deploy/restart). Servido via GET /arquivos/:id. */
+model Arquivo {
+  id        String   @id @default(uuid())
+  mimeType  String
+  conteudo  Bytes
+  criadoEm  DateTime @default(now())
+
+  @@map("arquivos")
+}
+
 model SolicitacaoFoto {
   id                String                 @id @default(uuid())
   alunoId           String

@@ -3,18 +3,15 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, unlink, writeFile } from 'fs/promises';
-import { randomUUID } from 'crypto';
-import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { EstadoMateria } from '../../generated/prisma/client';
-import { ATIVIDADES_DIR, ENTREGAS_DIR } from '../common/foto.util';
+import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
 import {
   garantirAcessoLeituraMateria,
   garantirPosseProfessor,
 } from '../common/posse.util';
-import { extensaoPorMime, mimeRegexParaFormato } from './formato-entrega.util';
+import { mimeRegexParaFormato } from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 
@@ -65,19 +62,12 @@ export class AtividadesService {
     return atividade;
   }
 
-  private async salvarAnexo(file: Express.Multer.File): Promise<string> {
-    await mkdir(ATIVIDADES_DIR, { recursive: true });
-    const ext = extname(file.originalname) || '';
-    const nomeArquivo = `${randomUUID()}${ext}`;
-    await writeFile(join(ATIVIDADES_DIR, nomeArquivo), file.buffer);
-    return `/uploads/atividades/${nomeArquivo}`;
+  private salvarAnexo(file: Express.Multer.File): Promise<string> {
+    return salvarArquivo(this.prisma, file.buffer, file.mimetype);
   }
 
-  private async removerAnexo(arquivoUrl: string | null) {
-    const nomeArquivo = arquivoUrl?.split('/').pop();
-    if (nomeArquivo) {
-      await unlink(join(ATIVIDADES_DIR, nomeArquivo)).catch(() => undefined);
-    }
+  private removerAnexo(arquivoUrl: string | null) {
+    return removerArquivo(this.prisma, arquivoUrl);
   }
 
   async criar(
@@ -189,9 +179,11 @@ export class AtividadesService {
       );
     }
 
-    await mkdir(ENTREGAS_DIR, { recursive: true });
-    const nomeArquivo = `${randomUUID()}.${extensaoPorMime(file.mimetype)}`;
-    await writeFile(join(ENTREGAS_DIR, nomeArquivo), file.buffer);
+    const arquivoUrl = await salvarArquivo(
+      this.prisma,
+      file.buffer,
+      file.mimetype,
+    );
 
     const existente = await this.prisma.entrega.findUnique({
       where: {
@@ -199,20 +191,13 @@ export class AtividadesService {
       },
     });
     if (existente) {
-      const nomeAntigo = existente.arquivoUrl.split('/').pop();
-      if (nomeAntigo) {
-        await unlink(join(ENTREGAS_DIR, nomeAntigo)).catch(() => undefined);
-      }
+      await removerArquivo(this.prisma, existente.arquivoUrl);
     }
 
     return this.prisma.entrega.upsert({
       where: { atividadeId_alunoId: { atividadeId, alunoId: user.alunoId! } },
-      create: {
-        atividadeId,
-        alunoId: user.alunoId!,
-        arquivoUrl: `/uploads/entregas/${nomeArquivo}`,
-      },
-      update: { arquivoUrl: `/uploads/entregas/${nomeArquivo}` },
+      create: { atividadeId, alunoId: user.alunoId!, arquivoUrl },
+      update: { arquivoUrl },
     });
   }
 

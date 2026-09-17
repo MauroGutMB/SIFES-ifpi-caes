@@ -1,10 +1,3 @@
-jest.mock('fs/promises', () => ({
-  mkdir: jest.fn().mockResolvedValue(undefined),
-  writeFile: jest.fn().mockResolvedValue(undefined),
-  unlink: jest.fn().mockResolvedValue(undefined),
-  readFile: jest.fn().mockResolvedValue(Buffer.from('x')),
-}));
-
 import { FotoSolicitacoesService } from './foto-solicitacoes.service';
 
 function arquivoFalso() {
@@ -20,6 +13,10 @@ function criarServico(pendenteExistente: unknown) {
       findFirst: jest.fn().mockResolvedValue(pendenteExistente),
       create: jest.fn().mockResolvedValue({ id: 'nova' }),
       update: jest.fn().mockResolvedValue({ id: 'atualizada' }),
+    },
+    arquivo: {
+      create: jest.fn().mockResolvedValue({ id: 'arquivo-novo' }),
+      delete: jest.fn().mockResolvedValue({}),
     },
   };
   const usersService = {};

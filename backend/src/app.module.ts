@@ -19,6 +19,7 @@ import { MateriaisAulaModule } from './materiais-aula/materiais-aula.module';
 import { AtividadesModule } from './atividades/atividades.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { RelatoriosModule } from './relatorios/relatorios.module';
+import { ArquivosModule } from './arquivos/arquivos.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { RelatoriosModule } from './relatorios/relatorios.module';
     AtividadesModule,
     AdminDashboardModule,
     RelatoriosModule,
+    ArquivosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

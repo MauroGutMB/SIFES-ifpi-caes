@@ -3,10 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { mkdir, readFile, unlink, writeFile } from 'fs/promises';
-import { randomUUID } from 'crypto';
-import { extname, join } from 'path';
-import { EXT_BY_MIME, FOTOS_PENDENTES_DIR } from '../common/foto.util';
+import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { StatusSolicitacaoFoto } from '../../generated/prisma/client';
@@ -22,26 +19,25 @@ export class FotoSolicitacoesService {
    * envio troca o arquivo dela em vez de criar outra — o aluno está editando a foto que
    * enviou, não abrindo um pedido novo. */
   async criar(alunoId: string, file: Express.Multer.File) {
-    await mkdir(FOTOS_PENDENTES_DIR, { recursive: true });
-    const ext = EXT_BY_MIME[file.mimetype];
-    const nomeArquivo = `${randomUUID()}.${ext}`;
-    await writeFile(join(FOTOS_PENDENTES_DIR, nomeArquivo), file.buffer);
+    const arquivoStagingUrl = await salvarArquivo(
+      this.prisma,
+      file.buffer,
+      file.mimetype,
+    );
 
     const pendente = await this.prisma.solicitacaoFoto.findFirst({
       where: { alunoId, status: StatusSolicitacaoFoto.PENDENTE },
     });
     if (pendente) {
-      await unlink(join(FOTOS_PENDENTES_DIR, pendente.arquivoStagingUrl)).catch(
-        () => undefined,
-      );
+      await removerArquivo(this.prisma, pendente.arquivoStagingUrl);
       return this.prisma.solicitacaoFoto.update({
         where: { id: pendente.id },
-        data: { arquivoStagingUrl: nomeArquivo },
+        data: { arquivoStagingUrl },
       });
     }
 
     return this.prisma.solicitacaoFoto.create({
-      data: { alunoId, arquivoStagingUrl: nomeArquivo },
+      data: { alunoId, arquivoStagingUrl },
     });
   }
 
@@ -78,12 +74,17 @@ export class FotoSolicitacoesService {
 
   async aprovar(id: string) {
     const solicitacao = await this.buscarPendente(id);
-    const caminho = join(FOTOS_PENDENTES_DIR, solicitacao.arquivoStagingUrl);
-    const buffer = await readFile(caminho);
-    const ext = extname(solicitacao.arquivoStagingUrl).slice(1);
+    const arquivoId = solicitacao.arquivoStagingUrl.split('/').pop()!;
+    const arquivo = await this.prisma.arquivo.findUniqueOrThrow({
+      where: { id: arquivoId },
+    });
 
-    await this.usersService.setFoto(solicitacao.aluno.userId, buffer, ext);
-    await unlink(caminho).catch(() => undefined);
+    await this.usersService.setFoto(
+      solicitacao.aluno.userId,
+      Buffer.from(arquivo.conteudo),
+      arquivo.mimeType,
+    );
+    await this.prisma.arquivo.delete({ where: { id: arquivoId } });
 
     return this.prisma.solicitacaoFoto.update({
       where: { id },
@@ -105,8 +106,7 @@ export class FotoSolicitacoesService {
 
   async rejeitar(id: string) {
     const solicitacao = await this.buscarPendente(id);
-    const caminho = join(FOTOS_PENDENTES_DIR, solicitacao.arquivoStagingUrl);
-    await unlink(caminho).catch(() => undefined);
+    await removerArquivo(this.prisma, solicitacao.arquivoStagingUrl);
 
     return this.prisma.solicitacaoFoto.update({
       where: { id },
