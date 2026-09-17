@@ -1,17 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { StatusFrequencia } from '../../../generated/prisma/client';
+import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 import { AulaDto } from './aula.dto';
-
-class FrequenciaAlunoResumoDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  nome: string;
-
-  @ApiProperty()
-  matricula: string;
-}
 
 export class FrequenciaComAlunoDto {
   @ApiProperty()
@@ -26,8 +16,8 @@ export class FrequenciaComAlunoDto {
   @ApiProperty({ enum: StatusFrequencia })
   status: StatusFrequencia;
 
-  @ApiProperty({ type: FrequenciaAlunoResumoDto })
-  aluno: FrequenciaAlunoResumoDto;
+  @ApiProperty({ type: AlunoResumoDto })
+  aluno: AlunoResumoDto;
 }
 
 export class AulaDetalheDto extends AulaDto {

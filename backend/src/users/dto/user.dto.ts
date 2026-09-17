@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../../generated/prisma/client';
+import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 
 class UserProfessorResumoDto {
   @ApiProperty()
@@ -9,16 +10,7 @@ class UserProfessorResumoDto {
   nome: string;
 }
 
-class UserAlunoResumoDto {
-  @ApiProperty()
-  id: string;
-
-  @ApiProperty()
-  nome: string;
-
-  @ApiProperty()
-  matricula: string;
-
+class UserAlunoResumoDto extends AlunoResumoDto {
   @ApiProperty({ nullable: true, type: String })
   turmaId: string | null;
 }
