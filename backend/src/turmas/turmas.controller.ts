@@ -8,12 +8,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
 import { TurmasService } from './turmas.service';
 import { CreateTurmaDto } from './dto/create-turma.dto';
 import { UpdateTurmaDto } from './dto/update-turma.dto';
+import { TurmaDto } from './dto/turma.dto';
 
 @ApiTags('turmas')
 @Roles(Role.ADMIN)
@@ -27,7 +28,8 @@ export class TurmasController {
   }
 
   @Get()
-  findAll(@Query('semestreId') semestreId?: string) {
+  @ApiOkResponse({ type: TurmaDto, isArray: true })
+  findAll(@Query('semestreId') semestreId?: string): Promise<TurmaDto[]> {
     return this.service.findAll(semestreId);
   }
 

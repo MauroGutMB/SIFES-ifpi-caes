@@ -18,11 +18,27 @@ export class FotoSolicitacoesService {
     private readonly usersService: UsersService,
   ) {}
 
+  /** Um aluno só tem uma solicitação "em voo" por vez: se já existe uma PENDENTE, o novo
+   * envio troca o arquivo dela em vez de criar outra — o aluno está editando a foto que
+   * enviou, não abrindo um pedido novo. */
   async criar(alunoId: string, file: Express.Multer.File) {
     await mkdir(FOTOS_PENDENTES_DIR, { recursive: true });
     const ext = EXT_BY_MIME[file.mimetype];
     const nomeArquivo = `${randomUUID()}.${ext}`;
     await writeFile(join(FOTOS_PENDENTES_DIR, nomeArquivo), file.buffer);
+
+    const pendente = await this.prisma.solicitacaoFoto.findFirst({
+      where: { alunoId, status: StatusSolicitacaoFoto.PENDENTE },
+    });
+    if (pendente) {
+      await unlink(join(FOTOS_PENDENTES_DIR, pendente.arquivoStagingUrl)).catch(
+        () => undefined,
+      );
+      return this.prisma.solicitacaoFoto.update({
+        where: { id: pendente.id },
+        data: { arquivoStagingUrl: nomeArquivo },
+      });
+    }
 
     return this.prisma.solicitacaoFoto.create({
       data: { alunoId, arquivoStagingUrl: nomeArquivo },

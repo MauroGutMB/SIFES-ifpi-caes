@@ -3,7 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EstadoMateria, Prisma, Role } from '../../generated/prisma/client';
+import {
+  DiaSemana,
+  EstadoMateria,
+  Prisma,
+  Role,
+} from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { BoletimService } from '../boletim/boletim.service';
@@ -14,6 +19,7 @@ import { UpdateMateriaDto } from './dto/update-materia.dto';
 import { gerarOcorrenciasAula, validarHorario } from './horario.util';
 
 type Tx = Prisma.TransactionClient;
+type Horario = { diaSemana: DiaSemana; horaInicio: string };
 
 @Injectable()
 export class MateriasService {
@@ -46,100 +52,154 @@ export class MateriasService {
     return data.toISOString().slice(0, 10);
   }
 
+  private validarHorarios(horarios: Horario[]) {
+    for (const horario of horarios) {
+      const erro = validarHorario(horario.horaInicio);
+      if (erro) {
+        throw new BadRequestException(erro);
+      }
+    }
+  }
+
   /**
-   * Alinha as Aulas de uma Matéria ao horário semanal + intervalo do Semestre atuais:
-   * remove as que não têm mais data correspondente, cria as que faltam e atualiza o
-   * horário das que continuam válidas — sem apagar/recriar o que não precisa mudar
-   * (o Semestre é editável a qualquer momento pelo admin, e isso não pode destruir
-   * lançamentos já feitos numa Aula que continua dentro do novo intervalo).
+   * Dentro de uma mesma Turma, dois slots com o mesmo dia+horário não podem pertencer a
+   * Matérias diferentes — a Turma (seus alunos) não pode estar em duas aulas ao mesmo tempo.
+   */
+  private async validarConflitosDeHorario(
+    turmaId: string,
+    materiaId: string | null,
+    horarios: Horario[],
+  ) {
+    for (const horario of horarios) {
+      const conflito = await this.prisma.horarioMateria.findFirst({
+        where: {
+          diaSemana: horario.diaSemana,
+          horaInicio: horario.horaInicio,
+          materia: {
+            turmaId,
+            id: materiaId ? { not: materiaId } : undefined,
+          },
+        },
+        include: { materia: true },
+      });
+      if (conflito) {
+        throw new BadRequestException(
+          `Conflito de horário: a turma já tem "${conflito.materia.nome}" em ` +
+            `${horario.diaSemana} às ${horario.horaInicio}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Alinha as Aulas de uma Matéria aos seus slots semanais + intervalo do Semestre atuais:
+   * remove as que não têm mais ocorrência correspondente, cria as que faltam e atualiza o
+   * horário das que continuam válidas — sem apagar/recriar o que não precisa mudar (o Semestre
+   * é editável a qualquer momento pelo admin, e isso não pode destruir lançamentos já feitos
+   * numa Aula que continua válida). Casadas por data + posição na lista de ocorrências do dia,
+   * já que uma Matéria pode ter mais de um slot no mesmo dia da semana.
    */
   private async sincronizarAulas(
     tx: Tx,
     materiaId: string,
     dataInicioSemestre: Date,
     dataFimSemestre: Date,
-    diaSemana: Parameters<typeof gerarOcorrenciasAula>[2],
-    horaInicioStr: string,
+    horarios: Horario[],
   ) {
-    const esperadas = gerarOcorrenciasAula(
-      dataInicioSemestre,
-      dataFimSemestre,
-      diaSemana,
-      horaInicioStr,
+    const esperadas = horarios.flatMap((horario) =>
+      gerarOcorrenciasAula(
+        dataInicioSemestre,
+        dataFimSemestre,
+        horario.diaSemana,
+        horario.horaInicio,
+      ),
     );
-    const esperadasPorData = new Map(
-      esperadas.map((ocorrencia) => [
-        this.dataKey(ocorrencia.data),
-        ocorrencia,
-      ]),
-    );
+    const esperadasPorDia = new Map<string, typeof esperadas>();
+    for (const ocorrencia of esperadas) {
+      const chave = this.dataKey(ocorrencia.data);
+      const lista = esperadasPorDia.get(chave) ?? [];
+      lista.push(ocorrencia);
+      esperadasPorDia.set(chave, lista);
+    }
+    for (const lista of esperadasPorDia.values()) {
+      lista.sort((a, b) => a.horaInicio.getTime() - b.horaInicio.getTime());
+    }
 
     const existentes = await tx.aula.findMany({
       where: { materiaId },
+      orderBy: { horaInicio: 'asc' },
       select: { id: true, data: true, horaInicio: true },
     });
-    const existentesPorData = new Map(
-      existentes.map((aula) => [this.dataKey(aula.data), aula]),
-    );
-
-    const idsRemover = existentes
-      .filter((aula) => !esperadasPorData.has(this.dataKey(aula.data)))
-      .map((aula) => aula.id);
-    if (idsRemover.length > 0) {
-      await tx.aula.deleteMany({ where: { id: { in: idsRemover } } });
+    const existentesPorDia = new Map<string, typeof existentes>();
+    for (const aula of existentes) {
+      const chave = this.dataKey(aula.data);
+      const lista = existentesPorDia.get(chave) ?? [];
+      lista.push(aula);
+      existentesPorDia.set(chave, lista);
     }
 
-    const aCriar: {
-      materiaId: string;
-      data: Date;
-      horaInicio: Date;
-      horaFim: Date;
-    }[] = [];
-    for (const [dataStr, ocorrencia] of esperadasPorData) {
-      const existente = existentesPorData.get(dataStr);
-      if (!existente) {
-        aCriar.push({
-          materiaId,
-          data: ocorrencia.data,
-          horaInicio: ocorrencia.horaInicio,
-          horaFim: ocorrencia.horaFim,
-        });
-      } else if (
-        existente.horaInicio.getTime() !== ocorrencia.horaInicio.getTime()
-      ) {
-        await tx.aula.update({
-          where: { id: existente.id },
-          data: {
-            horaInicio: ocorrencia.horaInicio,
-            horaFim: ocorrencia.horaFim,
-          },
-        });
+    let criadas = 0;
+    let removidas = 0;
+    const todosOsDias = new Set([
+      ...esperadasPorDia.keys(),
+      ...existentesPorDia.keys(),
+    ]);
+
+    for (const dia of todosOsDias) {
+      const esperadasNoDia = esperadasPorDia.get(dia) ?? [];
+      const existentesNoDia = existentesPorDia.get(dia) ?? [];
+      const max = Math.max(esperadasNoDia.length, existentesNoDia.length);
+
+      for (let i = 0; i < max; i++) {
+        const esperada = esperadasNoDia[i];
+        const existente = existentesNoDia[i];
+
+        if (esperada && existente) {
+          if (
+            existente.horaInicio.getTime() !== esperada.horaInicio.getTime()
+          ) {
+            await tx.aula.update({
+              where: { id: existente.id },
+              data: {
+                horaInicio: esperada.horaInicio,
+                horaFim: esperada.horaFim,
+              },
+            });
+          }
+        } else if (esperada && !existente) {
+          await tx.aula.create({
+            data: {
+              materiaId,
+              data: esperada.data,
+              horaInicio: esperada.horaInicio,
+              horaFim: esperada.horaFim,
+            },
+          });
+          criadas++;
+        } else if (!esperada && existente) {
+          await tx.aula.delete({ where: { id: existente.id } });
+          removidas++;
+        }
       }
     }
-    if (aCriar.length > 0) {
-      await tx.aula.createMany({ data: aCriar });
-    }
 
-    return { criadas: aCriar.length, removidas: idsRemover.length };
+    return { criadas, removidas };
   }
 
   async create(dto: CreateMateriaDto) {
     const turma = await this.carregarTurmaComSemestre(dto.turmaId);
     await this.validarProfessor(dto.professorId);
-
-    const erroHorario = validarHorario(dto.horaInicio);
-    if (erroHorario) {
-      throw new BadRequestException(erroHorario);
-    }
+    this.validarHorarios(dto.horarios);
+    await this.validarConflitosDeHorario(dto.turmaId, null, dto.horarios);
 
     return this.prisma.$transaction(async (tx) => {
       const materia = await tx.materia.create({
         data: {
+          nome: dto.nome,
           turmaId: dto.turmaId,
           professorId: dto.professorId,
           cargaHorariaReferencia: dto.cargaHorariaReferencia,
-          diaSemana: dto.diaSemana,
-          horaInicio: dto.horaInicio,
+          horarios: { createMany: { data: dto.horarios } },
         },
       });
 
@@ -148,22 +208,28 @@ export class MateriasService {
         materia.id,
         turma.semestre.dataInicio,
         turma.semestre.dataFim,
-        dto.diaSemana,
-        dto.horaInicio,
+        dto.horarios,
       );
 
       return { ...materia, aulasGeradas: sincronizado.criadas };
     });
   }
 
-  findAll(filtros: { turmaId?: string; professorId?: string }) {
+  findAll(filtros: {
+    turmaId?: string;
+    professorId?: string;
+    vinculadoAlunoId?: string;
+  }) {
     return this.prisma.materia.findMany({
       where: {
         turmaId: filtros.turmaId,
         professorId: filtros.professorId,
+        vinculos: filtros.vinculadoAlunoId
+          ? { some: { alunoId: filtros.vinculadoAlunoId } }
+          : undefined,
       },
-      include: { turma: true, professor: true },
-      orderBy: { diaSemana: 'asc' },
+      include: { turma: true, professor: true, horarios: true },
+      orderBy: { nome: 'asc' },
     });
   }
 
@@ -173,6 +239,7 @@ export class MateriasService {
       include: {
         turma: true,
         professor: true,
+        horarios: true,
         _count: { select: { aulas: true, vinculos: true } },
       },
     });
@@ -181,7 +248,7 @@ export class MateriasService {
   async update(id: string, dto: UpdateMateriaDto) {
     const materiaAtual = await this.prisma.materia.findUniqueOrThrow({
       where: { id },
-      include: { turma: { include: { semestre: true } } },
+      include: { turma: { include: { semestre: true } }, horarios: true },
     });
 
     const turma = dto.turmaId
@@ -192,33 +259,42 @@ export class MateriasService {
       await this.validarProfessor(dto.professorId);
     }
 
-    const diaSemana = dto.diaSemana ?? materiaAtual.diaSemana;
-    const horaInicio = dto.horaInicio ?? materiaAtual.horaInicio;
+    const horarios: Horario[] =
+      dto.horarios ??
+      materiaAtual.horarios.map((h) => ({
+        diaSemana: h.diaSemana,
+        horaInicio: h.horaInicio,
+      }));
+    this.validarHorarios(horarios);
 
-    const erroHorario = validarHorario(horaInicio);
-    if (erroHorario) {
-      throw new BadRequestException(erroHorario);
+    if (dto.horarios || dto.turmaId) {
+      await this.validarConflitosDeHorario(turma.id, id, horarios);
     }
 
     return this.prisma.$transaction(async (tx) => {
       const materia = await tx.materia.update({
         where: { id },
         data: {
+          nome: dto.nome,
           turmaId: dto.turmaId,
           professorId: dto.professorId,
           cargaHorariaReferencia: dto.cargaHorariaReferencia,
-          diaSemana: dto.diaSemana,
-          horaInicio: dto.horaInicio,
         },
       });
+
+      if (dto.horarios) {
+        await tx.horarioMateria.deleteMany({ where: { materiaId: id } });
+        await tx.horarioMateria.createMany({
+          data: dto.horarios.map((h) => ({ ...h, materiaId: id })),
+        });
+      }
 
       await this.sincronizarAulas(
         tx,
         id,
         turma.semestre.dataInicio,
         turma.semestre.dataFim,
-        diaSemana,
-        horaInicio,
+        horarios,
       );
 
       return materia;
@@ -332,6 +408,7 @@ export class MateriasService {
     });
     const materias = await this.prisma.materia.findMany({
       where: { turma: { semestreId } },
+      include: { horarios: true },
     });
 
     return this.prisma.$transaction(async (tx) => {
@@ -348,8 +425,7 @@ export class MateriasService {
             materia.id,
             semestre.dataInicio,
             semestre.dataFim,
-            materia.diaSemana,
-            materia.horaInicio,
+            materia.horarios,
           )),
         });
       }

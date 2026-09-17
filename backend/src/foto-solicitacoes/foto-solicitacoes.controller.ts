@@ -7,13 +7,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { FOTO_MIME_REGEX, MAX_FOTO_BYTES } from '../common/foto.util';
 import { FotoSolicitacoesService } from './foto-solicitacoes.service';
+import { MinhaSolicitacaoFotoDto } from './dto/minha-solicitacao-foto.dto';
 
 @ApiTags('foto-solicitacoes')
 @Roles(Role.ALUNO)
@@ -22,12 +23,22 @@ export class FotoSolicitacoesController {
   constructor(private readonly service: FotoSolicitacoesService) {}
 
   @Get()
-  minhas(@CurrentUser() user: AuthenticatedUser) {
+  @ApiOkResponse({ type: MinhaSolicitacaoFotoDto, isArray: true })
+  minhas(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<MinhaSolicitacaoFotoDto[]> {
     return this.service.listarMinhas(user.alunoId!);
   }
 
   @Post()
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['foto'],
+      properties: { foto: { type: 'string', format: 'binary' } },
+    },
+  })
   @UseInterceptors(FileInterceptor('foto'))
   solicitar(
     @CurrentUser() user: AuthenticatedUser,

@@ -5,14 +5,17 @@ import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { MATERIAIS_AULA_DIR } from '../common/foto.util';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 
 @Injectable()
 export class MateriaisAulaService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async carregarAulaComPosse(aulaId: string, user: AuthenticatedUser) {
+  private async carregarAula(aulaId: string, user: AuthenticatedUser) {
     const aula = await this.prisma.aula.findUnique({
       where: { id: aulaId },
       include: { materia: true },
@@ -20,9 +23,10 @@ export class MateriaisAulaService {
     if (!aula) {
       throw new NotFoundException('Aula não encontrada');
     }
-    garantirPosseProfessor(
+    await garantirAcessoLeituraMateria(
+      this.prisma,
       user,
-      aula.materia.professorId,
+      aula.materia,
       'Aula não encontrada',
     );
     return aula;
@@ -50,7 +54,7 @@ export class MateriaisAulaService {
     file: Express.Multer.File,
     user: AuthenticatedUser,
   ) {
-    await this.carregarAulaComPosse(aulaId, user);
+    await this.carregarAula(aulaId, user);
 
     await mkdir(MATERIAIS_AULA_DIR, { recursive: true });
     const ext = extname(file.originalname) || '';
@@ -67,7 +71,7 @@ export class MateriaisAulaService {
   }
 
   async listar(aulaId: string, user: AuthenticatedUser) {
-    await this.carregarAulaComPosse(aulaId, user);
+    await this.carregarAula(aulaId, user);
     return this.prisma.materialAula.findMany({
       where: { aulaId },
       orderBy: { postadoEm: 'desc' },

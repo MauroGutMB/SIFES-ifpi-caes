@@ -7,12 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "codegen": "orval --config orval.config.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.9.1",
+    "@mui/icons-material": "^9.4.0",
     "@mui/material": "^9.4.0",
     "@mui/x-data-grid": "^9.13.0",
     "@mui/x-date-pickers": "^9.13.0",

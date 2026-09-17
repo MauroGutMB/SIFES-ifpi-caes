@@ -30,3 +30,12 @@ export function agoraComoBrasiliaFake(agoraReal: Date = new Date()): Date {
     ),
   );
 }
+
+/** Data de hoje (meia-noite, no mesmo esquema "UTC de mentira" de Brasília) —
+ * usada para comparar com `Aula.data` ignorando o horário do dia. */
+export function hojeComoBrasiliaFake(agoraReal: Date = new Date()): Date {
+  const agora = agoraComoBrasiliaFake(agoraReal);
+  return new Date(
+    Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate()),
+  );
+}

@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { garantirPosseProfessor } from '../common/posse.util';
+import { Role } from '../../generated/prisma/client';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
+import { hojeComoBrasiliaFake } from '../common/tempo.util';
 import { calcularEstadoAula } from './estado-aula.util';
 import { UpdateAulaDto } from './dto/update-aula.dto';
 import { SetFrequenciasDto } from './dto/set-frequencias.dto';
@@ -32,7 +37,7 @@ export class AulasService {
     return aula;
   }
 
-  private async carregarMateriaComPosse(
+  private async carregarMateriaComAcessoLeitura(
     materiaId: string,
     user: AuthenticatedUser,
   ) {
@@ -42,35 +47,83 @@ export class AulasService {
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
   async findAllPorMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
+    await this.carregarMateriaComAcessoLeitura(materiaId, user);
+    // Aulas com data futura não aparecem pra professor/aluno — só o admin, que usa essa
+    // mesma listagem pra gerenciar overrides, enxerga o calendário completo do semestre.
+    const filtroData =
+      user.role === Role.ADMIN ? {} : { data: { lte: hojeComoBrasiliaFake() } };
     const aulas = await this.prisma.aula.findMany({
-      where: { materiaId },
+      where: { materiaId, ...filtroData },
+      include: { _count: { select: { frequencias: true } } },
       orderBy: { data: 'asc' },
     });
-    return aulas.map((aula) => ({ ...aula, estado: calcularEstadoAula(aula) }));
+    return aulas.map(({ _count, ...aula }) => ({
+      ...aula,
+      estado: calcularEstadoAula({
+        estadoOverride: aula.estadoOverride,
+        titulo: aula.titulo,
+        descricao: aula.descricao,
+        temFrequencias: _count.frequencias > 0,
+      }),
+    }));
   }
 
   async findOne(id: string, user: AuthenticatedUser) {
     const aula = await this.carregarAulaComPosse(id, user);
-    const frequencias = await this.prisma.frequencia.findMany({
-      where: { aulaId: id },
-      include: { aluno: { select: { id: true, nome: true, matricula: true } } },
+    const [vinculados, existentes] = await Promise.all([
+      this.prisma.vinculoAlunoMateria.findMany({
+        where: { materiaId: aula.materiaId },
+        include: {
+          aluno: { select: { id: true, nome: true, matricula: true } },
+        },
+        orderBy: { aluno: { nome: 'asc' } },
+      }),
+      this.prisma.frequencia.findMany({ where: { aulaId: id } }),
+    ]);
+    const statusPorAluno = new Map(
+      existentes.map((f) => [f.alunoId, f.status]),
+    );
+    // A aula nunca lançada não tem Frequencia salva ainda — a lista sempre parte do
+    // vínculo da turma com a matéria, não do que já foi registrado, senão o professor
+    // não teria como lançar frequência pela primeira vez.
+    const frequencias = vinculados.map((vinculo) => ({
+      id: existentes.find((f) => f.alunoId === vinculo.alunoId)?.id ?? null,
+      aulaId: id,
+      alunoId: vinculo.alunoId,
+      status: statusPorAluno.get(vinculo.alunoId) ?? ('PRESENTE' as const),
+      aluno: vinculo.aluno,
+    }));
+    const estado = calcularEstadoAula({
+      estadoOverride: aula.estadoOverride,
+      titulo: aula.titulo,
+      descricao: aula.descricao,
+      temFrequencias: existentes.length > 0,
     });
-    return { ...aula, estado: calcularEstadoAula(aula), frequencias };
+    return { ...aula, estado, frequencias };
+  }
+
+  private garantirDataNaoFutura(aula: { data: Date }, mensagem: string) {
+    if (aula.data.getTime() > hojeComoBrasiliaFake().getTime()) {
+      throw new BadRequestException(mensagem);
+    }
   }
 
   async update(id: string, dto: UpdateAulaDto, user: AuthenticatedUser) {
     const aula = await this.carregarAulaComPosse(id, user);
-    if (calcularEstadoAula(aula) !== 'LANCADO') {
-      throw new BadRequestException(
-        'Aula só pode ser editada enquanto estiver no estado lançado',
-      );
-    }
+    this.garantirDataNaoFutura(
+      aula,
+      'Não é possível editar uma aula com data futura',
+    );
     return this.prisma.aula.update({
       where: { id },
       data: { titulo: dto.titulo, descricao: dto.descricao },
@@ -83,11 +136,10 @@ export class AulasService {
     user: AuthenticatedUser,
   ) {
     const aula = await this.carregarAulaComPosse(id, user);
-    if (calcularEstadoAula(aula) !== 'LANCADO') {
-      throw new BadRequestException(
-        'Frequência só pode ser lançada enquanto a Aula estiver no estado lançado',
-      );
-    }
+    this.garantirDataNaoFutura(
+      aula,
+      'Não é possível lançar frequência de uma aula com data futura',
+    );
 
     const alunoIds = dto.frequencias.map((f) => f.alunoId);
     const vinculados = await this.prisma.vinculoAlunoMateria.count({

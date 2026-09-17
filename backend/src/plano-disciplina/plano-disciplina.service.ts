@@ -6,8 +6,12 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { EstadoMateria } from '../../generated/prisma/client';
+import { Role } from '../../generated/prisma/client';
 import { BoletimService } from '../boletim/boletim.service';
-import { garantirPosseProfessor } from '../common/posse.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
@@ -19,17 +23,19 @@ export class PlanoDisciplinaService {
     private readonly boletim: BoletimService,
   ) {}
 
-  private async carregarMateriaComPosse(
-    materiaId: string,
-    user: AuthenticatedUser,
-  ) {
+  private async carregarMateria(materiaId: string, user: AuthenticatedUser) {
     const materia = await this.prisma.materia.findUnique({
       where: { id: materiaId },
     });
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
@@ -62,7 +68,7 @@ export class PlanoDisciplinaService {
     dto: CreateItemAvaliacaoDto,
     user: AuthenticatedUser,
   ) {
-    const materia = await this.carregarMateriaComPosse(materiaId, user);
+    const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     return this.prisma.itemAvaliacao.create({
       data: { materiaId, nome: dto.nome, valorMaximo: dto.valorMaximo },
@@ -70,8 +76,14 @@ export class PlanoDisciplinaService {
   }
 
   async listarItens(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
-    return this.prisma.itemAvaliacao.findMany({ where: { materiaId } });
+    await this.carregarMateria(materiaId, user);
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+    });
+    return itens.map((item) => ({
+      ...item,
+      valorMaximo: item.valorMaximo.toString(),
+    }));
   }
 
   async atualizarItem(
@@ -141,7 +153,54 @@ export class PlanoDisciplinaService {
   }
 
   async boletimMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
-    return this.boletim.calcularBoletimMateria(materiaId);
+    await this.carregarMateria(materiaId, user);
+    const linhas = await this.boletim.calcularBoletimMateria(materiaId);
+    // Aluno só vê a própria linha do boletim, nunca a da turma inteira.
+    if (user.role === Role.ALUNO) {
+      return linhas.filter((linha) => linha.aluno.id === user.alunoId);
+    }
+    return linhas;
+  }
+
+  /** Detalhamento de notas por item de UM aluno — usado pelo professor pra editar as notas
+   * já lançadas dele a partir do boletim, sem precisar abrir item por item. */
+  async detalhamentoAluno(
+    materiaId: string,
+    alunoId: string,
+    user: AuthenticatedUser,
+  ) {
+    await this.carregarMateria(materiaId, user);
+    const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
+      where: { alunoId_materiaId: { alunoId, materiaId } },
+    });
+    if (!vinculado) {
+      throw new NotFoundException('Aluno não vinculado a esta matéria');
+    }
+
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+      include: { notas: { where: { alunoId } } },
+    });
+    return itens.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      valorMaximo: item.valorMaximo.toString(),
+      valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+    }));
+  }
+
+  async meuDetalhamento(materiaId: string, user: AuthenticatedUser) {
+    await this.carregarMateria(materiaId, user);
+
+    const itens = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+      include: { notas: { where: { alunoId: user.alunoId! } } },
+    });
+    return itens.map((item) => ({
+      id: item.id,
+      nome: item.nome,
+      valorMaximo: item.valorMaximo.toString(),
+      valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+    }));
   }
 }

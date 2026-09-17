@@ -26,8 +26,25 @@ As requisições de criação (`Criar Semestre`, `Criar Turma`, `Criar Professor
 script de teste que captura o `id` da resposta e já grava na variável de ambiente certa — não
 precisa copiar/colar manualmente.
 
-Requisições de upload (foto, material de aula, entrega de atividade) usam `multipart/form-data`
-com um campo de arquivo vazio — selecione o arquivo manualmente no Postman antes de enviar.
+Requisições de upload (foto, material de aula, entrega de atividade, `Criar Atividade`,
+`Atualizar Atividade`) usam `multipart/form-data` com um campo de arquivo vazio — selecione o
+arquivo manualmente no Postman antes de enviar. `Criar Atividade` agora exige `prazo` (data/hora
+limite de entrega, ISO 8601); depois do prazo o aluno não consegue mais enviar `entrega`.
 
 `DELETE /users/:userId/foto` precisa do id do **User** (não do Aluno/Professor) — pegue esse id na
 resposta de `GET /users/me` ou de qualquer endpoint que inclua `userId`.
+
+Endpoints novos nesta atualização:
+
+- **Plano de Disciplina → Detalhamento de Notas de um Aluno (Professor/Admin)** — mesma tela do
+  boletim, mas para editar as notas lançadas de um aluno específico.
+- **Atividades e Entregas → Meu Resumo de Atividades (Aluno)** — contagem de atividades
+  concluídas/pendentes/vencidas por matéria, usada no dashboard do aluno.
+- **Relatorios → Frequencia Detalhada da Turma (JSON)** — mesmo relatório de frequência por turma,
+  porém em JSON (não PDF/Excel), com detalhamento por aula (`aulaId`) e foto do aluno (`fotoUrl`);
+  aceita filtros opcionais `materiaId`, `alunoId`, `dataInicio`, `dataFim`. Aluno só vê a própria
+  frequência mesmo que tente forçar outro `alunoId` na query.
+
+`Solicitar Troca de Foto (Aluno)` agora funciona como upsert: se já existir uma solicitação
+pendente, o mesmo request substitui a foto enviada nela em vez de criar uma segunda solicitação —
+não repita a chamada esperando duas pendências.

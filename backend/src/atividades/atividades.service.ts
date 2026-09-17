@@ -5,12 +5,15 @@ import {
 } from '@nestjs/common';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { randomUUID } from 'crypto';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { EstadoMateria } from '../../generated/prisma/client';
-import { ENTREGAS_DIR } from '../common/foto.util';
-import { garantirPosseProfessor } from '../common/posse.util';
+import { ATIVIDADES_DIR, ENTREGAS_DIR } from '../common/foto.util';
+import {
+  garantirAcessoLeituraMateria,
+  garantirPosseProfessor,
+} from '../common/posse.util';
 import { extensaoPorMime, mimeRegexParaFormato } from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
@@ -19,17 +22,19 @@ import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 export class AtividadesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async carregarMateriaComPosse(
-    materiaId: string,
-    user: AuthenticatedUser,
-  ) {
+  private async carregarMateria(materiaId: string, user: AuthenticatedUser) {
     const materia = await this.prisma.materia.findUnique({
       where: { id: materiaId },
     });
     if (!materia) {
       throw new NotFoundException('Matéria não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    await garantirAcessoLeituraMateria(
+      this.prisma,
+      user,
+      materia,
+      'Matéria não encontrada',
+    );
     return materia;
   }
 
@@ -60,12 +65,28 @@ export class AtividadesService {
     return atividade;
   }
 
+  private async salvarAnexo(file: Express.Multer.File): Promise<string> {
+    await mkdir(ATIVIDADES_DIR, { recursive: true });
+    const ext = extname(file.originalname) || '';
+    const nomeArquivo = `${randomUUID()}${ext}`;
+    await writeFile(join(ATIVIDADES_DIR, nomeArquivo), file.buffer);
+    return `/uploads/atividades/${nomeArquivo}`;
+  }
+
+  private async removerAnexo(arquivoUrl: string | null) {
+    const nomeArquivo = arquivoUrl?.split('/').pop();
+    if (nomeArquivo) {
+      await unlink(join(ATIVIDADES_DIR, nomeArquivo)).catch(() => undefined);
+    }
+  }
+
   async criar(
     materiaId: string,
     dto: CreateAtividadeDto,
     user: AuthenticatedUser,
+    anexo?: Express.Multer.File,
   ) {
-    const materia = await this.carregarMateriaComPosse(materiaId, user);
+    const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     return this.prisma.atividade.create({
       data: {
@@ -73,12 +94,14 @@ export class AtividadesService {
         titulo: dto.titulo,
         descricao: dto.descricao,
         formatoExigido: dto.formatoExigido,
+        prazo: new Date(dto.prazo),
+        arquivoUrl: anexo ? await this.salvarAnexo(anexo) : null,
       },
     });
   }
 
   async listarPorMateria(materiaId: string, user: AuthenticatedUser) {
-    await this.carregarMateriaComPosse(materiaId, user);
+    await this.carregarMateria(materiaId, user);
     return this.prisma.atividade.findMany({
       where: { materiaId },
       orderBy: { criadaEm: 'desc' },
@@ -89,15 +112,23 @@ export class AtividadesService {
     id: string,
     dto: UpdateAtividadeDto,
     user: AuthenticatedUser,
+    anexo?: Express.Multer.File,
   ) {
     const atividade = await this.carregarAtividadeComPosseProfessor(id, user);
     this.garantirAberta(atividade.materia);
+    let arquivoUrl = atividade.arquivoUrl;
+    if (anexo) {
+      await this.removerAnexo(atividade.arquivoUrl);
+      arquivoUrl = await this.salvarAnexo(anexo);
+    }
     return this.prisma.atividade.update({
       where: { id },
       data: {
         titulo: dto.titulo,
         descricao: dto.descricao,
         formatoExigido: dto.formatoExigido,
+        prazo: dto.prazo ? new Date(dto.prazo) : undefined,
+        arquivoUrl,
       },
     });
   }
@@ -105,6 +136,7 @@ export class AtividadesService {
   async remover(id: string, user: AuthenticatedUser) {
     const atividade = await this.carregarAtividadeComPosseProfessor(id, user);
     this.garantirAberta(atividade.materia);
+    await this.removerAnexo(atividade.arquivoUrl);
     return this.prisma.atividade.delete({ where: { id } });
   }
 
@@ -130,6 +162,11 @@ export class AtividadesService {
       throw new NotFoundException('Atividade não encontrada');
     }
     this.garantirAberta(atividade.materia);
+    if (atividade.prazo && new Date() > atividade.prazo) {
+      throw new BadRequestException(
+        'O prazo de entrega desta Atividade já passou',
+      );
+    }
 
     const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
       where: {

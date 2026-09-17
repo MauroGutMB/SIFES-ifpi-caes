@@ -9,13 +9,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { MateriaisAulaService } from './materiais-aula.service';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
+import { MaterialAulaDto } from './dto/material-aula.dto';
 
 const MAX_MATERIAL_BYTES = 20 * 1024 * 1024; // 20MB
 
@@ -27,6 +28,16 @@ export class MateriaisAulaController {
 
   @Post()
   @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['titulo', 'arquivo'],
+      properties: {
+        titulo: { type: 'string' },
+        arquivo: { type: 'string', format: 'binary' },
+      },
+    },
+  })
   @UseInterceptors(FileInterceptor('arquivo'))
   criar(
     @Param('aulaId') aulaId: string,
@@ -42,11 +53,13 @@ export class MateriaisAulaController {
     return this.service.criar(aulaId, dto, file, user);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
+  @ApiOkResponse({ type: MaterialAulaDto, isArray: true })
   listar(
     @Param('aulaId') aulaId: string,
     @CurrentUser() user: AuthenticatedUser,
-  ) {
+  ): Promise<MaterialAulaDto[]> {
     return this.service.listar(aulaId, user);
   }
 }

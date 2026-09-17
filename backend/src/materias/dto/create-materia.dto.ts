@@ -1,8 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsUUID, Matches, Min } from 'class-validator';
-import { DiaSemana } from '../../../generated/prisma/client';
+import { Type } from 'class-transformer';
+import {
+  ArrayMinSize,
+  IsInt,
+  IsString,
+  IsUUID,
+  Min,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { HorarioMateriaInputDto } from './horario-materia.dto';
 
 export class CreateMateriaDto {
+  @ApiProperty({ example: 'Matemática' })
+  @IsString()
+  @MinLength(1)
+  nome: string;
+
   @ApiProperty()
   @IsUUID()
   turmaId: string;
@@ -19,14 +33,14 @@ export class CreateMateriaDto {
   @Min(1)
   cargaHorariaReferencia: number;
 
-  @ApiProperty({ enum: DiaSemana })
-  @IsEnum(DiaSemana)
-  diaSemana: DiaSemana;
-
   @ApiProperty({
-    example: '08:00',
-    description: 'Horário de início, formato HH:mm',
+    type: HorarioMateriaInputDto,
+    isArray: true,
+    description:
+      'Slots semanais recorrentes — a Matéria pode se encontrar mais de uma vez por semana',
   })
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
-  horaInicio: string;
+  @ValidateNested({ each: true })
+  @Type(() => HorarioMateriaInputDto)
+  @ArrayMinSize(1)
+  horarios: HorarioMateriaInputDto[];
 }

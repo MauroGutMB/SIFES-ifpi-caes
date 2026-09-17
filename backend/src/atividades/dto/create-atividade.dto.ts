@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { FormatoArquivo } from '../../../generated/prisma/client';
 
 export class CreateAtividadeDto {
@@ -16,4 +22,8 @@ export class CreateAtividadeDto {
   @ApiProperty({ enum: FormatoArquivo })
   @IsEnum(FormatoArquivo)
   formatoExigido: FormatoArquivo;
+
+  @ApiProperty({ description: 'Data/hora limite para entrega, ISO 8601' })
+  @IsDateString()
+  prazo: string;
 }

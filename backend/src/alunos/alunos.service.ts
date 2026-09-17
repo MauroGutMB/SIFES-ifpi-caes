@@ -5,14 +5,20 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { BoletimService } from '../boletim/boletim.service';
 import { gerarSenhaInicial } from '../common/password.util';
 import { rethrowAsConflict } from '../common/prisma-error.util';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
+import { MeuSemestreDto } from './dto/meu-semestre.dto';
+import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
 
 @Injectable()
 export class AlunosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly boletim: BoletimService,
+  ) {}
 
   async create(dto: CreateAlunoDto) {
     const senhaInicial = gerarSenhaInicial();
@@ -45,6 +51,13 @@ export class AlunosService {
     return this.prisma.aluno.findUniqueOrThrow({
       where: { id },
       include: { turma: true },
+    });
+  }
+
+  meuPerfil(alunoId: string) {
+    return this.prisma.aluno.findUniqueOrThrow({
+      where: { id: alunoId },
+      include: { turma: { include: { semestre: true } } },
     });
   }
 
@@ -133,5 +146,113 @@ export class AlunosService {
       throw new NotFoundException('Aluno não está vinculado a esta matéria');
     }
     return resultado;
+  }
+
+  /**
+   * Histórico de semestres do aluno, derivado dos vínculos aluno-matéria (nada é apagado ao
+   * trocar de semestre — ver regras-negocio.md). Um por semestre distinto que ele já teve
+   * matéria vinculada, com um resumo de situação (aprovado/reprovado/cursando) calculado a
+   * partir do boletim de cada matéria daquele semestre.
+   */
+  async meusSemestres(alunoId: string) {
+    const aluno = await this.prisma.aluno.findUniqueOrThrow({
+      where: { id: alunoId },
+    });
+
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { alunoId },
+      include: {
+        materia: { include: { turma: { include: { semestre: true } } } },
+      },
+    });
+
+    const porSemestre = new Map<string, typeof vinculos>();
+    for (const vinculo of vinculos) {
+      const semestreId = vinculo.materia.turma.semestreId;
+      const lista = porSemestre.get(semestreId) ?? [];
+      lista.push(vinculo);
+      porSemestre.set(semestreId, lista);
+    }
+
+    const resultado: MeuSemestreDto[] = [];
+    for (const [, vinculosDoSemestre] of porSemestre) {
+      const primeiro = vinculosDoSemestre[0].materia.turma;
+      let aprovadas = 0;
+      let reprovadas = 0;
+      let cursando = 0;
+
+      for (const vinculo of vinculosDoSemestre) {
+        const boletim = await this.boletim.calcularBoletimMateria(
+          vinculo.materiaId,
+        );
+        const linha = boletim.find((b) => b.aluno.id === alunoId);
+        if (linha?.situacao === 'APROVADO') aprovadas++;
+        else if (linha?.situacao === 'REPROVADO') reprovadas++;
+        else cursando++;
+      }
+
+      resultado.push({
+        semestre: primeiro.semestre,
+        turma: {
+          cursoTecnico: primeiro.cursoTecnico,
+          anoSerie: primeiro.anoSerie,
+          turno: primeiro.turno,
+        },
+        atual: primeiro.id === aluno.turmaId,
+        totalMaterias: vinculosDoSemestre.length,
+        aprovadas,
+        reprovadas,
+        cursando,
+      });
+    }
+
+    resultado.sort(
+      (a, b) =>
+        b.semestre.dataInicio.getTime() - a.semestre.dataInicio.getTime(),
+    );
+    return resultado;
+  }
+
+  /** Contagem de atividades por matéria pra tela "Minha situação" — concluída (já entregou),
+   * pendente (ainda dentro do prazo, sem entrega) ou vencida (prazo passou, sem entrega). */
+  async resumoAtividades(
+    alunoId: string,
+  ): Promise<AtividadesResumoMateriaDto[]> {
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { alunoId },
+      include: {
+        materia: {
+          include: {
+            atividades: {
+              include: { entregas: { where: { alunoId } } },
+            },
+          },
+        },
+      },
+    });
+
+    const agora = new Date();
+    return vinculos.map((vinculo) => {
+      let concluidas = 0;
+      let pendentes = 0;
+      let vencidas = 0;
+      for (const atividade of vinculo.materia.atividades) {
+        if (atividade.entregas.length > 0) {
+          concluidas++;
+        } else if (atividade.prazo && agora > atividade.prazo) {
+          vencidas++;
+        } else {
+          pendentes++;
+        }
+      }
+      return {
+        materiaId: vinculo.materiaId,
+        materiaNome: vinculo.materia.nome,
+        concluidas,
+        pendentes,
+        vencidas,
+        total: vinculo.materia.atividades.length,
+      };
+    });
   }
 }

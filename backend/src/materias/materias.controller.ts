@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -16,6 +16,7 @@ import { Role } from '../../generated/prisma/client';
 import { MateriasService } from './materias.service';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
+import { MateriaDto } from './dto/materia.dto';
 
 @ApiTags('materias')
 @Roles(Role.ADMIN)
@@ -28,12 +29,25 @@ export class MateriasController {
     return this.service.create(dto);
   }
 
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
+  @ApiOkResponse({ type: MateriaDto, isArray: true })
   findAll(
+    @CurrentUser() user: AuthenticatedUser,
     @Query('turmaId') turmaId?: string,
     @Query('professorId') professorId?: string,
-  ) {
-    return this.service.findAll({ turmaId, professorId });
+  ): Promise<MateriaDto[]> {
+    // Professor só enxerga as próprias matérias, aluno só as que está vinculado —
+    // ignora professorId vindo da query pra esses dois papéis.
+    const professorIdEfetivo =
+      user.role === Role.PROFESSOR ? user.professorId : professorId;
+    const vinculadoAlunoId =
+      user.role === Role.ALUNO ? user.alunoId : undefined;
+    return this.service.findAll({
+      turmaId,
+      professorId: professorIdEfetivo,
+      vinculadoAlunoId,
+    });
   }
 
   @Get(':id')
