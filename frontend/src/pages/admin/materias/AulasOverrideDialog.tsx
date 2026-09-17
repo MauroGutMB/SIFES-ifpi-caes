@@ -25,7 +25,7 @@ interface AulasOverrideDialogProps {
 }
 
 const OPCOES_OVERRIDE = [
-  { value: '', label: 'Automático (por horário)' },
+  { value: '', label: 'Automático (por frequência lançada)' },
   { value: 'LANCADO', label: 'Forçar lançado' },
   { value: 'NAO_LANCADO', label: 'Forçar não lançado' },
 ] as const;

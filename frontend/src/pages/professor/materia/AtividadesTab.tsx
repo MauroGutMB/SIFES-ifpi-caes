@@ -121,7 +121,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Atividades</Typography>
         {materiaAberta && (
           <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>

@@ -9,8 +9,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweepOutlined';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import GroupAddIcon from '@mui/icons-material/GroupAddOutlined';
@@ -57,6 +58,11 @@ export function AlunosPage() {
     null,
   );
   const [erro, setErro] = useState<string | null>(null);
+  const [selecionados, setSelecionados] = useState<GridRowSelectionModel>({
+    type: 'include',
+    ids: new Set(),
+  });
+  const [confirmandoExclusaoEmMassa, setConfirmandoExclusaoEmMassa] = useState(false);
 
   const nomeTurma = useMemo(() => {
     const mapa = new Map((turmas ?? []).map((t) => [t.id, `${t.cursoTecnico} — ${t.anoSerie}`]));
@@ -150,8 +156,27 @@ export function AlunosPage() {
     await invalidar();
   };
 
+  const excluirSelecionados = async () => {
+    await Promise.all(
+      [...selecionados.ids].map((id) => remover.mutateAsync({ id: String(id) })),
+    );
+    await invalidar();
+    setSelecionados({ type: 'include', ids: new Set() });
+    setConfirmandoExclusaoEmMassa(false);
+  };
+
+  const salvarEdicaoInline = async (linhaNova: AlunoDto, linhaAntiga: AlunoDto) => {
+    if (linhaNova.nome === linhaAntiga.nome) return linhaNova;
+    await atualizar.mutateAsync({
+      id: linhaNova.id,
+      data: { nome: linhaNova.nome, matricula: linhaNova.matricula },
+    });
+    await invalidar();
+    return linhaNova;
+  };
+
   const columns: GridColDef<AlunoDto>[] = [
-    { field: 'nome', headerName: 'Nome', flex: 1 },
+    { field: 'nome', headerName: 'Nome', flex: 1, editable: true },
     { field: 'matricula', headerName: 'Matrícula', flex: 1 },
     {
       field: 'turmaId',
@@ -193,11 +218,23 @@ export function AlunosPage() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Alunos</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
-          Novo aluno
-        </Button>
+        <Stack direction="row" spacing={1}>
+          {selecionados.ids.size > 0 && (
+            <Button
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteSweepIcon />}
+              onClick={() => setConfirmandoExclusaoEmMassa(true)}
+            >
+              Excluir {selecionados.ids.size} selecionado(s)
+            </Button>
+          )}
+          <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
+            Novo aluno
+          </Button>
+        </Stack>
       </Box>
 
       <DataGrid
@@ -207,6 +244,11 @@ export function AlunosPage() {
         disableRowSelectionOnClick
         density="compact"
         autoHeight
+        showToolbar
+        checkboxSelection
+        rowSelectionModel={selecionados}
+        onRowSelectionModelChange={setSelecionados}
+        processRowUpdate={salvarEdicaoInline}
         initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
       />
 
@@ -276,6 +318,17 @@ export function AlunosPage() {
         onConfirm={excluir}
         onClose={() => setParaExcluir(null)}
         confirmValue={paraExcluir?.matricula}
+      />
+
+      <ConfirmDialog
+        open={confirmandoExclusaoEmMassa}
+        title={`Excluir ${selecionados.ids.size} aluno(s)?`}
+        description="Isso remove o login e todo o histórico de cada um — notas, frequência e atividades entregues. Não pode ser desfeito."
+        confirmLabel="Excluir selecionados"
+        confirmColor="error"
+        loading={remover.isPending}
+        onConfirm={excluirSelecionados}
+        onClose={() => setConfirmandoExclusaoEmMassa(false)}
       />
 
       {senhaGerada && (

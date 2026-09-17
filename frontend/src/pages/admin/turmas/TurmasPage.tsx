@@ -143,7 +143,7 @@ export function TurmasPage() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Turmas</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
           Nova turma

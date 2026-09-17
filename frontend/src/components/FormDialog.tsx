@@ -8,6 +8,8 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
 import { tokens } from '../theme/tokens';
@@ -46,6 +48,8 @@ export function FormDialog({
   children,
 }: FormDialogProps) {
   const [confirmandoFechar, setConfirmandoFechar] = useState(false);
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
   const pedirFechar = () => {
     if (isDirty) {
@@ -61,10 +65,11 @@ export function FormDialog({
         open={open}
         onClose={pedirFechar}
         maxWidth={false}
+        fullScreen={fullScreen}
         slotProps={{
           paper: {
             component: 'form',
-            sx: { width, maxWidth: '92vw' },
+            sx: fullScreen ? { borderTop: 0 } : { width, maxWidth: '92vw' },
             onSubmit: (event: React.FormEvent) => {
               event.preventDefault();
               onSubmit();
@@ -79,7 +84,9 @@ export function FormDialog({
           </Typography>
         )}
 
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2.5 }}>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2.5, flex: fullScreen ? 1 : undefined }}
+        >
           {error && (
             <Box
               role="alert"
@@ -109,6 +116,8 @@ export function FormDialog({
             py: 2,
             bgcolor: '#FAFBFA',
             borderTop: `1px solid ${tokens.border}`,
+            position: fullScreen ? 'sticky' : undefined,
+            bottom: fullScreen ? 0 : undefined,
           }}
         >
           <Button variant="outlined" onClick={pedirFechar} disabled={submitting}>

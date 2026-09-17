@@ -19,6 +19,7 @@ import { TurmaProfessorPage } from '../pages/professor/TurmaProfessorPage';
 import { AlunoHomePage } from '../pages/aluno/HomePage';
 import { MinhasMateriasTab } from '../pages/aluno/MinhasMateriasTab';
 import { BoletimTab } from '../pages/aluno/BoletimTab';
+import { FrequenciaTab } from '../pages/aluno/FrequenciaTab';
 import { TurmaTab } from '../pages/aluno/TurmaTab';
 import { SemestresTab } from '../pages/aluno/SemestresTab';
 import { MateriaAlunoPage } from '../pages/aluno/materia/MateriaAlunoPage';
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
                   { path: 'materias', element: <MinhasMateriasTab /> },
                   { path: 'materias/:materiaId', element: <MateriaAlunoPage /> },
                   { path: 'boletim', element: <BoletimTab /> },
+                  { path: 'frequencia', element: <FrequenciaTab /> },
                   { path: 'turma', element: <TurmaTab /> },
                   { path: 'semestres', element: <SemestresTab /> },
                 ],

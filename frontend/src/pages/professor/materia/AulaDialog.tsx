@@ -77,8 +77,6 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
     }
   }, [aula]);
 
-  const editavel = aula?.estado === 'LANCADO';
-
   const invalidarAula = () =>
     aulaId &&
     queryClient.invalidateQueries({ queryKey: getAulasControllerFindOneQueryKey(aulaId) });
@@ -165,19 +163,11 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
           <Typography color="text.secondary">Carregando…</Typography>
         ) : (
           <>
-            {!editavel && (
-              <Typography variant="body2" color="text.secondary">
-                Esta aula só pode ser editada enquanto estiver no estado "lançado" (durante o
-                horário da aula).
-              </Typography>
-            )}
-
             <Stack direction="row" spacing={2}>
               <TextField
                 label="Título"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                disabled={!editavel}
                 fullWidth
               />
             </Stack>
@@ -185,23 +175,20 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
               label="Descrição"
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              disabled={!editavel}
               multiline
               minRows={2}
               fullWidth
             />
-            {editavel && (
-              <Box>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={salvarAula}
-                  disabled={atualizarAula.isPending}
-                >
-                  Salvar título/descrição
-                </Button>
-              </Box>
-            )}
+            <Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={salvarAula}
+                disabled={atualizarAula.isPending}
+              >
+                Salvar título/descrição
+              </Button>
+            </Box>
 
             <Divider />
 
@@ -222,7 +209,6 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                         select
                         size="small"
                         value={frequencias[f.alunoId] ?? f.status}
-                        disabled={!editavel}
                         onChange={(e) =>
                           setFrequenciasLocal((atual) => ({
                             ...atual,
@@ -242,7 +228,7 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                 ))}
               </TableBody>
             </Table>
-            {editavel && aula.frequencias.length > 0 && (
+            {aula.frequencias.length > 0 && (
               <Box>
                 <Button
                   variant="outlined"
