@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Button, Chip, Tab, Tabs, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackOutlined';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../../api/generated/materias/materias';
 import { resumoHorarios } from '../../admin/materias/dias-semana';
 import { SituacaoTab } from './SituacaoTab';
@@ -11,9 +11,10 @@ import { AtividadesAlunoTab } from './AtividadesAlunoTab';
 export function MateriaAlunoPage() {
   const { materiaId = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: materias } = useMateriasControllerFindAll();
   const materia = materias?.find((m) => m.id === materiaId);
-  const [tab, setTab] = useState(0);
+  const [tab, setTab] = useState((location.state as { tab?: number } | null)?.tab ?? 0);
 
   return (
     <>

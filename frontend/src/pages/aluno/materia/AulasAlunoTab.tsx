@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Button, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { useMateriaAulasControllerFindAll } from '../../../api/generated/aulas/aulas';
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
@@ -23,26 +23,19 @@ export function AulasAlunoTab({ materiaId }: AulasAlunoTabProps) {
             <TableRow>
               <TableCell>Data</TableCell>
               <TableCell>Título</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell>Materiais de aula</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!isLoading &&
               itensDaPagina.map((aula) => (
-                <TableRow
-                  key={aula.id}
-                  hover
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => setAulaSelecionada(aula.id)}
-                >
+                <TableRow key={aula.id}>
                   <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>{aula.titulo ?? '—'}</TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      label={aula.estado === 'LANCADO' ? 'Lançado' : 'Não lançado'}
-                      color={aula.estado === 'LANCADO' ? 'success' : 'default'}
-                    />
+                    <Button size="small" onClick={() => setAulaSelecionada(aula.id)}>
+                      Abrir
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
