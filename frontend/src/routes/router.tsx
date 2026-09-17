@@ -12,6 +12,7 @@ import { MateriasPage } from '../pages/admin/materias/MateriasPage';
 import { UsuariosPage } from '../pages/admin/usuarios/UsuariosPage';
 import { SolicitacoesFotoPage } from '../pages/admin/solicitacoes-foto/SolicitacoesFotoPage';
 import { ProfessorDashboardPage } from '../pages/professor/DashboardPage';
+import { MateriaProfessorPage } from '../pages/professor/materia/MateriaProfessorPage';
 import { AlunoDashboardPage } from '../pages/aluno/DashboardPage';
 import { SessionGate } from '../auth/SessionGate';
 import { RoleGate } from '../auth/RoleGate';
@@ -50,7 +51,10 @@ export const router = createBrowserRouter([
           {
             path: 'professor',
             element: <RoleGate allow={['PROFESSOR']} />,
-            children: [{ index: true, element: <ProfessorDashboardPage /> }],
+            children: [
+              { index: true, element: <ProfessorDashboardPage /> },
+              { path: 'materias/:materiaId', element: <MateriaProfessorPage /> },
+            ],
           },
           {
             path: 'aluno',
