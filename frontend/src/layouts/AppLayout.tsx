@@ -22,7 +22,20 @@ export function AppLayout() {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="static">
         <Toolbar sx={{ gap: 1.25 }}>
-          <img src={sifesMark} alt="" width={22} height={22} />
+          <Box
+            sx={{
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              bgcolor: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <img src={sifesMark} alt="" width={20} height={20} />
+          </Box>
           <Typography variant="subtitle1" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
             SIFES
           </Typography>
