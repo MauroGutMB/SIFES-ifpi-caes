@@ -28,6 +28,7 @@ export function EntregaAlunoDialog({ atividade, onClose }: EntregaAlunoDialogPro
   });
   const entregar = useEntregaControllerEntregar();
   const [erro, setErro] = useState<string | null>(null);
+  const prazoVencido = !!atividade?.prazo && new Date() > new Date(atividade.prazo);
 
   const enviar = async (arquivo: File) => {
     setErro(null);
@@ -55,9 +56,19 @@ export function EntregaAlunoDialog({ atividade, onClose }: EntregaAlunoDialogPro
             {atividade.descricao}
           </Typography>
         )}
-        <Typography variant="body2" sx={{ mb: 2 }}>
+        <Typography variant="body2" sx={{ mb: 1 }}>
           Formato exigido: {atividade ? LABEL_FORMATO[atividade.formatoExigido] : ''}
         </Typography>
+        {atividade?.prazo && (
+          <Typography
+            variant="body2"
+            color={prazoVencido ? 'error' : 'text.secondary'}
+            sx={{ mb: 2 }}
+          >
+            Prazo de entrega: {new Date(atividade.prazo).toLocaleString('pt-BR')}
+            {prazoVencido && ' — encerrado'}
+          </Typography>
+        )}
 
         {!isLoading && entrega && (
           <Typography variant="body2" sx={{ mb: 2 }}>
@@ -69,11 +80,12 @@ export function EntregaAlunoDialog({ atividade, onClose }: EntregaAlunoDialogPro
         )}
 
         <Stack spacing={1}>
-          <Button component="label" variant="contained" disabled={entregar.isPending}>
+          <Button component="label" variant="contained" disabled={entregar.isPending || prazoVencido}>
             {entrega ? 'Reenviar' : 'Enviar entrega'}
             <input
               type="file"
               hidden
+              disabled={prazoVencido}
               onChange={(e) => {
                 const arquivo = e.target.files?.[0];
                 if (arquivo) enviar(arquivo);

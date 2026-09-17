@@ -20,23 +20,28 @@ export function AtividadesAlunoTab({ materiaId }: AtividadesAlunoTabProps) {
             <TableRow>
               <TableCell>Título</TableCell>
               <TableCell>Formato</TableCell>
-              <TableCell>Criada em</TableCell>
+              <TableCell>Prazo</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!isLoading &&
-              (data ?? []).map((atividade) => (
-                <TableRow
-                  key={atividade.id}
-                  hover
-                  sx={{ cursor: 'pointer' }}
-                  onClick={() => setSelecionada(atividade)}
-                >
-                  <TableCell>{atividade.titulo}</TableCell>
-                  <TableCell>{atividade.formatoExigido}</TableCell>
-                  <TableCell>{new Date(atividade.criadaEm).toLocaleDateString('pt-BR')}</TableCell>
-                </TableRow>
-              ))}
+              (data ?? []).map((atividade) => {
+                const vencido = !!atividade.prazo && new Date() > new Date(atividade.prazo);
+                return (
+                  <TableRow
+                    key={atividade.id}
+                    hover
+                    sx={{ cursor: 'pointer' }}
+                    onClick={() => setSelecionada(atividade)}
+                  >
+                    <TableCell>{atividade.titulo}</TableCell>
+                    <TableCell>{atividade.formatoExigido}</TableCell>
+                    <TableCell sx={{ color: vencido ? 'error.main' : undefined }}>
+                      {atividade.prazo ? new Date(atividade.prazo).toLocaleString('pt-BR') : '—'}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             {!isLoading && !data?.length && (
               <TableRow>
                 <TableCell colSpan={3}>

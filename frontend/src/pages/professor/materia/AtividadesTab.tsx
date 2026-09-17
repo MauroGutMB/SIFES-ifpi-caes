@@ -45,6 +45,13 @@ const FORMATOS = [
   { value: 'FOTO', label: 'Foto' },
 ] as const;
 
+/** Converte um ISO completo pra "YYYY-MM-DDTHH:mm", formato aceito por <input type="datetime-local">. */
+function paraDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 interface AtividadesTabProps {
   materiaId: string;
   materiaAberta: boolean;
@@ -78,7 +85,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
 
   const abrirNovo = () => {
     setEditando(null);
-    reset({ titulo: '', descricao: '', formatoExigido: 'PDF' });
+    reset({ titulo: '', descricao: '', formatoExigido: 'PDF', prazo: '' });
     setAnexo(null);
     setErro(null);
     setDialogAberto(true);
@@ -90,6 +97,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
       titulo: atividade.titulo,
       descricao: atividade.descricao ?? '',
       formatoExigido: atividade.formatoExigido,
+      prazo: atividade.prazo ? paraDatetimeLocal(atividade.prazo) : '',
     });
     setAnexo(null);
     setErro(null);
@@ -141,13 +149,15 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
               <TableCell>Título</TableCell>
               <TableCell>Formato</TableCell>
               <TableCell>Anexo</TableCell>
-              <TableCell>Criada em</TableCell>
+              <TableCell>Prazo</TableCell>
               <TableCell width={140} />
             </TableRow>
           </TableHead>
           <TableBody>
             {!isLoading &&
-              (data ?? []).map((atividade) => (
+              (data ?? []).map((atividade) => {
+                const vencido = !!atividade.prazo && new Date() > new Date(atividade.prazo);
+                return (
                 <TableRow key={atividade.id}>
                   <TableCell>{atividade.titulo}</TableCell>
                   <TableCell>{atividade.formatoExigido}</TableCell>
@@ -160,7 +170,9 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
                       '—'
                     )}
                   </TableCell>
-                  <TableCell>{new Date(atividade.criadaEm).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell sx={{ color: vencido ? 'error.main' : undefined }}>
+                    {atividade.prazo ? new Date(atividade.prazo).toLocaleString('pt-BR') : '—'}
+                  </TableCell>
                   <TableCell>
                     <Stack direction="row">
                       <IconButton size="small" onClick={() => setEntregasDe(atividade.id)}>
@@ -179,7 +191,8 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
                     </Stack>
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             {!isLoading && !data?.length && (
               <TableRow>
                 <TableCell colSpan={5}>
@@ -234,6 +247,17 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
             </MenuItem>
           ))}
         </TextField>
+        <TextField
+          {...register('prazo', {
+            setValueAs: (v: string) => (v ? new Date(v).toISOString() : v),
+          })}
+          label="Prazo de entrega"
+          type="datetime-local"
+          error={!!errors.prazo}
+          helperText={errors.prazo?.message ?? 'Depois desse prazo o aluno não consegue mais enviar'}
+          fullWidth
+          slotProps={{ inputLabel: { shrink: true } }}
+        />
         <Box>
           <Button component="label" size="small" variant="outlined" startIcon={<AttachFileIcon />}>
             {anexo ? anexo.name : editando?.arquivoUrl ? 'Trocar anexo' : 'Anexar arquivo (opcional)'}
