@@ -6,3 +6,6 @@ node_modules
 
 # Arquivos enviados por usuários (fotos etc.)
 /uploads
+
+# Snapshots de banco gerados pelo db-util.sh
+/db-snapshots
