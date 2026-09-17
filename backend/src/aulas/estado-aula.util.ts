@@ -1,26 +1,19 @@
 import { AulaEstadoOverride } from '../../generated/prisma/client';
-import { agoraComoBrasiliaFake } from '../common/tempo.util';
 
 export type EstadoAula = 'LANCADO' | 'NAO_LANCADO';
 
-interface AulaComoHorario {
-  horaInicio: Date;
-  horaFim: Date;
+interface AulaComoFrequencia {
   estadoOverride: AulaEstadoOverride | null;
+  temFrequencias: boolean;
 }
 
 /**
- * Estado lançado/não lançado: automático pela janela [horaInicio, horaFim), a menos que o
- * admin tenha sobreposto manualmente (ver regras-negocio.md — Janela de lançamento e estado da Aula).
+ * Estado lançado/não lançado: reflete se a Aula já tem frequência registrada, a menos que
+ * o admin tenha sobreposto manualmente. Não bloqueia mais edição — ver `podeEditarAula`.
  */
-export function calcularEstadoAula(
-  aula: AulaComoHorario,
-  agora: Date = agoraComoBrasiliaFake(),
-): EstadoAula {
+export function calcularEstadoAula(aula: AulaComoFrequencia): EstadoAula {
   if (aula.estadoOverride) {
     return aula.estadoOverride;
   }
-  return agora >= aula.horaInicio && agora < aula.horaFim
-    ? 'LANCADO'
-    : 'NAO_LANCADO';
+  return aula.temFrequencias ? 'LANCADO' : 'NAO_LANCADO';
 }

@@ -4,8 +4,12 @@ import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 import { AulaDto } from './aula.dto';
 
 export class FrequenciaComAlunoDto {
-  @ApiProperty()
-  id: string;
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'null quando a frequência ainda não foi lançada',
+  })
+  id: string | null;
 
   @ApiProperty()
   aulaId: string;

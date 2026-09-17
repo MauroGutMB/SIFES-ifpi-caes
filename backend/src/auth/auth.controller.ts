@@ -36,10 +36,13 @@ export class AuthController {
   ) {}
 
   private setRefreshCookie(res: Response, token: string, expiresAt: Date) {
+    const secure = this.config.get('COOKIE_SECURE') === 'true';
     res.cookie(REFRESH_COOKIE, token, {
       httpOnly: true,
-      secure: this.config.get('COOKIE_SECURE') === 'true',
-      sameSite: 'strict',
+      secure,
+      // 'strict'/'lax' nunca são enviados em requisição cross-site — necessário aqui porque
+      // 'none' exige secure:true, por isso só liga quando COOKIE_SECURE=true.
+      sameSite: secure ? 'none' : 'lax',
       path: REFRESH_COOKIE_PATH,
       expires: expiresAt,
     });

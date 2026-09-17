@@ -6,12 +6,13 @@ import {
   Query,
   StreamableFile,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { RelatoriosService } from './relatorios.service';
+import { RelatorioFrequenciaTurmaDto } from './dto/frequencia-turma-relatorio.dto';
 import {
   extensaoParaFormato,
   Formato,
@@ -109,5 +110,24 @@ export class RelatoriosController {
     const formato = parseFormato(formatoQuery);
     const resultado = await this.service.frequenciaTurma(turmaId, formato);
     return this.empacotar(resultado, formato);
+  }
+
+  @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
+  @Get('turma/:turmaId/frequencia')
+  @ApiOkResponse({ type: RelatorioFrequenciaTurmaDto })
+  frequenciaTurmaDetalhada(
+    @Param('turmaId') turmaId: string,
+    @Query('materiaId') materiaId: string | undefined,
+    @Query('alunoId') alunoId: string | undefined,
+    @Query('dataInicio') dataInicio: string | undefined,
+    @Query('dataFim') dataFim: string | undefined,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<RelatorioFrequenciaTurmaDto> {
+    return this.service.frequenciaTurmaDetalhada(turmaId, user, {
+      materiaId,
+      alunoId,
+      dataInicio,
+      dataFim,
+    });
   }
 }

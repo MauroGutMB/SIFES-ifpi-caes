@@ -8,7 +8,17 @@ import { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
 import { BoletimService } from '../boletim/boletim.service';
 import { garantirPosseProfessor } from '../common/posse.util';
+import { hojeComoBrasiliaFake } from '../common/tempo.util';
+import { calcularFrequenciaPercentual } from '../boletim/boletim.util';
 import { Formato, gerarRelatorio, TabelaRelatorio } from './report-render.util';
+import type { RelatorioFrequenciaTurmaDto } from './dto/frequencia-turma-relatorio.dto';
+
+export interface FiltrosFrequenciaTurma {
+  materiaId?: string;
+  alunoId?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}
 
 @Injectable()
 export class RelatoriosService {
@@ -259,6 +269,117 @@ export class RelatoriosService {
     return {
       buffer: await gerarRelatorio(tabela, formato),
       nomeBase: 'frequencia-turma',
+    };
+  }
+
+  /** Painel de frequência da turma — exibível na tela, com filtros por matéria, aluno e
+   * intervalo de datas. Sem filtro de data, o padrão é "até hoje" (nunca antecipa aulas
+   * futuras, que ainda não têm frequência lançada). */
+  async frequenciaTurmaDetalhada(
+    turmaId: string,
+    user: AuthenticatedUser,
+    filtros: FiltrosFrequenciaTurma,
+  ): Promise<RelatorioFrequenciaTurmaDto> {
+    const turma = await this.prisma.turma.findUnique({
+      where: { id: turmaId },
+      include: { materias: true },
+    });
+    if (!turma) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+
+    let materias = turma.materias;
+    let alunoIdForcado: string | undefined;
+    if (user.role === Role.PROFESSOR) {
+      materias = materias.filter((m) => m.professorId === user.professorId);
+    } else if (user.role === Role.ALUNO) {
+      const vinculosDoAluno = await this.prisma.vinculoAlunoMateria.findMany({
+        where: {
+          alunoId: user.alunoId,
+          materiaId: { in: materias.map((m) => m.id) },
+        },
+        select: { materiaId: true },
+      });
+      const idsPermitidos = new Set(vinculosDoAluno.map((v) => v.materiaId));
+      materias = materias.filter((m) => idsPermitidos.has(m.id));
+      alunoIdForcado = user.alunoId;
+    }
+    if (filtros.materiaId) {
+      materias = materias.filter((m) => m.id === filtros.materiaId);
+    }
+    if (materias.length === 0) {
+      throw new NotFoundException('Turma não encontrada');
+    }
+    const alunoIdFiltro = alunoIdForcado ?? filtros.alunoId;
+    const materiaIds = materias.map((m) => m.id);
+    const nomePorMateria = new Map(materias.map((m) => [m.id, m.nome]));
+
+    const hoje = hojeComoBrasiliaFake();
+    const dataFim = filtros.dataFim ? new Date(filtros.dataFim) : hoje;
+    const dataFimEfetiva = dataFim.getTime() < hoje.getTime() ? dataFim : hoje;
+
+    const aulas = await this.prisma.aula.findMany({
+      where: {
+        materiaId: { in: materiaIds },
+        data: {
+          gte: filtros.dataInicio ? new Date(filtros.dataInicio) : undefined,
+          lte: dataFimEfetiva,
+        },
+      },
+      include: {
+        frequencias: {
+          where: alunoIdFiltro ? { alunoId: alunoIdFiltro } : undefined,
+          include: {
+            aluno: { select: { id: true, nome: true, matricula: true } },
+          },
+        },
+      },
+      orderBy: { data: 'asc' },
+    });
+
+    const detalhado = aulas.flatMap((aula) =>
+      aula.frequencias.map((f) => ({
+        data: aula.data,
+        materiaId: aula.materiaId,
+        materiaNome: nomePorMateria.get(aula.materiaId) ?? '',
+        alunoId: f.alunoId,
+        alunoNome: f.aluno.nome,
+        matricula: f.aluno.matricula,
+        status: f.status,
+      })),
+    );
+
+    const vinculados = await this.prisma.vinculoAlunoMateria.findMany({
+      where: {
+        materiaId: { in: materiaIds },
+        alunoId: alunoIdFiltro,
+      },
+      include: { aluno: { select: { id: true, nome: true, matricula: true } } },
+    });
+
+    const resumo: RelatorioFrequenciaTurmaDto['resumo'] = vinculados.map(
+      (vinculo) => {
+        const doAluno = detalhado.filter(
+          (l) =>
+            l.materiaId === vinculo.materiaId && l.alunoId === vinculo.alunoId,
+        );
+        return {
+          alunoId: vinculo.alunoId,
+          alunoNome: vinculo.aluno.nome,
+          matricula: vinculo.aluno.matricula,
+          materiaId: vinculo.materiaId,
+          materiaNome: nomePorMateria.get(vinculo.materiaId) ?? '',
+          frequenciaPercentual: Number(
+            calcularFrequenciaPercentual(doAluno).toFixed(2),
+          ),
+        };
+      },
+    );
+
+    return {
+      materias: materias.map((m) => ({ id: m.id, nome: m.nome })),
+      resumo,
+      detalhado,
     };
   }
 }
