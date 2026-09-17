@@ -20,6 +20,7 @@ import { VincularTurmaDto } from './dto/vincular-turma.dto';
 import { AlunoCriadoDto, AlunoDto, AlunoMeDto } from './dto/aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
 import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
+import { AtividadePendenteDto } from './dto/atividade-pendente.dto';
 
 @ApiTags('alunos')
 @Roles(Role.ADMIN)
@@ -62,6 +63,19 @@ export class AlunosController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<AtividadesResumoMateriaDto[]> {
     return this.service.resumoAtividades(user.alunoId!);
+  }
+
+  @Roles(Role.ALUNO)
+  @Get('me/atividades-pendentes')
+  @ApiOkResponse({ type: AtividadePendenteDto, isArray: true })
+  atividadesPendentes(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limite') limite?: string,
+  ): Promise<AtividadePendenteDto[]> {
+    return this.service.atividadesPendentes(
+      user.alunoId!,
+      limite ? Number(limite) : undefined,
+    );
   }
 
   @Get(':id')

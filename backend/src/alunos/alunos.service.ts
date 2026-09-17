@@ -12,6 +12,7 @@ import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
 import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
+import { AtividadePendenteDto } from './dto/atividade-pendente.dto';
 
 @Injectable()
 export class AlunosService {
@@ -254,5 +255,51 @@ export class AlunosService {
         total: vinculo.materia.atividades.length,
       };
     });
+  }
+
+  /** Atividades sem entrega e dentro do prazo, mais urgentes primeiro (prazo mais próximo),
+   * usadas no widget "Atividades pendentes" do Início do aluno. */
+  async atividadesPendentes(
+    alunoId: string,
+    limite = 5,
+  ): Promise<AtividadePendenteDto[]> {
+    const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
+      where: { alunoId },
+      include: {
+        materia: {
+          include: {
+            atividades: {
+              include: { entregas: { where: { alunoId } } },
+            },
+          },
+        },
+      },
+    });
+
+    const agora = new Date();
+    const pendentes: AtividadePendenteDto[] = [];
+    for (const vinculo of vinculos) {
+      for (const atividade of vinculo.materia.atividades) {
+        const jaEntregou = atividade.entregas.length > 0;
+        const vencida = !!atividade.prazo && agora > atividade.prazo;
+        if (!jaEntregou && !vencida) {
+          pendentes.push({
+            id: atividade.id,
+            titulo: atividade.titulo,
+            prazo: atividade.prazo,
+            materiaId: vinculo.materiaId,
+            materiaNome: vinculo.materia.nome,
+          });
+        }
+      }
+    }
+
+    pendentes.sort((a, b) => {
+      if (!a.prazo) return 1;
+      if (!b.prazo) return -1;
+      return a.prazo.getTime() - b.prazo.getTime();
+    });
+
+    return pendentes.slice(0, limite);
   }
 }
