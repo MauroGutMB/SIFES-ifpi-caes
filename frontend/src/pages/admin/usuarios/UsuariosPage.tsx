@@ -1,8 +1,17 @@
 import { useState } from 'react';
-import { Box, Chip, MenuItem, Paper, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
-import { useUsersControllerFindAll } from '../../../api/generated/users/users';
+import { isAxiosError } from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  getUsersControllerFindAllQueryKey,
+  useUsersControllerFindAll,
+  useUsersControllerRedefinirSenha,
+} from '../../../api/generated/users/users';
 import type { UserDto } from '../../../api/generated/models';
+import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { useToast } from '../../../components/ToastProvider';
+import { tokens } from '../../../theme/tokens';
 
 const PAPEIS = [
   { value: '', label: 'Todos' },
@@ -16,8 +25,33 @@ function nomeDoUsuario(user: UserDto): string {
 }
 
 export function UsuariosPage() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
   const [role, setRole] = useState('');
   const { data, isLoading } = useUsersControllerFindAll(role ? { role } : undefined);
+  const redefinirSenha = useUsersControllerRedefinirSenha();
+  const [senhaGerada, setSenhaGerada] = useState<{ nome: string; login: string; senha: string } | null>(
+    null,
+  );
+
+  const redefinir = async (user: UserDto) => {
+    try {
+      const resultado = await redefinirSenha.mutateAsync({ id: user.id });
+      await queryClient.invalidateQueries({ queryKey: getUsersControllerFindAllQueryKey() });
+      setSenhaGerada({
+        nome: nomeDoUsuario(user),
+        login: resultado.login,
+        senha: resultado.senhaInicial,
+      });
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível redefinir a senha')
+          : 'Não foi possível redefinir a senha',
+      );
+    }
+  };
 
   const columns: GridColDef<UserDto>[] = [
     { field: 'nome', headerName: 'Nome', flex: 1, valueGetter: (_v, row) => nomeDoUsuario(row) },
@@ -31,8 +65,32 @@ export function UsuariosPage() {
     {
       field: 'precisaTrocarSenha',
       headerName: 'Precisa trocar senha',
-      width: 170,
-      renderCell: (params) => (params.value ? <Chip size="small" label="Sim" color="warning" /> : '—'),
+      width: 320,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Chip
+            size="small"
+            label={params.value ? 'Sim' : 'Não'}
+            color={params.value ? 'warning' : 'default'}
+          />
+          <Button
+            size="small"
+            variant="contained"
+            disabled={!!params.value || redefinirSenha.isPending}
+            onClick={() => redefinir(params.row)}
+            sx={{
+              bgcolor: tokens.yellow,
+              color: tokens.yellowText,
+              '&:hover': { bgcolor: tokens.yellow, opacity: 0.85 },
+              '&.Mui-disabled': { bgcolor: tokens.border, color: tokens.textSecondary },
+            }}
+          >
+            Redefinir senha
+          </Button>
+        </Stack>
+      ),
     },
     {
       field: 'criadoEm',
@@ -73,6 +131,16 @@ export function UsuariosPage() {
           initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
         />
       </Paper>
+
+      {senhaGerada && (
+        <SenhaGeradaDialog
+          open
+          titulo={`Senha de ${senhaGerada.nome} redefinida`}
+          login={senhaGerada.login}
+          senha={senhaGerada.senha}
+          onClose={() => setSenhaGerada(null)}
+        />
+      )}
     </>
   );
 }

@@ -5,6 +5,7 @@ import {
   Param,
   ParseFilePipeBuilder,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -24,6 +25,7 @@ import { FileSignatureValidationPipe } from '../common/file-signature-validation
 import { UsersService } from './users.service';
 import { UserMeDto } from './dto/user-me.dto';
 import { UserDto } from './dto/user.dto';
+import { SenhaRedefinidaDto } from './dto/senha-redefinida.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -73,5 +75,12 @@ export class UsersController {
   @Delete(':id/foto')
   removerFoto(@Param('id') id: string) {
     return this.usersService.removerFoto(id);
+  }
+
+  @Roles(Role.ADMIN)
+  @Put(':id/redefinir-senha')
+  @ApiOkResponse({ type: SenhaRedefinidaDto })
+  redefinirSenha(@Param('id') id: string): Promise<SenhaRedefinidaDto> {
+    return this.usersService.resetarSenha(id);
   }
 }

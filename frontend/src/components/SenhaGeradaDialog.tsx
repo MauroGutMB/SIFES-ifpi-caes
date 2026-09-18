@@ -8,6 +8,9 @@ import { tokens } from '../theme/tokens';
 interface SenhaGeradaDialogProps {
   open: boolean;
   nome?: string;
+  /** Sobrescreve o título padrão ("X foi cadastrado(a)") — usado quando a senha não veio de
+   * um cadastro novo, ex: redefinição de senha de um usuário já existente. */
+  titulo?: string;
   login: string;
   senha: string;
   onClose: () => void;
@@ -15,7 +18,7 @@ interface SenhaGeradaDialogProps {
 
 /** Esta é a única vez que a senha aparece — o diálogo não fecha por Esc/backdrop,
  * só pelo botão "Anotei a senha". */
-export function SenhaGeradaDialog({ open, nome, login, senha, onClose }: SenhaGeradaDialogProps) {
+export function SenhaGeradaDialog({ open, nome, titulo, login, senha, onClose }: SenhaGeradaDialogProps) {
   const [copiado, setCopiado] = useState(false);
 
   const copiar = async () => {
@@ -35,7 +38,7 @@ export function SenhaGeradaDialog({ open, nome, login, senha, onClose }: SenhaGe
     >
       <DialogTitle sx={{ display: 'flex', gap: 1, alignItems: 'center', pb: 0.5 }}>
         <CheckIcon sx={{ color: tokens.green, fontSize: 22 }} />
-        {nome ? `${nome} foi cadastrado(a)` : 'Cadastro criado'}
+        {titulo ?? (nome ? `${nome} foi cadastrado(a)` : 'Cadastro criado')}
       </DialogTitle>
       <Typography variant="body2" sx={{ px: 3, color: tokens.textSecondary, fontSize: 13, lineHeight: 1.5 }}>
         Esta é a única vez que a senha aparece. Anote ou copie antes de fechar.
