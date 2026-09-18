@@ -1,5 +1,6 @@
 import PDFDocument from 'pdfkit';
 import ExcelJS from 'exceljs';
+import { join } from 'path';
 
 export type Formato = 'pdf' | 'xlsx';
 
@@ -7,6 +8,34 @@ export interface TabelaRelatorio {
   titulo: string;
   colunas: string[];
   linhas: (string | number)[][];
+}
+
+const ASSETS_DIR = join(process.cwd(), 'assets/relatorio');
+const LOGO_SIFES = join(ASSETS_DIR, 'sifes-icone.png');
+const LOGO_IF = join(ASSETS_DIR, 'if-logo.png');
+
+/** Timbre institucional no topo de todo relatório PDF: logo do SIFES à esquerda, logo do
+ * Instituto Federal do Piauí à direita, com uma linha divisória abaixo. */
+function desenharCabecalho(doc: PDFKit.PDFDocument) {
+  const inicioX = doc.page.margins.left;
+  const larguraUtil =
+    doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const alturaLogo = 32;
+  const y = doc.y;
+
+  doc.image(LOGO_SIFES, inicioX, y, { height: alturaLogo });
+
+  const larguraLogoIf = alturaLogo * (712 / 200);
+  doc.image(LOGO_IF, inicioX + larguraUtil - larguraLogoIf, y, {
+    height: alturaLogo,
+  });
+
+  doc.y = y + alturaLogo + 8;
+  doc
+    .moveTo(inicioX, doc.y)
+    .lineTo(inicioX + larguraUtil, doc.y)
+    .stroke();
+  doc.moveDown(0.8);
 }
 
 export function mimeParaFormato(formato: Formato): string {
@@ -34,6 +63,8 @@ export function gerarPdfTabela({
     doc.on('data', (chunk: Buffer) => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
+
+    desenharCabecalho(doc);
 
     doc.fontSize(16).text(titulo, { align: 'left' });
     doc.moveDown();
@@ -64,6 +95,7 @@ export function gerarPdfTabela({
     for (const linha of linhas) {
       if (doc.y > doc.page.height - doc.page.margins.bottom - 20) {
         doc.addPage();
+        desenharCabecalho(doc);
       }
       desenharLinha(linha, false);
     }
