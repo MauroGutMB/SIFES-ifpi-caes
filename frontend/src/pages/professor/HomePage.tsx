@@ -81,6 +81,7 @@ export function ProfessorHomePage() {
               Agenda da semana
             </Typography>
             <WeeklyAgenda
+              mostrarTurma
               itens={(materias ?? []).map((m) => ({
                 id: m.id,
                 titulo: m.nome,

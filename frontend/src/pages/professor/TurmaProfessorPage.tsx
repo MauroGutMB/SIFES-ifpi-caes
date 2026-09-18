@@ -5,6 +5,9 @@ import {
   Button,
   Chip,
   Collapse,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   IconButton,
   MenuItem,
   Paper,
@@ -37,7 +40,6 @@ interface AlunoAgrupado {
 interface AulaAgrupada {
   aulaId: string;
   data: string;
-  materiaNome: string;
   presentes: number;
   total: number;
 }
@@ -93,6 +95,67 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
   );
 }
 
+interface DetalheDisciplinaDialogProps {
+  materiaId: string | null;
+  materiaNome: string | undefined;
+  aulas: AulaAgrupada[];
+  onClose: () => void;
+  onAbrirAula: (aulaId: string) => void;
+}
+
+function DetalheDisciplinaDialog({
+  materiaId,
+  materiaNome,
+  aulas,
+  onClose,
+  onAbrirAula,
+}: DetalheDisciplinaDialogProps) {
+  return (
+    <Dialog open={!!materiaId} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{materiaNome} — aulas</DialogTitle>
+      <DialogContent>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Data</TableCell>
+              <TableCell>Presenças</TableCell>
+              <TableCell width={160} />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {aulas.map((aula) => (
+              <TableRow key={aula.aulaId}>
+                <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell>
+                  <Chip
+                    size="small"
+                    label={`${aula.presentes}/${aula.total}`}
+                    color={aula.presentes === aula.total ? 'success' : 'default'}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Button size="small" variant="outlined" onClick={() => onAbrirAula(aula.aulaId)}>
+                    Abrir aula detalhada
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {aulas.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Nenhum registro para os filtros selecionados.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function TurmaProfessorPage() {
   const { turmaId = '' } = useParams();
   const navigate = useNavigate();
@@ -103,6 +166,7 @@ export function TurmaProfessorPage() {
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [aulaSelecionada, setAulaSelecionada] = useState<string | null>(null);
+  const [materiaDetalheId, setMateriaDetalheId] = useState<string | null>(null);
 
   const materiasDaTurma = (materias ?? []).filter((m) => m.turmaId === turmaId);
 
@@ -141,25 +205,26 @@ export function TurmaProfessorPage() {
     return [...porAluno.values()];
   }, [resumo]);
 
-  const aulasAgrupadas = useMemo<AulaAgrupada[]>(() => {
-    const porAula = new Map<string, AulaAgrupada>();
+  const aulasPorMateria = useMemo(() => {
+    const porMateria = new Map<string, Map<string, AulaAgrupada>>();
     for (const linha of detalhado) {
+      const porAula = porMateria.get(linha.materiaId) ?? new Map<string, AulaAgrupada>();
       const atual = porAula.get(linha.aulaId) ?? {
         aulaId: linha.aulaId,
         data: linha.data,
-        materiaNome: linha.materiaNome,
         presentes: 0,
         total: 0,
       };
       atual.total += 1;
       if (linha.status === 'PRESENTE') atual.presentes += 1;
       porAula.set(linha.aulaId, atual);
+      porMateria.set(linha.materiaId, porAula);
     }
-    return [...porAula.values()];
+    return porMateria;
   }, [detalhado]);
 
   const paginacaoAlunos = usePaginacao(alunosAgrupados);
-  const paginacaoAulas = usePaginacao(aulasAgrupadas);
+  const aulasDaMateriaDetalhada = [...(aulasPorMateria.get(materiaDetalheId ?? '')?.values() ?? [])];
 
   const alunosDisponiveis = useMemo(() => {
     const mapa = new Map<string, string>();
@@ -271,54 +336,32 @@ export function TurmaProfessorPage() {
       </Paper>
 
       <Typography variant="subtitle1" gutterBottom>
-        Detalhado por aula
+        Detalhado por disciplina
       </Typography>
       <Paper variant="outlined">
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Matéria</TableCell>
-              <TableCell>Presenças</TableCell>
+              <TableCell>Disciplina</TableCell>
+              <TableCell>Aulas registradas</TableCell>
               <TableCell width={160} />
             </TableRow>
           </TableHead>
           <TableBody>
             {!carregandoRelatorio &&
-              paginacaoAulas.itensDaPagina.map((aula) => (
-                <TableRow key={aula.aulaId}>
-                  <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell>{aula.materiaNome}</TableCell>
+              materiasDaTurma.map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell>{m.nome}</TableCell>
+                  <TableCell>{aulasPorMateria.get(m.id)?.size ?? 0}</TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      label={`${aula.presentes}/${aula.total}`}
-                      color={aula.presentes === aula.total ? 'success' : 'default'}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Button size="small" variant="outlined" onClick={() => setAulaSelecionada(aula.aulaId)}>
-                      Abrir aula detalhada
+                    <Button size="small" variant="outlined" onClick={() => setMateriaDetalheId(m.id)}>
+                      Abrir
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
-            {!carregandoRelatorio && aulasAgrupadas.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <Typography variant="body2" color="text.secondary">
-                    Nenhum registro para os filtros selecionados.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
-        <Paginacao
-          total={aulasAgrupadas.length}
-          pagina={paginacaoAulas.pagina}
-          onChange={paginacaoAulas.setPagina}
-        />
       </Paper>
 
       {materiasDaTurma.length > 0 && (
@@ -334,6 +377,13 @@ export function TurmaProfessorPage() {
         </Stack>
       )}
 
+      <DetalheDisciplinaDialog
+        materiaId={materiaDetalheId}
+        materiaNome={materiasDaTurma.find((m) => m.id === materiaDetalheId)?.nome}
+        aulas={aulasDaMateriaDetalhada}
+        onClose={() => setMateriaDetalheId(null)}
+        onAbrirAula={setAulaSelecionada}
+      />
       <AulaDialog aulaId={aulaSelecionada} onClose={() => setAulaSelecionada(null)} />
     </>
   );

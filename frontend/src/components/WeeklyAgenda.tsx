@@ -15,6 +15,10 @@ export interface AgendaItem {
 
 interface WeeklyAgendaProps {
   itens: AgendaItem[];
+  /** Mostra "matéria — turma" direto na célula (não só no tooltip) — usado na agenda do
+   * professor, que dá aula em turmas diferentes e precisa se situar; o aluno já sabe qual é
+   * a sua turma, então só o nome da matéria basta. */
+  mostrarTurma?: boolean;
 }
 
 const HORAS = Array.from({ length: 11 }, (_, i) => 7 + i); // 7h..17h (janela 7h-18h, aulas de 1h)
@@ -27,7 +31,7 @@ function corPara(id: string): string {
   return PALETA[hash % PALETA.length];
 }
 
-export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
+export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -142,7 +146,11 @@ export function WeeklyAgenda({ itens }: WeeklyAgendaProps) {
                           whiteSpace: 'nowrap',
                         }}
                       >
-                        {isMobile ? item.titulo.slice(0, 3) : item.titulo}
+                        {isMobile
+                          ? item.titulo.slice(0, 3)
+                          : mostrarTurma && item.subtitulo
+                            ? `${item.titulo} — ${item.subtitulo}`
+                            : item.titulo}
                       </Box>
                     </Tooltip>
                   ))}
