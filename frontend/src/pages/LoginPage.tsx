@@ -45,16 +45,18 @@ export function LoginPage() {
   });
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, minHeight: '100vh' }}>
       <Box
         sx={{
-          display: { xs: 'none', sm: 'flex' },
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          width: { sm: '38%' },
-          minWidth: 380,
-          maxWidth: 600,
-          p: 7,
+          display: 'flex',
+          flexDirection: { xs: 'row', sm: 'column' },
+          alignItems: { xs: 'center', sm: 'stretch' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          gap: { xs: 1.5, sm: 0 },
+          width: { xs: '100%', sm: '38%' },
+          minWidth: { xs: 0, sm: 380 },
+          maxWidth: { xs: '100%', sm: 600 },
+          p: { xs: 2.5, sm: 7 },
           bgcolor: tokens.greenDeep,
           color: '#fff',
           position: 'relative',
@@ -66,6 +68,7 @@ export function LoginPage() {
           src={sifesMark}
           alt=""
           sx={{
+            display: { xs: 'none', sm: 'block' },
             position: 'absolute',
             right: -90,
             bottom: -70,
@@ -74,39 +77,59 @@ export function LoginPage() {
             pointerEvents: 'none',
           }}
         />
-        <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'row', sm: 'column' },
+            alignItems: { xs: 'center', sm: 'flex-start' },
+            gap: { xs: 1.5, sm: 0 },
+          }}
+        >
           <Box
             sx={{
-              width: 112,
-              height: 112,
+              width: { xs: 52, sm: 112 },
+              height: { xs: 52, sm: 112 },
               borderRadius: 1,
               bgcolor: '#fff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
-            <img src={sifesMark} alt="" width={80} height={80} />
+            <Box component="img" src={sifesMark} alt="" sx={{ width: { xs: 38, sm: 80 }, height: { xs: 38, sm: 80 } }} />
           </Box>
-          <Typography
-            sx={{
-              fontFamily: "'Archivo', sans-serif",
-              fontWeight: 800,
-              fontSize: 68,
-              letterSpacing: '-0.01em',
-              lineHeight: 1,
-              mt: 3.5,
-            }}
-          >
-            SIFES
-          </Typography>
-          <Box sx={{ width: 72, height: 5, bgcolor: tokens.yellow, mt: 2.25 }} />
-          <Typography sx={{ fontSize: 17, lineHeight: 1.5, mt: 2.5, maxWidth: 420, color: '#DCE8DF' }}>
-            Sistema do Instituto Federal de Esperantina
-          </Typography>
+          <Box>
+            <Typography
+              sx={{
+                fontFamily: "'Archivo', sans-serif",
+                fontWeight: 800,
+                fontSize: { xs: 30, sm: 68 },
+                letterSpacing: '-0.01em',
+                lineHeight: 1,
+                mt: { xs: 0, sm: 3.5 },
+              }}
+            >
+              SIFES
+            </Typography>
+            <Box sx={{ display: { xs: 'none', sm: 'block' }, width: 72, height: 5, bgcolor: tokens.yellow, mt: 2.25 }} />
+          </Box>
         </Box>
         <Typography
           sx={{
+            display: { xs: 'none', sm: 'block' },
+            fontSize: 17,
+            lineHeight: 1.5,
+            mt: 2.5,
+            maxWidth: 420,
+            color: '#DCE8DF',
+          }}
+        >
+          Sistema do Instituto Federal de Esperantina
+        </Typography>
+        <Typography
+          sx={{
+            display: { xs: 'none', sm: 'block' },
             fontSize: 11,
             fontWeight: 700,
             letterSpacing: '0.12em',
