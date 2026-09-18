@@ -18,6 +18,9 @@ export class SolicitacaoFotoDto {
   @ApiProperty({ nullable: true, type: Date })
   resolvidaEm: Date | null;
 
+  @ApiProperty({ description: 'URL da foto enviada, pendente de aprovação' })
+  arquivoStagingUrl: string;
+
   @ApiProperty({ type: AlunoResumoDto })
   aluno: AlunoResumoDto;
 }
