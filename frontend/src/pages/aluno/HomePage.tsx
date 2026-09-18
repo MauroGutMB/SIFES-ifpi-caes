@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import {
   Box,
+  Button,
   Card,
   CardActionArea,
   CardContent,
@@ -13,12 +15,14 @@ import {
 } from '@mui/material';
 import InsightsIcon from '@mui/icons-material/InsightsOutlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRightOutlined';
+import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import { useNavigate } from 'react-router-dom';
 import {
   useAlunosControllerAtividadesPendentes,
   useAlunosControllerMeuPerfil,
 } from '../../api/generated/alunos/alunos';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
+import { baixarArquivo } from '../../api/download';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
 import { ContaTab } from './ContaTab';
 
@@ -38,6 +42,16 @@ export function AlunoHomePage() {
   const { data: materias } = useMateriasControllerFindAll();
   const { data: pendentes } = useAlunosControllerAtividadesPendentes({ limite: '5' });
   const gruposPendentes = agruparPorMateria(pendentes ?? []);
+  const [baixando, setBaixando] = useState<string | null>(null);
+
+  const baixarAgenda = async (formato: 'pdf' | 'xlsx') => {
+    setBaixando(formato);
+    try {
+      await baixarArquivo(`/relatorios/agenda?formato=${formato}`, `agenda-semanal.${formato}`);
+    } finally {
+      setBaixando(null);
+    }
+  };
 
   return (
     <>
@@ -107,9 +121,29 @@ export function AlunoHomePage() {
         </Grid>
         <Grid size={{ xs: 12, md: 7 }}>
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              Agenda da semana
-            </Typography>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
+              <Typography variant="subtitle1">Agenda da semana</Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  disabled={baixando === 'pdf'}
+                  onClick={() => baixarAgenda('pdf')}
+                >
+                  PDF
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  disabled={baixando === 'xlsx'}
+                  onClick={() => baixarAgenda('xlsx')}
+                >
+                  Excel
+                </Button>
+              </Stack>
+            </Stack>
             <WeeklyAgenda
               itens={(materias ?? []).map((m) => ({
                 id: m.id,

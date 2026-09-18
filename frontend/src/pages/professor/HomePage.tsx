@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import { FotoPopup } from '../../components/FotoPopup';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,6 +11,7 @@ import {
 } from '../../api/generated/users/users';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { urlArquivo } from '../../api/arquivo-url';
+import { baixarArquivo } from '../../api/download';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
 
 export function ProfessorHomePage() {
@@ -18,7 +20,17 @@ export function ProfessorHomePage() {
   const { data: materias } = useMateriasControllerFindAll();
   const atualizarFoto = useUsersControllerUpdateFoto();
   const [erroFoto, setErroFoto] = useState<string | null>(null);
+  const [baixando, setBaixando] = useState<string | null>(null);
   const professor = materias?.[0]?.professor;
+
+  const baixarAgenda = async (formato: 'pdf' | 'xlsx') => {
+    setBaixando(formato);
+    try {
+      await baixarArquivo(`/relatorios/agenda?formato=${formato}`, `agenda-semanal.${formato}`);
+    } finally {
+      setBaixando(null);
+    }
+  };
 
   const trocarFoto = async (arquivo: File) => {
     setErroFoto(null);
@@ -79,9 +91,29 @@ export function ProfessorHomePage() {
         </Grid>
         <Grid size={{ xs: 12, md: 7 }}>
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              Agenda da semana
-            </Typography>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1 }}>
+              <Typography variant="subtitle1">Agenda da semana</Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  disabled={baixando === 'pdf'}
+                  onClick={() => baixarAgenda('pdf')}
+                >
+                  PDF
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  disabled={baixando === 'xlsx'}
+                  onClick={() => baixarAgenda('xlsx')}
+                >
+                  Excel
+                </Button>
+              </Stack>
+            </Stack>
             <WeeklyAgenda
               mostrarTurma
               itens={(materias ?? []).map((m) => ({
