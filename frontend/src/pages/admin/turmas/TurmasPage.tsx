@@ -9,8 +9,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { DataGrid, type GridColDef } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweepOutlined';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,6 +51,20 @@ export function TurmasPage() {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [paraExcluir, setParaExcluir] = useState<TurmaDto | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [selecionados, setSelecionados] = useState<GridRowSelectionModel>({
+    type: 'include',
+    ids: new Set(),
+  });
+  const [confirmandoExclusaoEmMassa, setConfirmandoExclusaoEmMassa] = useState(false);
+
+  // A DataGrid alterna para { type: 'exclude', ids } quando "selecionar tudo" é usado
+  // (ids vira o conjunto de EXCEÇÕES, não de selecionados) — por isso não dá pra confiar
+  // em selecionados.ids.size sozinho, precisa resolver contra as linhas atuais.
+  const idsSelecionados =
+    selecionados.type === 'include'
+      ? [...selecionados.ids].map(String)
+      : (data ?? []).map((t) => t.id).filter((id) => !selecionados.ids.has(id));
+  const totalSelecionados = idsSelecionados.length;
 
   const {
     register,
@@ -107,8 +122,22 @@ export function TurmasPage() {
     setParaExcluir(null);
   };
 
+  const excluirSelecionados = async () => {
+    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    await invalidar();
+    setSelecionados({ type: 'include', ids: new Set() });
+    setConfirmandoExclusaoEmMassa(false);
+  };
+
+  const salvarEdicaoInline = async (linhaNova: TurmaDto, linhaAntiga: TurmaDto) => {
+    if (linhaNova.cursoTecnico === linhaAntiga.cursoTecnico) return linhaNova;
+    await atualizar.mutateAsync({ id: linhaNova.id, data: { cursoTecnico: linhaNova.cursoTecnico } });
+    await invalidar();
+    return linhaNova;
+  };
+
   const columns: GridColDef<TurmaDto>[] = [
-    { field: 'cursoTecnico', headerName: 'Curso técnico', flex: 1 },
+    { field: 'cursoTecnico', headerName: 'Curso técnico', flex: 1, editable: true },
     { field: 'anoSerie', headerName: 'Ano/Série', flex: 1 },
     {
       field: 'turno',
@@ -146,12 +175,24 @@ export function TurmasPage() {
     <>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Turmas</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
-          Nova turma
-        </Button>
+        <Stack direction="row" spacing={1}>
+          {totalSelecionados > 0 && (
+            <Button
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteSweepIcon />}
+              onClick={() => setConfirmandoExclusaoEmMassa(true)}
+            >
+              Excluir {totalSelecionados} selecionado(s)
+            </Button>
+          )}
+          <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
+            Nova turma
+          </Button>
+        </Stack>
       </Box>
 
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <DataGrid
           rows={data ?? []}
           columns={columns}
@@ -159,6 +200,11 @@ export function TurmasPage() {
           disableRowSelectionOnClick
           density="compact"
           autoHeight
+          showToolbar
+          checkboxSelection
+          rowSelectionModel={selecionados}
+          onRowSelectionModelChange={setSelecionados}
+          processRowUpdate={salvarEdicaoInline}
           initialState={{ pagination: { paginationModel: { pageSize: 30 } } }}
         />
       </Paper>
@@ -228,6 +274,17 @@ export function TurmasPage() {
         loading={remover.isPending}
         onConfirm={excluir}
         onClose={() => setParaExcluir(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmandoExclusaoEmMassa}
+        title={`Excluir ${totalSelecionados} turma(s)?`}
+        description="Só é possível excluir turmas sem disciplinas vinculadas. Não pode ser desfeito."
+        confirmLabel="Excluir selecionadas"
+        confirmColor="error"
+        loading={remover.isPending}
+        onConfirm={excluirSelecionados}
+        onClose={() => setConfirmandoExclusaoEmMassa(false)}
       />
     </>
   );
