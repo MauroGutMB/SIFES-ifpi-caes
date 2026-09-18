@@ -5,12 +5,18 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { RouterProvider } from 'react-router-dom';
+import { z } from 'zod';
+import { ptBR as zodPtBR } from 'zod/locales';
 import './index.css';
 import { theme } from './theme/theme';
 import { queryClient } from './api/query-client';
 import { AuthProvider } from './auth/AuthContext';
 import { ToastProvider } from './components/ToastProvider';
 import { router } from './routes/router';
+
+// Sem isso, uma validação de campo (zodResolver) devolve a mensagem crua do Zod em inglês
+// (ex: "Too small: expected string to have >=1 characters") direto pro usuário.
+z.config({ localeError: zodPtBR().localeError });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

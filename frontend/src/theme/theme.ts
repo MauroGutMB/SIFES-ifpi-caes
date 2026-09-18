@@ -143,6 +143,10 @@ export const theme = createTheme(
       },
     },
     MuiOutlinedInput: {
+      // A label já é forçada a ficar estática acima do campo (ver MuiInputLabel abaixo), nunca
+      // flutuando sobre a borda — então o "notch" que o MUI reserva na borda pra acomodar a
+      // label flutuante não faz sentido aqui e deixa um recorte/artefato visual na borda.
+      defaultProps: { notched: false },
       styleOverrides: {
         root: {
           height: 44,
