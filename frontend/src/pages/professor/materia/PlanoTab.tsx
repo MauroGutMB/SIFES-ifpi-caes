@@ -20,9 +20,10 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
-import GradeIcon from '@mui/icons-material/GradeOutlined';
+import UploadFileIcon from '@mui/icons-material/UploadFileOutlined';
 import StarIcon from '@mui/icons-material/Star';
 import RuleIcon from '@mui/icons-material/RuleOutlined';
+import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheckOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -40,6 +41,7 @@ import {
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
 import { getMateriasControllerFindAllQueryKey } from '../../../api/generated/materias/materias';
 import {
+  useItensAvaliacaoControllerAplicarAbaixoMedia,
   useItensAvaliacaoControllerAtualizar,
   useItensAvaliacaoControllerDefinirItemEspecialAluno,
   useItensAvaliacaoControllerRemover,
@@ -49,7 +51,9 @@ import { MateriaPlanoControllerCriarItemBody } from '../../../api/generated/zod/
 import type { BoletimLinhaDto, ItemAvaliacaoDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { useToast } from '../../../components/ToastProvider';
 import { tokens } from '../../../theme/tokens';
+import { corMedia } from '../../../utils/corMedia';
 
 type FormValues = z.infer<typeof MateriaPlanoControllerCriarItemBody>;
 
@@ -366,6 +370,7 @@ export function PlanoTab({
   notaMinimaAprovacao,
 }: PlanoTabProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data: itens, isLoading } = useMateriaPlanoControllerListarItens(materiaId);
   const { data: boletim, isLoading: carregandoBoletim } =
     useMateriaPlanoControllerBoletim(materiaId);
@@ -373,12 +378,15 @@ export function PlanoTab({
   const atualizar = useItensAvaliacaoControllerAtualizar();
   const remover = useItensAvaliacaoControllerRemover();
   const setNotas = useItensAvaliacaoControllerSetNotas();
+  const aplicarAbaixoMedia = useItensAvaliacaoControllerAplicarAbaixoMedia();
 
   const [editando, setEditando] = useState<ItemAvaliacaoDto | null>(null);
   const [dialogAberto, setDialogAberto] = useState(false);
   const [paraExcluir, setParaExcluir] = useState<ItemAvaliacaoDto | null>(null);
   const [paraNotas, setParaNotas] = useState<ItemAvaliacaoDto | null>(null);
   const [notasEditadas, setNotasEditadas] = useState<Record<string, string>>({});
+  const [aplicarAbaixoMediaAberto, setAplicarAbaixoMediaAberto] = useState(false);
+  const [itemParaAplicar, setItemParaAplicar] = useState('');
   const [alunoParaEditarNotas, setAlunoParaEditarNotas] = useState<BoletimLinhaDto['aluno'] | null>(
     null,
   );
@@ -473,6 +481,38 @@ export function PlanoTab({
     }
   };
 
+  const itensEspeciais = (itens ?? []).filter((item) => item.especial);
+
+  const abrirAplicarAbaixoMedia = () => {
+    setItemParaAplicar(itensEspeciais[0]?.id ?? '');
+    setErro(null);
+    setAplicarAbaixoMediaAberto(true);
+  };
+
+  const salvarAplicarAbaixoMedia = async () => {
+    if (!itemParaAplicar) return;
+    setErro(null);
+    try {
+      const resultado = await aplicarAbaixoMedia.mutateAsync({ id: itemParaAplicar });
+      await queryClient.invalidateQueries({
+        queryKey: getMateriaPlanoControllerBoletimQueryKey(materiaId),
+      });
+      setAplicarAbaixoMediaAberto(false);
+      toast.success(
+        resultado.alunosHabilitados > 0
+          ? `Item habilitado para ${resultado.alunosHabilitados} aluno(s) abaixo da média`
+          : 'Nenhum aluno está abaixo da média no momento',
+      );
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível aplicar o item')
+          : 'Não foi possível aplicar o item',
+      );
+    }
+  };
+
   return (
     <>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -540,9 +580,11 @@ export function PlanoTab({
                   <TableCell>{item.valorMaximo}</TableCell>
                   <TableCell>
                     <Stack direction="row">
-                      <IconButton size="small" onClick={() => abrirNotas(item)}>
-                        <GradeIcon fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Lançar notas">
+                        <IconButton size="small" onClick={() => abrirNotas(item)}>
+                          <UploadFileIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       {materiaAberta && (
                         <>
                           <IconButton size="small" onClick={() => abrirEdicao(item)}>
@@ -570,8 +612,23 @@ export function PlanoTab({
         </Table>
       </Paper>
 
-      <Typography variant="h6" sx={{ mb: 1 }}>
-        Boletim
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Typography variant="h6">Boletim</Typography>
+        {materiaAberta && itensEspeciais.length > 0 && (
+          <Button
+            variant="outlined"
+            startIcon={<PlaylistAddCheckIcon fontSize="small" />}
+            onClick={abrirAplicarAbaixoMedia}
+            sx={{ '& .MuiButton-startIcon': { mr: 0.5 } }}
+          >
+            Aplicar item especial
+          </Button>
+        )}
+      </Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+        <Box component="span" sx={{ color: tokens.blueText, fontWeight: 600 }}>Azul</Box> = falta
+        lançar alguma nota (média parcial) · <Box component="span" sx={{ color: tokens.green, fontWeight: 600 }}>verde</Box> = aprovado ·{' '}
+        <Box component="span" sx={{ color: tokens.redText, fontWeight: 600 }}>vermelho</Box> = abaixo da média
       </Typography>
       <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
@@ -591,7 +648,23 @@ export function PlanoTab({
                 <TableRow key={linha.aluno.id}>
                   <TableCell>{linha.aluno.nome}</TableCell>
                   <TableCell>{linha.aluno.matricula}</TableCell>
-                  <TableCell>{linha.notaFinal.toFixed(1)}</TableCell>
+                  <TableCell>
+                    <Tooltip title={linha.notaParcial ? 'Nota parcial — falta lançar alguma nota' : ''}>
+                      <Box
+                        component="span"
+                        sx={{
+                          color: corMedia(
+                            linha.notaFinal,
+                            linha.notaParcial,
+                            Number(notaMinimaAprovacao),
+                          ),
+                          fontWeight: 600,
+                        }}
+                      >
+                        {linha.notaFinal.toFixed(1)}
+                      </Box>
+                    </Tooltip>
+                  </TableCell>
                   <TableCell>{linha.frequenciaPercentual.toFixed(0)}%</TableCell>
                   <TableCell>{LABEL_SITUACAO[linha.situacao]}</TableCell>
                   <TableCell>
@@ -674,6 +747,35 @@ export function PlanoTab({
             }
           />
         ))}
+      </FormDialog>
+
+      <FormDialog
+        open={aplicarAbaixoMediaAberto}
+        title="Aplicar item especial"
+        subtitle="Habilita o item escolhido para todos os alunos cuja média atual está abaixo da nota mínima de aprovação."
+        onClose={() => setAplicarAbaixoMediaAberto(false)}
+        onSubmit={salvarAplicarAbaixoMedia}
+        error={erro}
+        submitting={aplicarAbaixoMedia.isPending}
+        submitLabel="Aplicar"
+      >
+        <TextField
+          select
+          label="Item especial"
+          size="small"
+          fullWidth
+          value={itemParaAplicar}
+          onChange={(e) => setItemParaAplicar(e.target.value)}
+        >
+          {itensEspeciais.map((item) => (
+            <MenuItem key={item.id} value={item.id}>
+              {item.nome}
+            </MenuItem>
+          ))}
+        </TextField>
+        <Typography variant="body2" color="text.secondary">
+          Nota mínima de aprovação da disciplina: {notaMinimaAprovacao}
+        </Typography>
       </FormDialog>
 
       <EditarNotasAlunoDialog

@@ -1,9 +1,11 @@
 import { Card, CardContent, Chip, Grid, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { useMateriaPlanoControllerBoletim } from '../../../api/generated/plano-disciplina/plano-disciplina';
 import { useMateriaPlanoControllerMeuDetalhamento } from '../../../api/generated/plano-disciplina/plano-disciplina';
+import { corMedia } from '../../../utils/corMedia';
 
 interface SituacaoTabProps {
   materiaId: string;
+  notaMinimaAprovacao: string;
 }
 
 const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'success' | 'error' }> = {
@@ -12,7 +14,7 @@ const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'succes
   REPROVADO: { label: 'Reprovado', color: 'error' },
 };
 
-export function SituacaoTab({ materiaId }: SituacaoTabProps) {
+export function SituacaoTab({ materiaId, notaMinimaAprovacao }: SituacaoTabProps) {
   const { data: boletim, isLoading } = useMateriaPlanoControllerBoletim(materiaId);
   const { data: itens, isLoading: carregandoItens } = useMateriaPlanoControllerMeuDetalhamento(materiaId);
 
@@ -28,7 +30,23 @@ export function SituacaoTab({ materiaId }: SituacaoTabProps) {
                 <Typography variant="body2" color="text.secondary">
                   Média
                 </Typography>
-                <Typography variant="h4">{minhaLinha.notaFinal.toFixed(1)}</Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    color: corMedia(
+                      minhaLinha.notaFinal,
+                      minhaLinha.notaParcial,
+                      Number(notaMinimaAprovacao),
+                    ),
+                  }}
+                >
+                  {minhaLinha.notaFinal.toFixed(1)}
+                </Typography>
+                {minhaLinha.notaParcial && (
+                  <Typography variant="caption" color="text.secondary">
+                    Parcial — falta lançar alguma nota
+                  </Typography>
+                )}
               </CardContent>
             </Card>
           </Grid>

@@ -56,7 +56,9 @@ export function MateriaAlunoPage() {
         <Tab label="Atividades" />
       </Tabs>
 
-      {tab === 0 && <SituacaoTab materiaId={materiaId} />}
+      {tab === 0 && materia && (
+        <SituacaoTab materiaId={materiaId} notaMinimaAprovacao={materia.notaMinimaAprovacao} />
+      )}
       {tab === 1 && <AulasAlunoTab materiaId={materiaId} />}
       {tab === 2 && <AtividadesAlunoTab materiaId={materiaId} />}
     </>

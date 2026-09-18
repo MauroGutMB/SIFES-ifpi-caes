@@ -26,6 +26,7 @@ import {
   materiaPlanoControllerBoletim,
 } from '../../api/generated/plano-disciplina/plano-disciplina';
 import { tokens } from '../../theme/tokens';
+import { corMedia } from '../../utils/corMedia';
 
 const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'success' | 'error' }> = {
   CURSANDO: { label: 'Cursando', color: 'default' },
@@ -33,7 +34,6 @@ const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'succes
   REPROVADO: { label: 'Reprovado', color: 'error' },
 };
 
-const NOTA_CORTE = 7;
 const FREQUENCIA_MINIMA = 75;
 
 export function BoletimTab() {
@@ -84,7 +84,6 @@ export function BoletimTab() {
             <TableBody>
               {materias.map((materia, i) => {
                 const linha = resultados[i]?.data?.[0];
-                const mediaBaixa = !!linha && linha.notaFinal < NOTA_CORTE;
                 const frequenciaBaixa = !!linha && linha.frequenciaPercentual < FREQUENCIA_MINIMA;
                 return (
                   <TableRow
@@ -93,7 +92,20 @@ export function BoletimTab() {
                     onClick={() => navigate(`/app/aluno/materias/${materia.id}`)}
                   >
                     <TableCell>{materia.nome}</TableCell>
-                    <TableCell sx={{ color: mediaBaixa ? tokens.redText : undefined, fontWeight: mediaBaixa ? 600 : undefined }}>
+                    <TableCell
+                      sx={
+                        linha
+                          ? {
+                              color: corMedia(
+                                linha.notaFinal,
+                                linha.notaParcial,
+                                Number(materia.notaMinimaAprovacao),
+                              ),
+                              fontWeight: 600,
+                            }
+                          : undefined
+                      }
+                    >
                       {linha ? linha.notaFinal.toFixed(1) : '—'}
                     </TableCell>
                     <TableCell sx={{ color: frequenciaBaixa ? tokens.redText : undefined, fontWeight: frequenciaBaixa ? 600 : undefined }}>
