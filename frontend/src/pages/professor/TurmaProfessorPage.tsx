@@ -295,6 +295,20 @@ export function TurmaProfessorPage() {
         Relatório de frequência das suas matérias nesta turma, até a data de hoje.
       </Typography>
 
+      <Typography variant="subtitle1" gutterBottom>
+        Minhas disciplinas nesta turma
+      </Typography>
+      <Stack direction="row" spacing={1} sx={{ mb: 3, flexWrap: 'wrap', rowGap: 1 }}>
+        {materiasDaTurma.map((m) => (
+          <Chip
+            key={m.id}
+            label={m.nome}
+            onClick={() => navigate(`/app/professor/materias/${m.id}`)}
+            variant="outlined"
+          />
+        ))}
+      </Stack>
+
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
           <TextField
@@ -408,19 +422,6 @@ export function TurmaProfessorPage() {
           </TableBody>
         </Table>
       </Paper>
-
-      {materiasDaTurma.length > 0 && (
-        <Stack direction="row" spacing={1} sx={{ mt: 3, flexWrap: 'wrap', rowGap: 1 }}>
-          {materiasDaTurma.map((m) => (
-            <Chip
-              key={m.id}
-              label={`Abrir ${m.nome}`}
-              onClick={() => navigate(`/app/professor/materias/${m.id}`)}
-              variant="outlined"
-            />
-          ))}
-        </Stack>
-      )}
 
       <DetalheDisciplinaDialog
         materiaId={materiaDetalheId}
