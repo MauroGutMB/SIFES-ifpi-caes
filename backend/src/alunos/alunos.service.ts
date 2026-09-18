@@ -36,17 +36,22 @@ export class AlunosService {
           },
         },
       });
-      return { ...aluno, senhaInicial };
+      return { ...aluno, fotoUrl: null, senhaInicial };
     } catch (error) {
       rethrowAsConflict(error, 'Já existe um aluno com esta matrícula');
     }
   }
 
-  findAll(turmaId?: string) {
-    return this.prisma.aluno.findMany({
+  async findAll(turmaId?: string) {
+    const alunos = await this.prisma.aluno.findMany({
       where: turmaId ? { turmaId } : undefined,
+      include: { user: { select: { fotoUrl: true } } },
       orderBy: { nome: 'asc' },
     });
+    return alunos.map(({ user, ...aluno }) => ({
+      ...aluno,
+      fotoUrl: user.fotoUrl,
+    }));
   }
 
   findOne(id: string) {
@@ -56,11 +61,15 @@ export class AlunosService {
     });
   }
 
-  meuPerfil(alunoId: string) {
-    return this.prisma.aluno.findUniqueOrThrow({
+  async meuPerfil(alunoId: string) {
+    const { user, ...aluno } = await this.prisma.aluno.findUniqueOrThrow({
       where: { id: alunoId },
-      include: { turma: { include: { semestre: true } } },
+      include: {
+        turma: { include: { semestre: true } },
+        user: { select: { fotoUrl: true } },
+      },
     });
+    return { ...aluno, fotoUrl: user.fotoUrl };
   }
 
   async update(id: string, dto: UpdateAlunoDto) {

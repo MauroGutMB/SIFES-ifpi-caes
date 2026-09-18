@@ -16,6 +16,9 @@ export class AlunoDto {
 
   @ApiProperty({ nullable: true, type: String })
   turmaId: string | null;
+
+  @ApiProperty({ nullable: true, type: String })
+  fotoUrl: string | null;
 }
 
 export class AlunoCriadoDto extends AlunoDto {
