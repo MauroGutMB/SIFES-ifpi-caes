@@ -42,7 +42,7 @@ export class AuthController {
       httpOnly: true,
       secure,
       // 'strict'/'lax' nunca são enviados em requisição cross-site — necessário aqui porque
-      // frontend (Cloudflare) e backend (Render) ficam em domínios diferentes em produção.
+      // frontend e backend costumam ficar em domínios diferentes em produção.
       // 'none' exige secure:true, por isso só liga quando COOKIE_SECURE=true.
       sameSite: secure ? 'none' : 'lax',
       path: REFRESH_COOKIE_PATH,

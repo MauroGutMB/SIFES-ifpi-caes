@@ -12,7 +12,17 @@ async function bootstrap() {
   // contentSecurityPolicy desligado porque quebraria o Swagger UI montado em /docs (ele carrega
   // scripts/estilos inline) — os headers que importam pra prevenir XSS de upload (nosniff,
   // frameguard) continuam ativos por padrão.
-  app.use(helmet({ contentSecurityPolicy: false }));
+  //
+  // crossOriginResourcePolicy também precisa sair do padrão ('same-origin'): frontend e backend
+  // costumam ficar em domínios diferentes em produção, e GET /arquivos/:id serve fotos de
+  // perfil e materiais que o frontend carrega direto num <img>/<a> — com o padrão do helmet,
+  // o navegador bloqueia essas respostas por serem "cross-origin", mesmo com a URL certa.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(cookieParser());
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.useGlobalPipes(
