@@ -10,11 +10,20 @@ function usuario(parcial: Partial<AuthenticatedUser>): AuthenticatedUser {
   return { id: 'user-1', role: Role.ALUNO, ...parcial };
 }
 
+// Os bytes iniciais precisam bater com a assinatura real do mimetype declarado — o serviço agora
+// valida magic bytes, não só o header, então um buffer de texto solto seria rejeitado mesmo nos
+// casos de sucesso.
+const MAGIC_POR_MIME: Record<string, number[]> = {
+  'application/pdf': [0x25, 0x50, 0x44, 0x46],
+  'image/png': [0x89, 0x50, 0x4e, 0x47],
+  'image/jpeg': [0xff, 0xd8, 0xff],
+};
+
 function arquivoFalso(mimetype: string) {
   return {
     originalname: 'arquivo.pdf',
     mimetype,
-    buffer: Buffer.from('x'),
+    buffer: Buffer.from(MAGIC_POR_MIME[mimetype] ?? []),
   } as Express.Multer.File;
 }
 

@@ -14,11 +14,28 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
+import { FileSignatureValidationPipe } from '../common/file-signature-validation.pipe';
 import { MateriaisAulaService } from './materiais-aula.service';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 import { MaterialAulaDto } from './dto/material-aula.dto';
 
 const MAX_MATERIAL_BYTES = 20 * 1024 * 1024; // 20MB
+
+// Material de aula é intencionalmente flexível (o professor pode subir slide, apostila, foto),
+// mas ainda assim restrito a um allowlist — nunca aceita tipos executáveis pelo navegador
+// (html, svg, javascript), que é o vetor de XSS armazenado que essa validação existe pra fechar.
+const MATERIAL_MIME_TIPOS = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+];
+const MATERIAL_MIME_REGEX = new RegExp(
+  `^(${MATERIAL_MIME_TIPOS.map((mime) => mime.replace(/[.+]/g, '\\$&')).join('|')})$`,
+);
 
 @ApiTags('materiais-aula')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -44,8 +61,10 @@ export class MateriaisAulaController {
     @Body() dto: CreateMaterialAulaDto,
     @UploadedFile(
       new ParseFilePipeBuilder()
+        .addFileTypeValidator({ fileType: MATERIAL_MIME_REGEX })
         .addMaxSizeValidator({ maxSize: MAX_MATERIAL_BYTES })
         .build(),
+      new FileSignatureValidationPipe(MATERIAL_MIME_TIPOS),
     )
     file: Express.Multer.File,
     @CurrentUser() user: AuthenticatedUser,

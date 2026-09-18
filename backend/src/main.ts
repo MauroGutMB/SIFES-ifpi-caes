@@ -2,12 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // contentSecurityPolicy desligado porque quebraria o Swagger UI montado em /docs (ele carrega
+  // scripts/estilos inline) — os headers que importam pra prevenir XSS de upload (nosniff,
+  // frameguard) continuam ativos por padrão.
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cookieParser());
   app.useGlobalFilters(new PrismaExceptionFilter());
   app.useGlobalPipes(

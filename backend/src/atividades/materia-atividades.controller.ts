@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  ParseFilePipeBuilder,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -16,6 +17,7 @@ import { Role } from '../../generated/prisma/client';
 import { AtividadesService } from './atividades.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { AtividadeDto } from './dto/atividade.dto';
+import { MAX_ENTREGA_BYTES } from './formato-entrega.util';
 
 @ApiTags('atividades')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -43,7 +45,12 @@ export class MateriaAtividadesController {
     @Param('materiaId') materiaId: string,
     @Body() dto: CreateAtividadeDto,
     @CurrentUser() user: AuthenticatedUser,
-    @UploadedFile() anexo?: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: MAX_ENTREGA_BYTES })
+        .build({ fileIsRequired: false }),
+    )
+    anexo?: Express.Multer.File,
   ) {
     return this.service.criar(materiaId, dto, user, anexo);
   }

@@ -4,6 +4,17 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Único conjunto de mimeTypes que esse endpoint tem confiança pra ecoar como Content-Type real.
+// Cobre tudo que os pontos de upload do sistema hoje aceitam (fotos, materiais de aula, entregas,
+// anexos de atividade). Qualquer mimeType gravado fora desse allowlist — inclusive dados legados
+// gravados antes da validação de upload existir — é servido como download genérico, nunca
+// renderizado inline, porque o valor vem de uma coluna preenchida por quem fez o upload.
+const MIME_TIPOS_SEGUROS_PARA_INLINE = new Set([
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+]);
+
 /** Serve o conteúdo binário de qualquer upload gravado na tabela `arquivos` — substitui o antigo
  * `useStaticAssets('/uploads')`, que dependia de disco local (efêmero em produção). Público, sem
  * autenticação, para preservar o mesmo comportamento de acesso que os arquivos estáticos tinham
@@ -20,7 +31,17 @@ export class ArquivosController {
     if (!arquivo) {
       throw new NotFoundException('Arquivo não encontrado');
     }
-    res.set('Content-Type', arquivo.mimeType);
+
+    // Nunca deixa o navegador "adivinhar" o tipo por conta própria — reforça o Content-Type
+    // abaixo mesmo quando ele já é seguro.
+    res.set('X-Content-Type-Options', 'nosniff');
+
+    const seguro = MIME_TIPOS_SEGUROS_PARA_INLINE.has(arquivo.mimeType);
+    res.set(
+      'Content-Type',
+      seguro ? arquivo.mimeType : 'application/octet-stream',
+    );
+    res.set('Content-Disposition', seguro ? 'inline' : 'attachment');
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
     res.send(Buffer.from(arquivo.conteudo));
   }

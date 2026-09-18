@@ -15,7 +15,12 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
-import { FOTO_MIME_REGEX, MAX_FOTO_BYTES } from '../common/foto.util';
+import {
+  FOTO_MIME_REGEX,
+  FOTO_MIME_TIPOS,
+  MAX_FOTO_BYTES,
+} from '../common/foto.util';
+import { FileSignatureValidationPipe } from '../common/file-signature-validation.pipe';
 import { UsersService } from './users.service';
 import { UserMeDto } from './dto/user-me.dto';
 import { UserDto } from './dto/user.dto';
@@ -57,6 +62,7 @@ export class UsersController {
         .addFileTypeValidator({ fileType: FOTO_MIME_REGEX })
         .addMaxSizeValidator({ maxSize: MAX_FOTO_BYTES })
         .build(),
+      new FileSignatureValidationPipe(FOTO_MIME_TIPOS),
     )
     file: Express.Multer.File,
   ) {

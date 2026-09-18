@@ -5,13 +5,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { EstadoMateria } from '../../generated/prisma/client';
+import { EstadoMateria, FormatoArquivo } from '../../generated/prisma/client';
 import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
+import { validarAssinaturaArquivo } from '../common/file-signature.util';
 import {
   garantirAcessoLeituraMateria,
   garantirPosseProfessor,
 } from '../common/posse.util';
-import { mimeRegexParaFormato } from './formato-entrega.util';
+import {
+  mimeRegexParaFormato,
+  mimeTiposParaFormato,
+} from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 
@@ -62,6 +66,23 @@ export class AtividadesService {
     return atividade;
   }
 
+  /** Valida o anexo contra o formato exigido pela Atividade — tanto o header Content-Type
+   * (declarado pelo cliente) quanto os magic bytes reais do conteúdo, que não podem ser
+   * falsificados da mesma forma. */
+  private validarAnexo(file: Express.Multer.File, formato: FormatoArquivo) {
+    const regexEsperado = mimeRegexParaFormato(formato);
+    if (!regexEsperado.test(file.mimetype)) {
+      throw new BadRequestException(
+        `Formato de arquivo inválido — o anexo deve ser do tipo ${formato}`,
+      );
+    }
+    if (!validarAssinaturaArquivo(file.buffer, mimeTiposParaFormato(formato))) {
+      throw new BadRequestException(
+        'O conteúdo do arquivo não corresponde ao tipo declarado',
+      );
+    }
+  }
+
   private salvarAnexo(file: Express.Multer.File): Promise<string> {
     return salvarArquivo(this.prisma, file.buffer, file.mimetype);
   }
@@ -78,6 +99,9 @@ export class AtividadesService {
   ) {
     const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
+    if (anexo) {
+      this.validarAnexo(anexo, dto.formatoExigido);
+    }
     return this.prisma.atividade.create({
       data: {
         materiaId,
@@ -108,6 +132,7 @@ export class AtividadesService {
     this.garantirAberta(atividade.materia);
     let arquivoUrl = atividade.arquivoUrl;
     if (anexo) {
+      this.validarAnexo(anexo, dto.formatoExigido ?? atividade.formatoExigido);
       await this.removerAnexo(atividade.arquivoUrl);
       arquivoUrl = await this.salvarAnexo(anexo);
     }
@@ -172,12 +197,7 @@ export class AtividadesService {
       );
     }
 
-    const regexEsperado = mimeRegexParaFormato(atividade.formatoExigido);
-    if (!regexEsperado.test(file.mimetype)) {
-      throw new BadRequestException(
-        `Formato de arquivo inválido — esta Atividade exige ${atividade.formatoExigido}`,
-      );
-    }
+    this.validarAnexo(file, atividade.formatoExigido);
 
     const arquivoUrl = await salvarArquivo(
       this.prisma,
