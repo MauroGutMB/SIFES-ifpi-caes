@@ -54,10 +54,6 @@ export class RelatoriosService {
       include: { frequencias: { include: { aluno: true } } },
       orderBy: { data: 'asc' },
     });
-    const boletim = await this.boletim.calcularBoletimMateria(materiaId);
-    const boletimPorAluno = new Map(
-      boletim.map((linha) => [linha.aluno.id, linha]),
-    );
 
     const linhas: (string | number)[][] = [];
     for (const aula of aulas) {
@@ -70,13 +66,10 @@ export class RelatoriosService {
           '—',
           '—',
           '—',
-          '—',
-          '—',
         ]);
         continue;
       }
       for (const f of aula.frequencias) {
-        const situacaoAluno = boletimPorAluno.get(f.alunoId);
         linhas.push([
           dataStr,
           aula.titulo ?? '',
@@ -84,10 +77,6 @@ export class RelatoriosService {
           f.aluno.nome,
           f.aluno.matricula,
           f.status,
-          situacaoAluno ? situacaoAluno.notaFinal.toFixed(2) : '—',
-          situacaoAluno
-            ? `${situacaoAluno.frequenciaPercentual.toFixed(1)}%`
-            : '—',
         ]);
       }
     }
@@ -101,10 +90,9 @@ export class RelatoriosService {
         'Descricao',
         'Aluno',
         'Matricula',
-        'Presenca na aula',
-        'Media atual',
-        'Frequencia do aluno',
+        'Presenca',
       ],
+      colunasAgrupadas: [0, 1, 2],
       linhas,
     };
     return {
