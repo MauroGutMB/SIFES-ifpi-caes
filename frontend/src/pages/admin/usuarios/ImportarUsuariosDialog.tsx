@@ -107,6 +107,31 @@ export function ImportarUsuariosDialog({ open, onClose, onImportado }: ImportarU
                 </Table>
               </Stack>
             )}
+            {resultado.ignorados.length > 0 && (
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">
+                  {resultado.ignorados.length} linha(s) ignorada(s) (login já existente)
+                </Typography>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Linha</TableCell>
+                      <TableCell>Nome</TableCell>
+                      <TableCell>Login</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {resultado.ignorados.map((item) => (
+                      <TableRow key={item.linha}>
+                        <TableCell>{item.linha}</TableCell>
+                        <TableCell>{item.nome}</TableCell>
+                        <TableCell>{item.login}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Stack>
+            )}
             {resultado.erros.length > 0 && (
               <Stack spacing={1}>
                 <Typography variant="subtitle2" color="error">

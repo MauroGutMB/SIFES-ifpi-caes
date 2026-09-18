@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Box, Button, Chip, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
@@ -14,8 +15,9 @@ import { useToast } from '../../../components/ToastProvider';
 import { baixarArquivo } from '../../../api/download';
 import { tokens } from '../../../theme/tokens';
 import { ImportarUsuariosDialog } from './ImportarUsuariosDialog';
+import { InstrucoesImportacaoDialog } from './InstrucoesImportacaoDialog';
 
-const PAPEIS = [
+const CARGOS = [
   { value: '', label: 'Todos' },
   { value: 'ADMIN', label: 'Administrador' },
   { value: 'PROFESSOR', label: 'Professor' },
@@ -40,6 +42,7 @@ export function UsuariosPage() {
     somenteVisualizacao?: boolean;
   } | null>(null);
   const [importarAberto, setImportarAberto] = useState(false);
+  const [instrucoesAberto, setInstrucoesAberto] = useState(false);
   // Senhas geradas nesta sessão do navegador, por login — nunca persistidas (o hash no banco
   // não é reversível, então isso é a única forma de "reexibir" a senha depois do diálogo inicial).
   const [senhasGeradas, setSenhasGeradas] = useState<Record<string, string>>({});
@@ -93,7 +96,7 @@ export function UsuariosPage() {
     { field: 'login', headerName: 'Login', flex: 1 },
     {
       field: 'role',
-      headerName: 'Papel',
+      headerName: 'Cargo',
       width: 130,
       renderCell: (params) => <Chip size="small" label={params.value} />,
     },
@@ -153,23 +156,9 @@ export function UsuariosPage() {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Usuários</Typography>
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-          <TextField
-            select
-            size="small"
-            label="Papel"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            sx={{ minWidth: 200 }}
-          >
-            {PAPEIS.map((papel) => (
-              <MenuItem key={papel.value} value={papel.value}>
-                {papel.label}
-              </MenuItem>
-            ))}
-          </TextField>
           <Paper
             variant="outlined"
-            sx={{ display: 'flex', gap: 1, p: 1 }}
+            sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1 }}
           >
             <Button size="small" variant="outlined" onClick={baixarModelo}>
               Baixar modelo de importação
@@ -177,7 +166,29 @@ export function UsuariosPage() {
             <Button size="small" variant="contained" onClick={() => setImportarAberto(true)}>
               Importar usuários
             </Button>
+            <IconButton
+              size="small"
+              onClick={() => setInstrucoesAberto(true)}
+              title="Como importar usuários"
+              aria-label="Como importar usuários"
+            >
+              <MenuBookOutlinedIcon fontSize="small" />
+            </IconButton>
           </Paper>
+          <TextField
+            select
+            size="small"
+            label="Cargo"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            sx={{ minWidth: 200 }}
+          >
+            {CARGOS.map((cargo) => (
+              <MenuItem key={cargo.value} value={cargo.value}>
+                {cargo.label}
+              </MenuItem>
+            ))}
+          </TextField>
         </Stack>
       </Box>
 
@@ -210,6 +221,8 @@ export function UsuariosPage() {
         onClose={() => setImportarAberto(false)}
         onImportado={(importados) => void aoImportar(importados)}
       />
+
+      <InstrucoesImportacaoDialog open={instrucoesAberto} onClose={() => setInstrucoesAberto(false)} />
     </>
   );
 }
