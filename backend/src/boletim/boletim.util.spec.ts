@@ -72,6 +72,14 @@ describe('boletim.util', () => {
       expect(nota).toBe(5);
     });
 
+    it('item especial sem modoEspecial configurado é ignorado (não vira PONDERADA por acaso)', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5),
+        itemEspecial({ id: 'e1', modoEspecial: null, valorObtido: 10 }),
+      ]);
+      expect(nota).toBe(5);
+    });
+
     it('modo PONDERADA: item especial entra como mais um componente da média, com peso próprio', () => {
       const nota = calcularNotaFinal([
         itemNormal('1', 10, 5, 2),

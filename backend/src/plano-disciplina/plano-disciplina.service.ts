@@ -131,6 +131,11 @@ export class PlanoDisciplinaService {
         );
       }
       if (config.itemSubstituidoId) {
+        if (!item.especial) {
+          throw new BadRequestException(
+            `"${item.nome}" não é um item especial, não pode substituir outro item`,
+          );
+        }
         const substituido = itensPorId.get(config.itemSubstituidoId);
         if (!substituido || substituido.especial) {
           throw new BadRequestException(
@@ -138,6 +143,52 @@ export class PlanoDisciplinaService {
           );
         }
       }
+    }
+
+    // Estado de modoEspecial/itemSubstituidoId depois de aplicar esta configuração (itens fora
+    // de dto.itens mantêm o que já tinham) — usado pra validar conflitos entre itens diferentes,
+    // já que cada item é configurado isoladamente no loop acima.
+    const configPorId = new Map(
+      dto.itens.map((config) => [config.itemAvaliacaoId, config]),
+    );
+    const estadoFinal = itensDaMateria.map((item) => {
+      const config = configPorId.get(item.id);
+      return {
+        nome: item.nome,
+        modoEspecial: config
+          ? (config.modoEspecial ?? null)
+          : item.modoEspecial,
+        itemSubstituidoId: config
+          ? (config.itemSubstituidoId ?? null)
+          : item.itemSubstituidoId,
+      };
+    });
+
+    const itensSubstituiMedia = estadoFinal.filter(
+      (item) => item.modoEspecial === 'SUBSTITUI_MEDIA',
+    );
+    if (itensSubstituiMedia.length > 1) {
+      throw new BadRequestException(
+        `Só pode haver um item no modo "Substitui média" por disciplina (encontrados: ${itensSubstituiMedia
+          .map((item) => item.nome)
+          .join(', ')})`,
+      );
+    }
+
+    const alvosSubstituidos = estadoFinal
+      .filter((item) => item.modoEspecial === 'SUBSTITUI_ITEM')
+      .map((item) => item.itemSubstituidoId)
+      .filter((id): id is string => id != null);
+    const alvoDuplicado = alvosSubstituidos.find(
+      (id, index) => alvosSubstituidos.indexOf(id) !== index,
+    );
+    if (alvoDuplicado) {
+      const nomeAlvo = itensDaMateria.find(
+        (item) => item.id === alvoDuplicado,
+      )?.nome;
+      throw new BadRequestException(
+        `Dois itens especiais não podem substituir o mesmo item ("${nomeAlvo}")`,
+      );
     }
 
     await this.prisma.$transaction([
@@ -177,6 +228,11 @@ export class PlanoDisciplinaService {
     if (!item.especial) {
       throw new BadRequestException('Este item não é um item especial');
     }
+    if (habilitado && !item.modoEspecial) {
+      throw new BadRequestException(
+        'Configure como este item conta na nota (Regra de aprovação) antes de habilitá-lo para algum aluno',
+      );
+    }
     const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
       where: { alunoId_materiaId: { alunoId, materiaId: item.materiaId } },
     });
@@ -213,6 +269,11 @@ export class PlanoDisciplinaService {
     this.garantirAberta(item.materia);
     if (!item.especial) {
       throw new BadRequestException('Este item não é um item especial');
+    }
+    if (!item.modoEspecial) {
+      throw new BadRequestException(
+        'Configure como este item conta na nota (Regra de aprovação) antes de aplicá-lo',
+      );
     }
 
     const boletim = await this.boletim.calcularBoletimMateria(item.materiaId);
@@ -344,6 +405,7 @@ export class PlanoDisciplinaService {
       nome: item.nome,
       valorMaximo: item.valorMaximo.toString(),
       valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+      notaLancada: !!item.notas[0],
       especial: item.especial,
       habilitadoParaAluno: item.alunosHabilitados.length > 0,
     }));
@@ -364,6 +426,7 @@ export class PlanoDisciplinaService {
       nome: item.nome,
       valorMaximo: item.valorMaximo.toString(),
       valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+      notaLancada: !!item.notas[0],
       especial: item.especial,
       habilitadoParaAluno: item.alunosHabilitados.length > 0,
     }));

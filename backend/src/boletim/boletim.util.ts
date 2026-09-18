@@ -46,7 +46,11 @@ export function calcularNotaFinal(
     .map((item) => ({ id: item.id, peso: item.peso, nota: normalizar(item) }));
 
   const especiaisValidos = itens.filter((item) => {
-    if (!item.especial || !item.habilitadoParaAluno) return false;
+    // `modoEspecial` null significa que o professor nunca configurou como esse item conta na
+    // nota (Regra de aprovação) — a API já impede habilitar um item nesse estado pra qualquer
+    // aluno, mas o cálculo também não deve tratar "sem modo" como se fosse PONDERADA por acaso.
+    if (!item.especial || !item.habilitadoParaAluno || !item.modoEspecial)
+      return false;
     return normalizar(item) >= notaMinimaAprovacao;
   });
 
