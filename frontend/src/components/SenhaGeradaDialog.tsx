@@ -14,11 +14,22 @@ interface SenhaGeradaDialogProps {
   login: string;
   senha: string;
   onClose: () => void;
+  /** Quando true, apenas reexibe uma senha já gerada nesta sessão (ex: clique no chip
+   * "Sim" da tabela) — o diálogo fecha normalmente e não mostra o aviso de "não recuperável". */
+  somenteVisualizacao?: boolean;
 }
 
 /** Esta é a única vez que a senha aparece — o diálogo não fecha por Esc/backdrop,
- * só pelo botão "Anotei a senha". */
-export function SenhaGeradaDialog({ open, nome, titulo, login, senha, onClose }: SenhaGeradaDialogProps) {
+ * só pelo botão "Anotei a senha" (exceto em modo somenteVisualizacao). */
+export function SenhaGeradaDialog({
+  open,
+  nome,
+  titulo,
+  login,
+  senha,
+  onClose,
+  somenteVisualizacao,
+}: SenhaGeradaDialogProps) {
   const [copiado, setCopiado] = useState(false);
 
   const copiar = async () => {
@@ -31,6 +42,10 @@ export function SenhaGeradaDialog({ open, nome, titulo, login, senha, onClose }:
     <Dialog
       open={open}
       onClose={(_event, reason) => {
+        if (somenteVisualizacao) {
+          onClose();
+          return;
+        }
         if (reason === 'escapeKeyDown' || reason === 'backdropClick') return;
       }}
       maxWidth={false}
@@ -41,7 +56,9 @@ export function SenhaGeradaDialog({ open, nome, titulo, login, senha, onClose }:
         {titulo ?? (nome ? `${nome} foi cadastrado(a)` : 'Cadastro criado')}
       </DialogTitle>
       <Typography variant="body2" sx={{ px: 3, color: tokens.textSecondary, fontSize: 13, lineHeight: 1.5 }}>
-        Esta é a única vez que a senha aparece. Anote ou copie antes de fechar.
+        {somenteVisualizacao
+          ? 'Senha gerada nesta sessão. Anote ou copie se precisar.'
+          : 'Esta é a única vez que a senha aparece. Anote ou copie antes de fechar.'}
       </Typography>
 
       <DialogContent sx={{ pt: 2.5 }}>
@@ -103,21 +120,23 @@ export function SenhaGeradaDialog({ open, nome, titulo, login, senha, onClose }:
           </Button>
         </Box>
 
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 1,
-            mt: 2,
-            p: '12px 14px',
-            bgcolor: tokens.yellowBg,
-            borderRadius: 1,
-          }}
-        >
-          <WarningAmberIcon sx={{ color: tokens.yellowText, fontSize: 16, mt: '1px' }} />
-          <Typography sx={{ fontSize: 12.5, color: tokens.yellowText, lineHeight: 1.5 }}>
-            Depois de fechar, a senha não pode ser recuperada — será preciso gerar uma nova.
-          </Typography>
-        </Box>
+        {!somenteVisualizacao && (
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              mt: 2,
+              p: '12px 14px',
+              bgcolor: tokens.yellowBg,
+              borderRadius: 1,
+            }}
+          >
+            <WarningAmberIcon sx={{ color: tokens.yellowText, fontSize: 16, mt: '1px' }} />
+            <Typography sx={{ fontSize: 12.5, color: tokens.yellowText, lineHeight: 1.5 }}>
+              Depois de fechar, a senha não pode ser recuperada — será preciso gerar uma nova.
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
 
       <DialogActions sx={{ justifyContent: 'flex-end', px: 3, py: 2, bgcolor: '#FAFBFA', borderTop: `1px solid ${tokens.border}` }}>
