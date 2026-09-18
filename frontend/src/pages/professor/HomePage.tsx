@@ -8,6 +8,7 @@ import {
   useUsersControllerUpdateFoto,
 } from '../../api/generated/users/users';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
+import { urlArquivo } from '../../api/arquivo-url';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
 
 export function ProfessorHomePage() {
@@ -43,7 +44,7 @@ export function ProfessorHomePage() {
         <Grid size={{ xs: 12, md: 5 }}>
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
-              <Avatar src={me?.fotoUrl ?? undefined} sx={{ width: 64, height: 64 }} />
+              <Avatar src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
               <div>
                 <Typography variant="h6">{professor?.nome ?? me?.login}</Typography>
                 {professor && (

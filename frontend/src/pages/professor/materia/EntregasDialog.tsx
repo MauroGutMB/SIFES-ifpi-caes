@@ -12,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useAtividadesControllerListarEntregas } from '../../../api/generated/atividades/atividades';
+import { urlArquivo } from '../../../api/arquivo-url';
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
 
@@ -46,7 +47,7 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
                   <TableCell>{entrega.aluno.nome}</TableCell>
                   <TableCell>{new Date(entrega.enviadoEm).toLocaleString('pt-BR')}</TableCell>
                   <TableCell>
-                    <a href={entrega.arquivoUrl} target="_blank" rel="noreferrer">
+                    <a href={urlArquivo(entrega.arquivoUrl)} target="_blank" rel="noreferrer">
                       Abrir
                     </a>
                   </TableCell>

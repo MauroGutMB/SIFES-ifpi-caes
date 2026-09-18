@@ -35,6 +35,7 @@ import {
   useMaterialAulaItemControllerRemover,
 } from '../../../api/generated/materiais-aula/materiais-aula';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { urlArquivo } from '../../../api/arquivo-url';
 
 interface AulaDialogProps {
   aulaId: string | null;
@@ -264,7 +265,7 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                   sx={{ alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <Typography variant="body2">
-                    <a href={material.arquivoUrl} target="_blank" rel="noreferrer">
+                    <a href={urlArquivo(material.arquivoUrl)} target="_blank" rel="noreferrer">
                       {material.titulo}
                     </a>
                   </Typography>

@@ -10,6 +10,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useMateriaisAulaControllerListar } from '../../../api/generated/materiais-aula/materiais-aula';
+import { urlArquivo } from '../../../api/arquivo-url';
 
 interface AulaMateriaisDialogProps {
   aulaId: string | null;
@@ -31,7 +32,7 @@ export function AulaMateriaisDialog({ aulaId, onClose }: AulaMateriaisDialogProp
               <ListItem key={material.id}>
                 <ListItemText
                   primary={
-                    <a href={material.arquivoUrl} target="_blank" rel="noreferrer">
+                    <a href={urlArquivo(material.arquivoUrl)} target="_blank" rel="noreferrer">
                       {material.titulo}
                     </a>
                   }

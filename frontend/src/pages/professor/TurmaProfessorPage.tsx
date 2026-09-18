@@ -27,6 +27,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
 import { useMateriaPlanoControllerDetalhamentoAluno } from '../../api/generated/plano-disciplina/plano-disciplina';
+import { urlArquivo } from '../../api/arquivo-url';
 import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
 import { AulaDialog } from './materia/AulaDialog';
@@ -97,7 +98,7 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
         </TableCell>
         <TableCell>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Avatar src={aluno.fotoUrl ?? undefined} sx={{ width: 28, height: 28 }} />
+            <Avatar src={urlArquivo(aluno.fotoUrl)} sx={{ width: 28, height: 28 }} />
             <span>{aluno.alunoNome}</span>
           </Stack>
         </TableCell>

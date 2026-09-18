@@ -9,6 +9,7 @@ import {
   useFotoSolicitacoesControllerSolicitar,
 } from '../../api/generated/foto-solicitacoes/foto-solicitacoes';
 import type { AlunoMeDto } from '../../api/generated/models';
+import { urlArquivo } from '../../api/arquivo-url';
 
 interface ContaTabProps {
   perfil: AlunoMeDto;
@@ -46,7 +47,7 @@ export function ContaTab({ perfil }: ContaTabProps) {
     <Stack spacing={3} sx={{ maxWidth: 480 }}>
       <Paper variant="outlined" sx={{ p: 3 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-          <Avatar src={me?.fotoUrl ?? undefined} sx={{ width: 64, height: 64 }} />
+          <Avatar src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
           <div>
             <Typography variant="h6">{perfil.nome}</Typography>
             <Typography variant="body2" color="text.secondary">
