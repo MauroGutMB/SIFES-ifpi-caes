@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Avatar, Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUsersControllerMe } from '../../api/generated/users/users';
@@ -10,6 +10,7 @@ import {
 } from '../../api/generated/foto-solicitacoes/foto-solicitacoes';
 import type { AlunoMeDto } from '../../api/generated/models';
 import { urlArquivo } from '../../api/arquivo-url';
+import { FotoPopup } from '../../components/FotoPopup';
 
 interface ContaTabProps {
   perfil: AlunoMeDto;
@@ -47,7 +48,7 @@ export function ContaTab({ perfil }: ContaTabProps) {
     <Stack spacing={3} sx={{ maxWidth: 480 }}>
       <Paper variant="outlined" sx={{ p: 3 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-          <Avatar src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
+          <FotoPopup src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
           <div>
             <Typography variant="h6">{perfil.nome}</Typography>
             <Typography variant="body2" color="text.secondary">

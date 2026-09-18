@@ -1,4 +1,4 @@
-import { Avatar, Box, Card, CardActionArea, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import ScheduleIcon from '@mui/icons-material/ScheduleOutlined';
@@ -7,6 +7,7 @@ import InboxIcon from '@mui/icons-material/InboxOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { urlArquivo } from '../../api/arquivo-url';
+import { FotoPopup } from '../../components/FotoPopup';
 import { resumoHorarios } from '../admin/materias/dias-semana';
 import { tokens } from '../../theme/tokens';
 
@@ -62,7 +63,7 @@ export function MinhasMateriasTab() {
                     <Stack spacing={0.75}>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                         {materia.professor.fotoUrl ? (
-                          <Avatar src={urlArquivo(materia.professor.fotoUrl)} sx={{ width: 18, height: 18 }} />
+                          <FotoPopup src={urlArquivo(materia.professor.fotoUrl)} sx={{ width: 18, height: 18 }} />
                         ) : (
                           <PersonOutlineIcon fontSize="inherit" sx={{ color: 'text.secondary' }} />
                         )}

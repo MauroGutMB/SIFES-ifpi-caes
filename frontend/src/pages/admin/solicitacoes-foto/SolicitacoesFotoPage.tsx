@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Chip, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import CheckIcon from '@mui/icons-material/CheckOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
@@ -13,6 +13,7 @@ import {
 } from '../../../api/generated/admin-foto-solicitacoes/admin-foto-solicitacoes';
 import type { SolicitacaoFotoDto } from '../../../api/generated/models';
 import { urlArquivo } from '../../../api/arquivo-url';
+import { FotoPopup } from '../../../components/FotoPopup';
 
 export function SolicitacoesFotoPage() {
   const queryClient = useQueryClient();
@@ -34,14 +35,14 @@ export function SolicitacoesFotoPage() {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Tooltip title="Abrir em tamanho real">
-          <a href={urlArquivo(params.row.arquivoStagingUrl)} target="_blank" rel="noreferrer">
-            <Avatar
+        <Tooltip title="Ver em tamanho real">
+          <span>
+            <FotoPopup
               src={urlArquivo(params.row.arquivoStagingUrl)}
               variant="rounded"
               sx={{ width: 40, height: 40 }}
             />
-          </a>
+          </span>
         </Tooltip>
       ),
     },

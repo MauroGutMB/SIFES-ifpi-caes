@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Avatar, Box, Button, Chip, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Button, Chip, Stack, Tab, Tabs, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackOutlined';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../../api/generated/materias/materias';
 import { urlArquivo } from '../../../api/arquivo-url';
+import { FotoPopup } from '../../../components/FotoPopup';
 import { resumoHorarios } from '../../admin/materias/dias-semana';
 import { SituacaoTab } from './SituacaoTab';
 import { AulasAlunoTab } from './AulasAlunoTab';
@@ -29,7 +30,7 @@ export function MateriaAlunoPage() {
 
       {materia && (
         <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
-          <Avatar
+          <FotoPopup
             src={urlArquivo(materia.professor.fotoUrl)}
             sx={{ width: 56, height: 56 }}
           />

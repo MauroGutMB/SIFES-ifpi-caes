@@ -1,6 +1,7 @@
-import { Avatar, Divider, Grid, List, ListItem, ListItemAvatar, ListItemText, Paper, Stack, Typography } from '@mui/material';
+import { Divider, Grid, List, ListItem, ListItemAvatar, ListItemText, Paper, Stack, Typography } from '@mui/material';
 import { useAlunosControllerMeuPerfil, useAlunosControllerMinhaTurma } from '../../api/generated/alunos/alunos';
 import { urlArquivo } from '../../api/arquivo-url';
+import { FotoPopup } from '../../components/FotoPopup';
 
 export function TurmaTab() {
   const { data: perfil } = useAlunosControllerMeuPerfil();
@@ -66,7 +67,7 @@ export function TurmaTab() {
                       {i > 0 && <Divider component="li" />}
                       <ListItem>
                         <ListItemAvatar>
-                          <Avatar
+                          <FotoPopup
                             src={urlArquivo(fotoPorProfessorId.get(disciplina.professorId))}
                             sx={{ width: 32, height: 32 }}
                           />
@@ -98,7 +99,7 @@ export function TurmaTab() {
                       {i > 0 && <Divider component="li" />}
                       <ListItem>
                         <ListItemAvatar>
-                          <Avatar src={urlArquivo(aluno.fotoUrl)} sx={{ width: 32, height: 32 }} />
+                          <FotoPopup src={urlArquivo(aluno.fotoUrl)} sx={{ width: 32, height: 32 }} />
                         </ListItemAvatar>
                         <ListItemText primary={aluno.nome} secondary={aluno.matricula} />
                       </ListItem>

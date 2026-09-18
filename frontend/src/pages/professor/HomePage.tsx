@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Avatar, Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import { Box, Button, Grid, Paper, Stack, Typography } from '@mui/material';
+import { FotoPopup } from '../../components/FotoPopup';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -44,7 +45,7 @@ export function ProfessorHomePage() {
         <Grid size={{ xs: 12, md: 5 }}>
           <Paper variant="outlined" sx={{ p: 3 }}>
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 2 }}>
-              <Avatar src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
+              <FotoPopup src={urlArquivo(me?.fotoUrl)} sx={{ width: 64, height: 64 }} />
               <div>
                 <Typography variant="h6">{professor?.nome ?? me?.login}</Typography>
                 {professor && (
