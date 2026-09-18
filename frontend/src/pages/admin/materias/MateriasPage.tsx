@@ -322,7 +322,7 @@ export function MateriasPage() {
                   sx={{ width: 170 }}
                   defaultValue={field.diaSemana}
                 >
-                  {DIAS_SEMANA.map((dia) => (
+                  {DIAS_SEMANA.filter((dia) => dia.value !== 'SABADO').map((dia) => (
                     <MenuItem key={dia.value} value={dia.value}>
                       {dia.label}
                     </MenuItem>
@@ -335,6 +335,8 @@ export function MateriasPage() {
                     <TimePicker
                       label="Início"
                       ampm={false}
+                      minTime={horaParaData('07:00') ?? undefined}
+                      maxTime={horaParaData('17:00') ?? undefined}
                       value={horaParaData(campo.value)}
                       onChange={(data) => campo.onChange(dataParaHora(data))}
                       slotProps={{
