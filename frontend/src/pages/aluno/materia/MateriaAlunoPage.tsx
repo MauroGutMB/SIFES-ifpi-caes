@@ -23,7 +23,7 @@ export function MateriaAlunoPage() {
         onClick={() => navigate('/app/aluno/materias')}
         sx={{ mb: 1 }}
       >
-        Minhas matérias
+        Minhas disciplinas
       </Button>
 
       {materia && (

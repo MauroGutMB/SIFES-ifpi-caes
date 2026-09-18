@@ -51,7 +51,7 @@ export function RelatoriosTab({ materiaId }: RelatoriosTabProps) {
 
       <div>
         <Typography variant="h6" gutterBottom>
-          Frequência da matéria
+          Frequência da disciplina
         </Typography>
         <Stack direction="row" spacing={1}>
           <Button

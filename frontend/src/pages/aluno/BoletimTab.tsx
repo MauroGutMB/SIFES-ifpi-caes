@@ -66,7 +66,7 @@ export function BoletimTab() {
         <Typography variant="h4">Boletim</Typography>
       </Stack>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Toque em uma matéria para ver o detalhamento nota a nota.
+        Toque em uma disciplina para ver o detalhamento nota a nota.
       </Typography>
 
       <Paper variant="outlined" sx={{ mb: 3 }}>
@@ -74,7 +74,7 @@ export function BoletimTab() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Matéria</TableCell>
+                <TableCell>Disciplina</TableCell>
                 <TableCell>Média</TableCell>
                 <TableCell>Frequência</TableCell>
                 <TableCell>Situação</TableCell>
@@ -120,7 +120,7 @@ export function BoletimTab() {
           <Stack spacing={1} sx={{ alignItems: 'center', py: 4, color: tokens.textSecondary }}>
             <InboxIcon fontSize="small" />
             <Typography variant="body2" color="text.secondary">
-              Você ainda não está vinculado a nenhuma matéria.
+              Você ainda não está vinculado a nenhuma disciplina.
             </Typography>
           </Stack>
         )}

@@ -11,7 +11,7 @@ import { SidebarNavList, type SidebarNavItem } from './SidebarNavList';
 const ITENS_NAV: SidebarNavItem[] = [
   { to: '/app/aluno', label: 'Início', icon: <HomeIcon fontSize="small" />, end: true },
   { to: '/app/aluno/situacao', label: 'Minha situação', icon: <InsightsIcon fontSize="small" /> },
-  { to: '/app/aluno/materias', label: 'Minhas matérias', icon: <MenuBookIcon fontSize="small" /> },
+  { to: '/app/aluno/materias', label: 'Minhas disciplinas', icon: <MenuBookIcon fontSize="small" /> },
   { to: '/app/aluno/boletim', label: 'Boletim', icon: <AssessmentIcon fontSize="small" /> },
   { to: '/app/aluno/frequencia', label: 'Frequência', icon: <EventAvailableIcon fontSize="small" /> },
   { to: '/app/aluno/turma', label: 'Turma', icon: <ClassIcon fontSize="small" /> },

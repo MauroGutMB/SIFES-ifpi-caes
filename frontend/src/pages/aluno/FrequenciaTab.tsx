@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Chip,
   MenuItem,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -35,8 +36,23 @@ export function FrequenciaTab() {
     { query: { enabled: !!turmaId } },
   );
 
-  const detalhado = relatorio?.detalhado ?? [];
-  const { pagina, setPagina, itensDaPagina: detalhadoDaPagina } = usePaginacao(detalhado);
+  const detalhado = useMemo(() => relatorio?.detalhado ?? [], [relatorio]);
+
+  const diasAgrupados = useMemo(() => {
+    const porDia = new Map<
+      string,
+      { data: string; aulas: { materiaNome: string; status: string }[] }
+    >();
+    for (const linha of detalhado) {
+      const chave = linha.data.slice(0, 10);
+      const atual = porDia.get(chave) ?? { data: linha.data, aulas: [] };
+      atual.aulas.push({ materiaNome: linha.materiaNome, status: linha.status });
+      porDia.set(chave, atual);
+    }
+    return [...porDia.values()].sort((a, b) => (a.data < b.data ? 1 : -1));
+  }, [detalhado]);
+
+  const { pagina, setPagina, itensDaPagina: diasDaPagina } = usePaginacao(diasAgrupados);
 
   if (perfil && !perfil.turmaId) {
     return (
@@ -57,18 +73,18 @@ export function FrequenciaTab() {
         Frequência
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Suas presenças e faltas por matéria, até a data de hoje.
+        Suas presenças e faltas por disciplina, até a data de hoje.
       </Typography>
 
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <TextField
           select
-          label="Matéria"
+          label="Disciplina"
           value={materiaId}
           onChange={(e) => setMateriaId(e.target.value)}
           sx={{ minWidth: 220 }}
         >
-          <MenuItem value="">Todas as matérias</MenuItem>
+          <MenuItem value="">Todas as disciplinas</MenuItem>
           {(materias ?? []).map((m) => (
             <MenuItem key={m.id} value={m.id}>
               {m.nome}
@@ -78,13 +94,13 @@ export function FrequenciaTab() {
       </Paper>
 
       <Typography variant="subtitle1" gutterBottom>
-        Resumo por matéria
+        Resumo por disciplina
       </Typography>
       <Paper variant="outlined" sx={{ mb: 3 }}>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Matéria</TableCell>
+              <TableCell>Disciplina</TableCell>
               <TableCell>Frequência</TableCell>
             </TableRow>
           </TableHead>
@@ -116,35 +132,44 @@ export function FrequenciaTab() {
       </Paper>
 
       <Typography variant="subtitle1" gutterBottom>
-        Detalhado por aula
+        Detalhado por dia
       </Typography>
       <Paper variant="outlined">
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>
-              <TableCell>Matéria</TableCell>
-              <TableCell>Status</TableCell>
+              <TableCell>Aulas do dia</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {!isLoading &&
-              detalhadoDaPagina.map((linha, i) => (
-                <TableRow key={i}>
-                  <TableCell>{new Date(linha.data).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell>{linha.materiaNome}</TableCell>
+              diasDaPagina.map((dia) => (
+                <TableRow key={dia.data}>
+                  <TableCell sx={{ verticalAlign: 'top' }}>
+                    {new Date(dia.data).toLocaleDateString('pt-BR')}
+                  </TableCell>
                   <TableCell>
-                    <Chip
-                      size="small"
-                      label={LABEL_STATUS[linha.status].label}
-                      color={LABEL_STATUS[linha.status].color}
-                    />
+                    <Stack spacing={0.75}>
+                      {dia.aulas.map((aula, i) => (
+                        <Stack key={i} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                          <Typography variant="body2" sx={{ minWidth: 160 }}>
+                            {aula.materiaNome}
+                          </Typography>
+                          <Chip
+                            size="small"
+                            label={LABEL_STATUS[aula.status].label}
+                            color={LABEL_STATUS[aula.status].color}
+                          />
+                        </Stack>
+                      ))}
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
-            {!isLoading && detalhado.length === 0 && (
+            {!isLoading && diasAgrupados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3}>
+                <TableCell colSpan={2}>
                   <Typography variant="body2" color="text.secondary">
                     Nenhuma aula lançada ainda.
                   </Typography>
@@ -153,7 +178,7 @@ export function FrequenciaTab() {
             )}
           </TableBody>
         </Table>
-        <Paginacao total={detalhado.length} pagina={pagina} onChange={setPagina} />
+        <Paginacao total={diasAgrupados.length} pagina={pagina} onChange={setPagina} />
       </Paper>
     </>
   );

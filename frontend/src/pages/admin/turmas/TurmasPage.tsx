@@ -222,7 +222,7 @@ export function TurmasPage() {
       <ConfirmDialog
         open={!!paraExcluir}
         title="Excluir turma"
-        description={`Tem certeza que deseja excluir "${paraExcluir?.cursoTecnico} — ${paraExcluir?.anoSerie}"? Só é possível excluir se não houver matérias vinculadas a ela.`}
+        description={`Tem certeza que deseja excluir "${paraExcluir?.cursoTecnico} — ${paraExcluir?.anoSerie}"? Só é possível excluir se não houver disciplinas vinculadas a ela.`}
         confirmLabel="Excluir"
         confirmColor="error"
         loading={remover.isPending}

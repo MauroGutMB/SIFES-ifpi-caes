@@ -15,7 +15,7 @@ const ITENS_NAV: SidebarNavItem[] = [
   { to: '/app/admin/professores', label: 'Professores', icon: <GroupIcon fontSize="small" /> },
   { to: '/app/admin/turmas', label: 'Turmas', icon: <ClassIcon fontSize="small" /> },
   { to: '/app/admin/semestres', label: 'Semestres', icon: <EventIcon fontSize="small" /> },
-  { to: '/app/admin/materias', label: 'Matérias', icon: <MenuBookIcon fontSize="small" /> },
+  { to: '/app/admin/materias', label: 'Disciplinas', icon: <MenuBookIcon fontSize="small" /> },
   {
     to: '/app/admin/solicitacoes-foto',
     label: 'Solicitações de foto',

@@ -242,7 +242,7 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
             )}
             {aula.frequencias.length === 0 && (
               <Typography variant="body2" color="text.secondary">
-                Nenhum aluno vinculado a esta matéria ainda.
+                Nenhum aluno vinculado a esta disciplina ainda.
               </Typography>
             )}
 

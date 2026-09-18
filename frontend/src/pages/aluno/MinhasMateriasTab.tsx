@@ -16,10 +16,10 @@ export function MinhasMateriasTab() {
   return (
     <>
       <Typography variant="h4" gutterBottom>
-        Minhas matérias
+        Minhas disciplinas
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Toque em uma matéria para ver plano de aula, atividades e frequência dela.
+        Toque em uma disciplina para ver plano de aula, atividades e frequência dela.
       </Typography>
 
       {isLoading ? (
@@ -34,7 +34,7 @@ export function MinhasMateriasTab() {
         <Stack spacing={1} sx={{ alignItems: 'center', py: 6, color: tokens.textSecondary }}>
           <InboxIcon />
           <Typography color="text.secondary">
-            Você ainda não está vinculado a nenhuma matéria.
+            Você ainda não está vinculado a nenhuma disciplina.
           </Typography>
         </Stack>
       ) : (

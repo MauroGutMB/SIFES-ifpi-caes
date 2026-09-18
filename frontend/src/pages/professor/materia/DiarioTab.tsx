@@ -50,7 +50,7 @@ export function DiarioTab({ materiaId }: DiarioTabProps) {
               <TableRow>
                 <TableCell colSpan={3}>
                   <Typography color="text.secondary" variant="body2">
-                    Nenhuma aula cadastrada para esta matéria.
+                    Nenhuma aula cadastrada para esta disciplina.
                   </Typography>
                 </TableCell>
               </TableRow>

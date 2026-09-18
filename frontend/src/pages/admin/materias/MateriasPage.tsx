@@ -209,7 +209,7 @@ export function MateriasPage() {
               <EventNoteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title={params.row.estado === 'ABERTA' ? 'Encerrar matéria' : 'Reabrir matéria'}>
+          <Tooltip title={params.row.estado === 'ABERTA' ? 'Encerrar disciplina' : 'Reabrir disciplina'}>
             <IconButton size="small" onClick={() => alternarEstado(params.row)}>
               {params.row.estado === 'ABERTA' ? (
                 <LockIcon fontSize="small" />
@@ -232,9 +232,9 @@ export function MateriasPage() {
   return (
     <>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h4">Matérias</Typography>
+        <Typography variant="h4">Disciplinas</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
-          Nova matéria
+          Nova disciplina
         </Button>
       </Box>
 
@@ -252,13 +252,13 @@ export function MateriasPage() {
 
       <FormDialog
         open={dialogAberto}
-        title={editando ? 'Editar matéria' : 'Nova matéria'}
+        title={editando ? 'Editar disciplina' : 'Nova disciplina'}
         subtitle="As mudanças valem a partir do próximo lançamento de aula."
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
         error={erro}
         submitting={criar.isPending || atualizar.isPending}
-        submitLabel={editando ? 'Salvar matéria' : 'Criar matéria'}
+        submitLabel={editando ? 'Salvar disciplina' : 'Criar disciplina'}
         width={520}
         isDirty={isDirty}
       >
@@ -391,8 +391,8 @@ export function MateriasPage() {
 
       <ConfirmDialog
         open={!!paraExcluir}
-        title="Excluir matéria"
-        description="Tem certeza que deseja excluir esta matéria? Isso remove aulas, plano de disciplina e atividades vinculadas."
+        title="Excluir disciplina"
+        description="Tem certeza que deseja excluir esta disciplina? Isso remove aulas, plano de disciplina e atividades vinculadas."
         confirmLabel="Excluir"
         confirmColor="error"
         loading={remover.isPending}

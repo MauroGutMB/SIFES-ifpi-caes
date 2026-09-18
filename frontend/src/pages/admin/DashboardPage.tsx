@@ -64,7 +64,7 @@ export function AdminDashboardPage() {
           <Cartao titulo="Alunos" valor={data.totalAlunos} to="/app/admin/alunos" />
           <Cartao titulo="Alunos sem turma" valor={data.alunosSemTurma} to="/app/admin/alunos" />
           <Cartao
-            titulo="Matérias no semestre atual"
+            titulo="Disciplinas no semestre atual"
             valor={data.materiasSemestreAtual}
             to="/app/admin/materias"
           />

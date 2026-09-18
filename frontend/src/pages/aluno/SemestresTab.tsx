@@ -17,11 +17,11 @@ export function SemestresTab() {
             <TableRow>
               <TableCell>Semestre</TableCell>
               <TableCell>Turma</TableCell>
-              <TableCell>Matérias</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Disciplinas</TableCell>
               <TableCell>Aprovadas</TableCell>
               <TableCell>Reprovadas</TableCell>
               <TableCell>Cursando</TableCell>
-              <TableCell></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -32,13 +32,17 @@ export function SemestresTab() {
                   <TableCell>
                     {item.turma.cursoTecnico} — {item.turma.anoSerie}
                   </TableCell>
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      label={item.atual ? 'Cursando' : 'Concluído'}
+                      color={item.atual ? 'success' : 'default'}
+                    />
+                  </TableCell>
                   <TableCell>{item.totalMaterias}</TableCell>
                   <TableCell>{item.aprovadas}</TableCell>
                   <TableCell>{item.reprovadas}</TableCell>
                   <TableCell>{item.cursando}</TableCell>
-                  <TableCell>
-                    {item.atual && <Chip size="small" label="Atual" color="success" />}
-                  </TableCell>
                 </TableRow>
               ))}
             {!isLoading && !data?.length && (

@@ -20,7 +20,7 @@ export function MateriaProfessorPage() {
   return (
     <>
       <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/app/professor')} sx={{ mb: 1 }}>
-        Minhas matérias
+        Minhas disciplinas
       </Button>
 
       {materia && (

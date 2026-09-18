@@ -54,7 +54,7 @@ export function ProfessorHomePage() {
               </div>
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              {materias?.length ?? 0} matéria(s) atribuída(s)
+              {materias?.length ?? 0} disciplina(s) atribuída(s)
             </Typography>
             <Button component="label" variant="outlined" size="small" disabled={atualizarFoto.isPending}>
               Trocar foto

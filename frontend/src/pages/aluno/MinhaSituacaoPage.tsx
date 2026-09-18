@@ -62,13 +62,13 @@ export function MinhaSituacaoPage() {
         Minha situação
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Um resumo de presença, atividades e das matérias que você cursa. Toque em qualquer linha
-        para abrir a matéria.
+        Um resumo de presença, atividades e das disciplinas que você cursa. Toque em qualquer
+        linha para abrir a disciplina.
       </Typography>
 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, md: 4 }}>
-          <TituloBox icone={<EventAvailableIcon fontSize="small" />} texto="Presença por matéria" />
+          <TituloBox icone={<EventAvailableIcon fontSize="small" />} texto="Presença por disciplina" />
           <Paper variant="outlined">
             {frequencia?.resumo.length ? (
               <List dense disablePadding>
@@ -158,7 +158,7 @@ export function MinhaSituacaoPage() {
                 </List>
               </>
             ) : (
-              <EstadoVazio mensagem="Nenhuma matéria vinculada ainda." />
+              <EstadoVazio mensagem="Nenhuma disciplina vinculada ainda." />
             )}
           </Paper>
         </Grid>
@@ -179,7 +179,7 @@ export function MinhaSituacaoPage() {
                 ))}
               </List>
             ) : (
-              <EstadoVazio mensagem="Nenhuma matéria vinculada ainda." />
+              <EstadoVazio mensagem="Nenhuma disciplina vinculada ainda." />
             )}
           </Paper>
         </Grid>

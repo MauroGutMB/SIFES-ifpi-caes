@@ -104,7 +104,7 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
           <Collapse in={aberto} unmountOnExit>
             <Box sx={{ py: 1.5, pl: 5 }}>
               <Typography variant="caption" color="text.secondary">
-                Detalhamento por matéria
+                Detalhamento por disciplina
               </Typography>
               <Table size="small">
                 <TableBody>
@@ -292,7 +292,7 @@ export function TurmaProfessorPage() {
         {turma.cursoTecnico} — {turma.anoSerie}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Relatório de frequência das suas matérias nesta turma, até a data de hoje.
+        Relatório de frequência das suas disciplinas nesta turma, até a data de hoje.
       </Typography>
 
       <Typography variant="subtitle1" gutterBottom>
@@ -313,12 +313,12 @@ export function TurmaProfessorPage() {
         <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', rowGap: 2 }}>
           <TextField
             select
-            label="Matéria"
+            label="Disciplina"
             value={materiaId}
             onChange={(e) => setMateriaId(e.target.value)}
             sx={{ minWidth: 200 }}
           >
-            <MenuItem value="">Todas as minhas matérias</MenuItem>
+            <MenuItem value="">Todas as minhas disciplinas</MenuItem>
             {materiasDaTurma.map((m) => (
               <MenuItem key={m.id} value={m.id}>
                 {m.nome}
@@ -368,7 +368,7 @@ export function TurmaProfessorPage() {
               <TableCell width={40} />
               <TableCell>Aluno</TableCell>
               <TableCell>Matrícula</TableCell>
-              <TableCell>Matérias</TableCell>
+              <TableCell>Disciplinas</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
