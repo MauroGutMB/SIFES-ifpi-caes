@@ -112,6 +112,7 @@ export class RelatoriosService {
     }
     const aluno = await this.prisma.aluno.findUnique({
       where: { id: alunoId },
+      include: { turma: true },
     });
     if (!aluno) {
       throw new NotFoundException('Aluno não encontrado');
@@ -143,6 +144,9 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Boletim - ${aluno.nome} (${aluno.matricula})`,
+      subtitulo: aluno.turma
+        ? `Turma: ${aluno.turma.cursoTecnico} — ${aluno.turma.anoSerie}`
+        : undefined,
       colunas: [
         'Materia',
         'Curso',
