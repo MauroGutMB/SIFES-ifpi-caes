@@ -135,6 +135,7 @@ model Aluno {
   entregas    Entrega[]
   solicitacoesFoto SolicitacaoFoto[]
   itensEspeciais   ItemEspecialAluno[]
+  pendenciasResolvidas PendenciaResolvida[]
 
   @@map("alunos")
 }
@@ -188,6 +189,7 @@ model Materia {
   aulas                    Aula[]
   itensAvaliacao           ItemAvaliacao[]
   atividades               Atividade[]
+  pendenciasResolvidas     PendenciaResolvida[]
 
   @@map("materias")
 }
@@ -344,4 +346,21 @@ model Entrega {
 
   @@unique([atividadeId, alunoId])
   @@map("entregas")
+}
+
+/** Pendência acadêmica (não confundir com solicitação de foto): marca que o admin já tomou
+ * conhecimento de que um aluno reprovou numa disciplina encerrada. A pendência em si nunca é
+ * "criada" — ela é calculada ao vivo (disciplina com `estado = ENCERRADA` + boletim do aluno
+ * com `situacao = REPROVADO`); esta tabela só guarda o reconhecimento do admin, pra separar
+ * a aba "Pendências" (ainda não visto) de "Resolvidas" (já visto) sem nunca alterar a nota. */
+model PendenciaResolvida {
+  id          String   @id @default(uuid())
+  alunoId     String
+  aluno       Aluno    @relation(fields: [alunoId], references: [id], onDelete: Cascade)
+  materiaId   String
+  materia     Materia  @relation(fields: [materiaId], references: [id], onDelete: Cascade)
+  resolvidaEm DateTime @default(now())
+
+  @@unique([alunoId, materiaId])
+  @@map("pendencias_resolvidas")
 }

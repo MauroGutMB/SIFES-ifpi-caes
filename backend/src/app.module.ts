@@ -22,6 +22,7 @@ import { AtividadesModule } from './atividades/atividades.module';
 import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { RelatoriosModule } from './relatorios/relatorios.module';
 import { ArquivosModule } from './arquivos/arquivos.module';
+import { PendenciasModule } from './pendencias/pendencias.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ArquivosModule } from './arquivos/arquivos.module';
     AdminDashboardModule,
     RelatoriosModule,
     ArquivosModule,
+    PendenciasModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
