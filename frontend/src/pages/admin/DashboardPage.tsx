@@ -47,7 +47,7 @@ export function AdminDashboardPage() {
 
       {isLoading || !data ? (
         <Grid container spacing={2}>
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 7 }).map((_, i) => (
             <Grid key={i} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
               <Skeleton variant="rounded" height={96} />
             </Grid>
@@ -73,6 +73,12 @@ export function AdminDashboardPage() {
             valor={data.alunosComPendencia}
             destaque={data.alunosComPendencia > 0}
             to="/app/admin/pendencias"
+          />
+          <Cartao
+            titulo="Solicitações de foto pendentes"
+            valor={data.fotosParaAprovar}
+            destaque={data.fotosParaAprovar > 0}
+            to="/app/admin/solicitacoes-foto"
           />
         </Grid>
       )}

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PendenciasService } from '../pendencias/pendencias.service';
+import { StatusSolicitacaoFoto } from '../../generated/prisma/client';
 import { agoraComoBrasiliaFake } from '../common/tempo.util';
 
 @Injectable()
@@ -16,11 +17,15 @@ export class AdminDashboardService {
       where: { dataInicio: { lte: hoje }, dataFim: { gte: hoje } },
     });
 
-    const [totalProfessores, totalAlunos, alunosSemTurma] = await Promise.all([
-      this.prisma.professor.count(),
-      this.prisma.aluno.count(),
-      this.prisma.aluno.count({ where: { turmaId: null } }),
-    ]);
+    const [totalProfessores, totalAlunos, alunosSemTurma, fotosParaAprovar] =
+      await Promise.all([
+        this.prisma.professor.count(),
+        this.prisma.aluno.count(),
+        this.prisma.aluno.count({ where: { turmaId: null } }),
+        this.prisma.solicitacaoFoto.count({
+          where: { status: StatusSolicitacaoFoto.PENDENTE },
+        }),
+      ]);
 
     const materiasSemestreAtual = semestreAtual
       ? await this.prisma.materia.count({
@@ -41,6 +46,7 @@ export class AdminDashboardService {
       alunosSemTurma,
       materiasSemestreAtual,
       alunosComPendencia,
+      fotosParaAprovar,
     };
   }
 }

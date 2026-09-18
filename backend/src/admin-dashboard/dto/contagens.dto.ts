@@ -26,4 +26,7 @@ export class ContagensDto {
 
   @ApiProperty()
   alunosComPendencia: number;
+
+  @ApiProperty()
+  fotosParaAprovar: number;
 }
