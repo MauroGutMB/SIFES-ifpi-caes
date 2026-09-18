@@ -157,10 +157,17 @@ export function AlunosPage() {
     await invalidar();
   };
 
+  // A DataGrid alterna para { type: 'exclude', ids } quando "selecionar tudo" é usado
+  // (ids vira o conjunto de EXCEÇÕES, não de selecionados) — por isso não dá pra confiar
+  // em selecionados.ids.size sozinho, precisa resolver contra as linhas atuais.
+  const idsSelecionados =
+    selecionados.type === 'include'
+      ? [...selecionados.ids].map(String)
+      : (data ?? []).map((a) => a.id).filter((id) => !selecionados.ids.has(id));
+  const totalSelecionados = idsSelecionados.length;
+
   const excluirSelecionados = async () => {
-    await Promise.all(
-      [...selecionados.ids].map((id) => remover.mutateAsync({ id: String(id) })),
-    );
+    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
@@ -222,14 +229,14 @@ export function AlunosPage() {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Alunos</Typography>
         <Stack direction="row" spacing={1}>
-          {selecionados.ids.size > 0 && (
+          {totalSelecionados > 0 && (
             <Button
               color="error"
               variant="outlined"
               startIcon={<DeleteSweepIcon />}
               onClick={() => setConfirmandoExclusaoEmMassa(true)}
             >
-              Excluir {selecionados.ids.size} selecionado(s)
+              Excluir {totalSelecionados} selecionado(s)
             </Button>
           )}
           <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
@@ -325,7 +332,7 @@ export function AlunosPage() {
 
       <ConfirmDialog
         open={confirmandoExclusaoEmMassa}
-        title={`Excluir ${selecionados.ids.size} aluno(s)?`}
+        title={`Excluir ${totalSelecionados} aluno(s)?`}
         description="Isso remove o login e todo o histórico de cada um — notas, frequência e atividades entregues. Não pode ser desfeito."
         confirmLabel="Excluir selecionados"
         confirmColor="error"
