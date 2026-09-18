@@ -18,13 +18,15 @@ import { CreateAlunoDto } from '../alunos/dto/create-aluno.dto';
 import { CreateProfessorDto } from '../professores/dto/create-professor.dto';
 import type {
   ErroImportacaoDto,
+  IgnoradoImportacaoDto,
   ImportarUsuariosResultadoDto,
   UsuarioImportadoDto,
 } from './dto/importar-usuarios-resultado.dto';
 
 const COLUNAS_MODELO = ['nome', 'login', 'cargo'];
-export const MODELO_IMPORTACAO_CSV =
-  'nome,login,cargo\r\nMaria da Silva,12345678,ALUNO\r\nJoão Souza,joao.souza@ifpi.edu.br,PROFESSOR\r\n';
+// BOM no início — sem ele o Excel abre o CSV como se fosse Latin-1 e quebra os acentos.
+const MODELO_IMPORTACAO_CSV =
+  '\uFEFFnome,login,cargo\r\nMaria da Silva,12345678,ALUNO\r\nJoão Souza,joao.souza@ifpi.edu.br,PROFESSOR\r\n';
 
 @Injectable()
 export class UsersService {
@@ -133,7 +135,10 @@ export class UsersService {
 
   /** Cria alunos e professores em lote a partir de um CSV (nome,login,cargo) — cada linha é
    * criada com o mesmo fluxo de sempre (senha inicial gerada, precisaTrocarSenha=true por
-   * padrão), então uma linha ruim não afeta as outras: erro por linha, não aborta o lote. */
+   * padrão). Uma linha malformada (coluna faltando/inválida) não afeta as outras: é ignorada
+   * por inteiro e relatada em `erros`. A importação é idempotente: se o login já existe, a
+   * linha é apenas pulada (relatada em `ignorados`), sem duplicar nem falhar — reimportar o
+   * mesmo arquivo várias vezes é seguro. */
   async importarUsuarios(
     arquivo: Buffer,
   ): Promise<ImportarUsuariosResultadoDto> {
@@ -154,9 +159,19 @@ export class UsersService {
 
     const importados: UsuarioImportadoDto[] = [];
     const erros: ErroImportacaoDto[] = [];
+    const ignorados: IgnoradoImportacaoDto[] = [];
 
     for (const [indice, colunas] of dados.entries()) {
       const linha = indice + 2; // +1 pra base 1, +1 pelo cabeçalho
+
+      if (colunas.length !== COLUNAS_MODELO.length) {
+        erros.push({
+          linha,
+          motivo: `linha deveria ter ${COLUNAS_MODELO.length} colunas (nome,login,cargo), tem ${colunas.length}`,
+        });
+        continue;
+      }
+
       const [nome, login, cargoBruto] = colunas;
       const cargo = cargoBruto?.trim().toUpperCase();
 
@@ -169,6 +184,15 @@ export class UsersService {
           linha,
           motivo: `cargo deve ser "ALUNO" ou "PROFESSOR" (recebido: "${cargoBruto}")`,
         });
+        continue;
+      }
+
+      const jaExiste = await this.prisma.user.findUnique({
+        where: { login },
+        select: { id: true },
+      });
+      if (jaExiste) {
+        ignorados.push({ linha, nome, login, motivo: 'login já existe' });
         continue;
       }
 
@@ -227,6 +251,6 @@ export class UsersService {
       }
     }
 
-    return { importados, erros };
+    return { importados, erros, ignorados };
   }
 }

@@ -30,4 +30,11 @@ describe('parseCsv', () => {
       ['Maria', '123', 'ALUNO'],
     ]);
   });
+
+  it('remove o BOM UTF-8 do início do arquivo (comum em CSV salvo pelo Excel)', () => {
+    expect(parseCsv('﻿nome,login,cargo\nJoão,123,ALUNO')).toEqual([
+      ['nome', 'login', 'cargo'],
+      ['João', '123', 'ALUNO'],
+    ]);
+  });
 });

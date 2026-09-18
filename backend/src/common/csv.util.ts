@@ -32,9 +32,12 @@ function parseLinhaCsv(linha: string): string[] {
 }
 
 /** Ignora linhas em branco (incluindo uma linha final vazia, comum em arquivos exportados
- * do Excel/Sheets). */
+ * do Excel/Sheets). Remove o BOM UTF-8 se presente — o Excel adiciona um ao salvar
+ * CSV como "UTF-8", e sem removê-lo ele gruda no primeiro campo do cabeçalho. */
 export function parseCsv(conteudo: string): string[][] {
-  return conteudo
+  const semBom =
+    conteudo.charCodeAt(0) === 0xfeff ? conteudo.slice(1) : conteudo;
+  return semBom
     .split(/\r\n|\n/)
     .filter((linha) => linha.trim().length > 0)
     .map(parseLinhaCsv);

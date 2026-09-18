@@ -29,10 +29,38 @@ export class ErroImportacaoDto {
   motivo: string;
 }
 
+export class IgnoradoImportacaoDto {
+  @ApiProperty({ description: 'Linha do CSV que foi pulada' })
+  linha: number;
+
+  @ApiProperty()
+  nome: string;
+
+  @ApiProperty()
+  login: string;
+
+  @ApiProperty({
+    description: 'Motivo de a linha ter sido pulada (ex: login já existe)',
+  })
+  motivo: string;
+}
+
 export class ImportarUsuariosResultadoDto {
   @ApiProperty({ type: UsuarioImportadoDto, isArray: true })
   importados: UsuarioImportadoDto[];
 
-  @ApiProperty({ type: ErroImportacaoDto, isArray: true })
+  @ApiProperty({
+    type: ErroImportacaoDto,
+    isArray: true,
+    description: 'Linhas malformadas — não foram inseridas',
+  })
   erros: ErroImportacaoDto[];
+
+  @ApiProperty({
+    type: IgnoradoImportacaoDto,
+    isArray: true,
+    description:
+      'Linhas válidas mas puladas por já existir um usuário com esse login',
+  })
+  ignorados: IgnoradoImportacaoDto[];
 }
