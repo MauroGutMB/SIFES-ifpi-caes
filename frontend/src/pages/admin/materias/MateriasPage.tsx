@@ -337,9 +337,11 @@ export function MateriasPage() {
                     <TimePicker
                       label="Início"
                       ampm={false}
-                      views={['hours']}
                       minTime={horaParaData('07:00') ?? undefined}
                       maxTime={horaParaData('17:00') ?? undefined}
+                      shouldDisableTime={(valor, view) =>
+                        view === 'minutes' && valor.getMinutes() !== 0
+                      }
                       value={horaParaData(campo.value)}
                       onChange={(data) => campo.onChange(dataParaHora(data))}
                       slotProps={{
