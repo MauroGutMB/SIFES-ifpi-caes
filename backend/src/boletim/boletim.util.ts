@@ -16,7 +16,6 @@ export interface ItemParaNotaFinal {
   especial: boolean;
   modoEspecial: ModoItemEspecial | null;
   itemSubstituidoId: string | null;
-  notaMetaMinima: number | null;
   /** Só é relevante quando `especial` é true — se o aluno não foi habilitado (professor não
    * marcou recuperação/prova final pra ele), o item é ignorado no cálculo dele. */
   habilitadoParaAluno: boolean;
@@ -28,13 +27,17 @@ export interface ItemParaNotaFinal {
  * - PONDERADA: mais um componente na mesma média ponderada, com seu próprio peso.
  * - SUBSTITUI_ITEM: troca o componente do item indicado (`itemSubstituidoId`) pelo do especial.
  * - SUBSTITUI_MEDIA: a nota final vira diretamente a nota (normalizada) do item especial.
- * Um item especial só entra se atingir a `notaMetaMinima` (quando configurada) — abaixo disso é
- * ignorado e o cálculo segue como se o aluno não tivesse acesso a ele.
+ * Um item especial só entra se atingir a `notaMinimaAprovacao` da disciplina — abaixo disso é
+ * ignorado e o cálculo segue como se o aluno não tivesse acesso a ele (não existe um segundo
+ * "meta mínima" por item: é a mesma nota mínima configurada pra aprovação na disciplina).
  *
  * `peso` nasce como 1 na criação do item (ver PlanoDisciplinaService.criarItem) — todo item
  * conta igual na média até o professor customizar pesos pela regra de aprovação.
  */
-export function calcularNotaFinal(itens: ItemParaNotaFinal[]): number {
+export function calcularNotaFinal(
+  itens: ItemParaNotaFinal[],
+  notaMinimaAprovacao: number = NOTA_CORTE,
+): number {
   const normalizar = (item: ItemParaNotaFinal) =>
     item.valorMaximo === 0 ? 0 : (item.valorObtido / item.valorMaximo) * 10;
 
@@ -44,8 +47,7 @@ export function calcularNotaFinal(itens: ItemParaNotaFinal[]): number {
 
   const especiaisValidos = itens.filter((item) => {
     if (!item.especial || !item.habilitadoParaAluno) return false;
-    if (item.notaMetaMinima == null) return true;
-    return normalizar(item) >= item.notaMetaMinima;
+    return normalizar(item) >= notaMinimaAprovacao;
   });
 
   let substituicaoDeMedia: number | null = null;

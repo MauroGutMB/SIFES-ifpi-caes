@@ -49,9 +49,6 @@ export class BoletimService {
           especial: item.especial,
           modoEspecial: item.modoEspecial,
           itemSubstituidoId: item.itemSubstituidoId,
-          notaMetaMinima: item.notaMetaMinima
-            ? item.notaMetaMinima.toNumber()
-            : null,
           habilitadoParaAluno: item.alunosHabilitados.some(
             (h) => h.alunoId === aluno.id,
           ),
@@ -61,7 +58,7 @@ export class BoletimService {
         (f) => f.alunoId === aluno.id,
       );
 
-      const notaFinal = calcularNotaFinal(itensDoAluno);
+      const notaFinal = calcularNotaFinal(itensDoAluno, notaMinimaAprovacao);
       const frequenciaPercentual =
         calcularFrequenciaPercentual(frequenciasDoAluno);
       const situacao = calcularSituacao(

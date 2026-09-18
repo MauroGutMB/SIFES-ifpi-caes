@@ -22,7 +22,6 @@ function itemNormal(
     especial: false,
     modoEspecial: null,
     itemSubstituidoId: null,
-    notaMetaMinima: null,
     habilitadoParaAluno: false,
   };
 }
@@ -37,7 +36,6 @@ function itemEspecial(
     especial: true,
     modoEspecial: 'PONDERADA',
     itemSubstituidoId: null,
-    notaMetaMinima: null,
     habilitadoParaAluno: true,
     ...overrides,
   };
@@ -118,29 +116,33 @@ describe('boletim.util', () => {
       expect(nota).toBe(9);
     });
 
-    it('item especial abaixo da nota meta mínima é ignorado', () => {
-      const nota = calcularNotaFinal([
-        itemNormal('1', 10, 5),
-        itemEspecial({
-          id: 'e1',
-          modoEspecial: 'SUBSTITUI_MEDIA',
-          notaMetaMinima: 6,
-          valorObtido: 5, // normalizado = 5, abaixo da meta
-        }),
-      ]);
+    it('item especial abaixo da nota mínima de aprovação da disciplina é ignorado', () => {
+      const nota = calcularNotaFinal(
+        [
+          itemNormal('1', 10, 5),
+          itemEspecial({
+            id: 'e1',
+            modoEspecial: 'SUBSTITUI_MEDIA',
+            valorObtido: 5, // normalizado = 5, abaixo da nota mínima (6)
+          }),
+        ],
+        6,
+      );
       expect(nota).toBe(5); // ignora o especial, fica só a média normal
     });
 
-    it('item especial que atinge a nota meta mínima é considerado', () => {
-      const nota = calcularNotaFinal([
-        itemNormal('1', 10, 5),
-        itemEspecial({
-          id: 'e1',
-          modoEspecial: 'SUBSTITUI_MEDIA',
-          notaMetaMinima: 6,
-          valorObtido: 6,
-        }),
-      ]);
+    it('item especial que atinge a nota mínima de aprovação da disciplina é considerado', () => {
+      const nota = calcularNotaFinal(
+        [
+          itemNormal('1', 10, 5),
+          itemEspecial({
+            id: 'e1',
+            modoEspecial: 'SUBSTITUI_MEDIA',
+            valorObtido: 6,
+          }),
+        ],
+        6,
+      );
       expect(nota).toBe(6);
     });
   });

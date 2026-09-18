@@ -284,7 +284,6 @@ model ItemAvaliacao {
   itemSubstituidoId String?
   itemSubstituido   ItemAvaliacao?    @relation("Substituicao", fields: [itemSubstituidoId], references: [id], onDelete: SetNull)
   substituiDe       ItemAvaliacao[]   @relation("Substituicao")
-  notaMetaMinima    Decimal?          @db.Decimal(5, 2)
 
   notas             Nota[]
   alunosHabilitados ItemEspecialAluno[]

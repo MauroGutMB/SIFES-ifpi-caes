@@ -93,12 +93,13 @@ export class PlanoDisciplinaService {
       ...item,
       valorMaximo: item.valorMaximo.toString(),
       peso: item.peso.toString(),
-      notaMetaMinima: item.notaMetaMinima?.toString() ?? null,
     }));
   }
 
-  /** Pesos, modo dos itens especiais (ponderada/substitui item/substitui média) e nota meta
-   * mínima — configurados de uma vez pra disciplina inteira, normais e especiais juntos. */
+  /** Pesos e modo dos itens especiais (ponderada/substitui item/substitui média) — configurados
+   * de uma vez pra disciplina inteira, normais e especiais juntos. Um item especial só entra no
+   * cálculo do aluno se atingir a `notaMinimaAprovacao` da própria disciplina (não há uma nota
+   * mínima separada por item). */
   async configurarRegra(
     materiaId: string,
     dto: ConfigurarRegraDto,
@@ -147,7 +148,6 @@ export class PlanoDisciplinaService {
             peso: config.peso,
             modoEspecial: config.modoEspecial,
             itemSubstituidoId: config.itemSubstituidoId,
-            notaMetaMinima: config.notaMetaMinima,
           },
         }),
       ),

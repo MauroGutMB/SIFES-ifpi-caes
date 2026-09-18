@@ -25,11 +25,4 @@ export class ItemAvaliacaoDto {
 
   @ApiProperty({ nullable: true, type: String })
   itemSubstituidoId: string | null;
-
-  @ApiProperty({
-    description: 'Decimal serializado como string',
-    type: String,
-    nullable: true,
-  })
-  notaMetaMinima: string | null;
 }

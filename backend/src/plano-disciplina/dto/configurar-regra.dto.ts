@@ -40,17 +40,6 @@ export class ConfiguracaoItemDto {
   @IsOptional()
   @IsUUID()
   itemSubstituidoId?: string;
-
-  @ApiProperty({
-    required: false,
-    description:
-      'Nota mínima (0-10, já normalizada) que o item especial precisa atingir pra valer — abaixo disso é ignorado no cálculo',
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(10)
-  notaMetaMinima?: number;
 }
 
 export class ConfigurarRegraDto {
