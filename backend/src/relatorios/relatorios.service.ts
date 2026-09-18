@@ -303,6 +303,78 @@ export class RelatoriosService {
     };
   }
 
+  /** Agenda semanal (dia + horário de cada disciplina) de quem está pedindo — professor vê as
+   * disciplinas que ministra, aluno vê as que está vinculado. Mesma fonte de dado que já
+   * alimenta o card "Agenda da semana" do início de cada um (GET /materias). */
+  async agendaSemanal(formato: Formato, user: AuthenticatedUser) {
+    if (user.role !== Role.PROFESSOR && user.role !== Role.ALUNO) {
+      throw new BadRequestException(
+        'Agenda semanal só está disponível para professor ou aluno',
+      );
+    }
+
+    const materias = await this.prisma.materia.findMany({
+      where: {
+        professorId:
+          user.role === Role.PROFESSOR ? user.professorId : undefined,
+        vinculos:
+          user.role === Role.ALUNO
+            ? { some: { alunoId: user.alunoId } }
+            : undefined,
+      },
+      include: { turma: true, professor: true, horarios: true },
+      orderBy: { nome: 'asc' },
+    });
+
+    const ORDEM_DIA: Record<string, number> = {
+      SEGUNDA: 1,
+      TERCA: 2,
+      QUARTA: 3,
+      QUINTA: 4,
+      SEXTA: 5,
+      SABADO: 6,
+    };
+    const LABEL_DIA: Record<string, string> = {
+      SEGUNDA: 'Segunda-feira',
+      TERCA: 'Terça-feira',
+      QUARTA: 'Quarta-feira',
+      QUINTA: 'Quinta-feira',
+      SEXTA: 'Sexta-feira',
+      SABADO: 'Sábado',
+    };
+
+    const itens = materias.flatMap((materia) =>
+      materia.horarios.map((horario) => ({
+        diaSemana: horario.diaSemana,
+        horaInicio: horario.horaInicio,
+        materiaNome: materia.nome,
+        turmaNome: `${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`,
+        professorNome: materia.professor.nome,
+      })),
+    );
+    itens.sort(
+      (a, b) =>
+        ORDEM_DIA[a.diaSemana] - ORDEM_DIA[b.diaSemana] ||
+        a.horaInicio.localeCompare(b.horaInicio),
+    );
+
+    const tabela: TabelaRelatorio = {
+      titulo: 'Agenda da semana',
+      colunas: ['Dia', 'Horário', 'Disciplina', 'Turma', 'Professor'],
+      linhas: itens.map((item) => [
+        LABEL_DIA[item.diaSemana],
+        item.horaInicio,
+        item.materiaNome,
+        item.turmaNome,
+        item.professorNome,
+      ]),
+    };
+    return {
+      buffer: await gerarRelatorio(tabela, formato),
+      nomeBase: 'agenda-semanal',
+    };
+  }
+
   /** Painel de frequência da turma — exibível na tela, com filtros por matéria, aluno e
    * intervalo de datas. Sem filtro de data, o padrão é "até hoje" (nunca antecipa aulas
    * futuras, que ainda não têm frequência lançada). */
