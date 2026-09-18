@@ -19,9 +19,11 @@ import {
 } from '../../../api/generated/professores/professores';
 import { ProfessoresControllerCreateBody } from '../../../api/generated/zod/professores/professores';
 import type { ProfessorDto } from '../../../api/generated/models';
+import { urlArquivo } from '../../../api/arquivo-url';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { FotoPopup } from '../../../components/FotoPopup';
 import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof ProfessoresControllerCreateBody>;
@@ -133,6 +135,16 @@ export function ProfessoresPage() {
   };
 
   const columns: GridColDef<ProfessorDto>[] = [
+    {
+      field: 'fotoUrl',
+      headerName: 'Foto',
+      width: 64,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <FotoPopup src={urlArquivo(params.row.fotoUrl)} sx={{ width: 32, height: 32 }} />
+      ),
+    },
     { field: 'nome', headerName: 'Nome', flex: 1, editable: true },
     { field: 'email', headerName: 'E-mail', flex: 1 },
     {

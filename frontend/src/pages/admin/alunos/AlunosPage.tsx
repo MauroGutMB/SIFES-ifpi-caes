@@ -34,9 +34,11 @@ import {
 import { useTurmasControllerFindAll } from '../../../api/generated/turmas/turmas';
 import { AlunosControllerCreateBody } from '../../../api/generated/zod/alunos/alunos';
 import type { AlunoDto } from '../../../api/generated/models';
+import { urlArquivo } from '../../../api/arquivo-url';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { FotoPopup } from '../../../components/FotoPopup';
 import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof AlunosControllerCreateBody>;
@@ -200,6 +202,16 @@ export function AlunosPage() {
   };
 
   const columns: GridColDef<AlunoDto>[] = [
+    {
+      field: 'fotoUrl',
+      headerName: 'Foto',
+      width: 64,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <FotoPopup src={urlArquivo(params.row.fotoUrl)} sx={{ width: 32, height: 32 }} />
+      ),
+    },
     { field: 'nome', headerName: 'Nome', flex: 1, editable: true },
     { field: 'matricula', headerName: 'Matrícula', flex: 1 },
     {
