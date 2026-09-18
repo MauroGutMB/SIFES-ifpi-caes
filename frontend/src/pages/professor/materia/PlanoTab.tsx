@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Chip,
   FormControlLabel,
   IconButton,
   MenuItem,
@@ -95,7 +96,11 @@ function EditarNotasAlunoDialog({
 
   useEffect(() => {
     if (itens) {
-      setValores(Object.fromEntries(itens.map((item) => [item.id, item.valorObtido])));
+      setValores(
+        Object.fromEntries(
+          itens.map((item) => [item.id, item.notaLancada ? item.valorObtido : '']),
+        ),
+      );
       setHabilitados(
         Object.fromEntries(itens.map((item) => [item.id, item.habilitadoParaAluno])),
       );
@@ -153,6 +158,7 @@ function EditarNotasAlunoDialog({
           <Stack key={item.id} spacing={0.5}>
             <TextField
               label={`${item.nome} (máx. ${item.valorMaximo})`}
+              placeholder="Não lançado"
               type="number"
               size="small"
               fullWidth
@@ -481,10 +487,14 @@ export function PlanoTab({
     }
   };
 
-  const itensEspeciais = (itens ?? []).filter((item) => item.especial);
+  // Só entram os que já têm modo definido na Regra de aprovação — sem isso o backend rejeita
+  // habilitar o item pra qualquer aluno, então nem faz sentido oferecer no seletor.
+  const itensEspeciaisConfigurados = (itens ?? []).filter(
+    (item) => item.especial && item.modoEspecial,
+  );
 
   const abrirAplicarAbaixoMedia = () => {
-    setItemParaAplicar(itensEspeciais[0]?.id ?? '');
+    setItemParaAplicar(itensEspeciaisConfigurados[0]?.id ?? '');
     setErro(null);
     setAplicarAbaixoMediaAberto(true);
   };
@@ -575,6 +585,16 @@ export function PlanoTab({
                         </Tooltip>
                       )}
                       <span>{item.nome}</span>
+                      {item.especial && !item.modoEspecial && (
+                        <Tooltip title="Configure como esse item conta na nota antes de habilitá-lo pra algum aluno">
+                          <Chip
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            label="Modo não configurado"
+                          />
+                        </Tooltip>
+                      )}
                     </Stack>
                   </TableCell>
                   <TableCell>{item.valorMaximo}</TableCell>
@@ -614,7 +634,7 @@ export function PlanoTab({
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h6">Boletim</Typography>
-        {materiaAberta && itensEspeciais.length > 0 && (
+        {materiaAberta && itensEspeciaisConfigurados.length > 0 && (
           <Button
             variant="outlined"
             startIcon={<PlaylistAddCheckIcon fontSize="small" />}
@@ -767,7 +787,7 @@ export function PlanoTab({
           value={itemParaAplicar}
           onChange={(e) => setItemParaAplicar(e.target.value)}
         >
-          {itensEspeciais.map((item) => (
+          {itensEspeciaisConfigurados.map((item) => (
             <MenuItem key={item.id} value={item.id}>
               {item.nome}
             </MenuItem>

@@ -94,7 +94,13 @@ export function SituacaoTab({ materiaId, notaMinimaAprovacao }: SituacaoTabProps
                 <TableRow key={item.id}>
                   <TableCell>{item.nome}</TableCell>
                   <TableCell>{item.valorMaximo}</TableCell>
-                  <TableCell>{item.valorObtido}</TableCell>
+                  <TableCell>
+                    {item.notaLancada ? (
+                      item.valorObtido
+                    ) : (
+                      <Chip size="small" variant="outlined" label="Não lançado" />
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             {!carregandoItens && !itens?.length && (

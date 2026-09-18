@@ -74,7 +74,11 @@ function NotasDetalhadas({
           key={item.id}
           size="small"
           variant="outlined"
-          label={`${item.nome}: ${item.valorObtido}/${item.valorMaximo}`}
+          label={
+            item.notaLancada
+              ? `${item.nome}: ${item.valorObtido}/${item.valorMaximo}`
+              : `${item.nome}: não lançado`
+          }
         />
       ))}
     </Stack>
