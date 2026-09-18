@@ -58,7 +58,9 @@ function horaParaData(hora: string): Date | null {
 
 function dataParaHora(data: Date | null): string {
   if (!data) return '';
-  return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`;
+  // Aulas só começam em hora cheia — o picker só mostra a view de horas, mas zera os minutos
+  // aqui também pra nunca deixar passar um valor antigo com minuto não-zero.
+  return `${String(data.getHours()).padStart(2, '0')}:00`;
 }
 
 export function MateriasPage() {
@@ -335,6 +337,7 @@ export function MateriasPage() {
                     <TimePicker
                       label="Início"
                       ampm={false}
+                      views={['hours']}
                       minTime={horaParaData('07:00') ?? undefined}
                       maxTime={horaParaData('17:00') ?? undefined}
                       value={horaParaData(campo.value)}
