@@ -41,6 +41,9 @@ export class BoletimService {
     return materia.vinculos.map(({ aluno }) => {
       const itensDoAluno = materia.itensAvaliacao.map((item) => {
         const nota = item.notas.find((n) => n.alunoId === aluno.id);
+        const habilitadoParaAluno = item.alunosHabilitados.some(
+          (h) => h.alunoId === aluno.id,
+        );
         return {
           id: item.id,
           valorMaximo: item.valorMaximo.toNumber(),
@@ -49,9 +52,10 @@ export class BoletimService {
           especial: item.especial,
           modoEspecial: item.modoEspecial,
           itemSubstituidoId: item.itemSubstituidoId,
-          habilitadoParaAluno: item.alunosHabilitados.some(
-            (h) => h.alunoId === aluno.id,
-          ),
+          habilitadoParaAluno,
+          // Só usado pra decidir se a média é parcial — item sem nota entra como 0 no cálculo
+          // real, mas isso não é "a nota definitiva dele" enquanto o professor não lançou.
+          notaLancada: !!nota,
         };
       });
       const frequenciasDoAluno = frequencias.filter(
@@ -70,10 +74,17 @@ export class BoletimService {
       const faltas = frequenciasDoAluno.filter(
         (f) => f.status === StatusFrequencia.FALTA,
       ).length;
+      // Parcial = ainda falta lançar a nota de algum item que conta pra esse aluno (item normal,
+      // ou especial já habilitado pra ele) — a média mostrada pode subir/descer quando entrar.
+      const notaParcial = itensDoAluno.some(
+        (item) =>
+          (!item.especial || item.habilitadoParaAluno) && !item.notaLancada,
+      );
 
       return {
         aluno,
         notaFinal: Number(notaFinal.toFixed(2)),
+        notaParcial,
         frequenciaPercentual: Number(frequenciaPercentual.toFixed(2)),
         situacao,
         faltas,

@@ -202,6 +202,45 @@ export class PlanoDisciplinaService {
     return { habilitado };
   }
 
+  /** Habilita este item especial de uma vez pra todos os alunos cuja média atual está abaixo
+   * da nota mínima de aprovação da disciplina — atalho pro caso comum de "aplicar recuperação/
+   * prova final pra quem está reprovando", sem precisar marcar aluno por aluno. */
+  async aplicarItemEspecialAbaixoMedia(
+    itemId: string,
+    user: AuthenticatedUser,
+  ) {
+    const item = await this.carregarItemComPosse(itemId, user);
+    this.garantirAberta(item.materia);
+    if (!item.especial) {
+      throw new BadRequestException('Este item não é um item especial');
+    }
+
+    const boletim = await this.boletim.calcularBoletimMateria(item.materiaId);
+    const notaMinimaAprovacao = item.materia.notaMinimaAprovacao.toNumber();
+    const alunosAbaixoDaMedia = boletim.filter(
+      (linha) => linha.notaFinal < notaMinimaAprovacao,
+    );
+
+    if (alunosAbaixoDaMedia.length > 0) {
+      await this.prisma.$transaction(
+        alunosAbaixoDaMedia.map((linha) =>
+          this.prisma.itemEspecialAluno.upsert({
+            where: {
+              itemAvaliacaoId_alunoId: {
+                itemAvaliacaoId: itemId,
+                alunoId: linha.aluno.id,
+              },
+            },
+            create: { itemAvaliacaoId: itemId, alunoId: linha.aluno.id },
+            update: {},
+          }),
+        ),
+      );
+    }
+
+    return { alunosHabilitados: alunosAbaixoDaMedia.length };
+  }
+
   async atualizarItem(
     id: string,
     dto: UpdateItemAvaliacaoDto,

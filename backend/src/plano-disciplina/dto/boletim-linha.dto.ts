@@ -8,6 +8,12 @@ export class BoletimLinhaDto {
   @ApiProperty()
   notaFinal: number;
 
+  @ApiProperty({
+    description:
+      'true se algum item que conta pra esse aluno ainda não teve nota lançada — a média pode mudar',
+  })
+  notaParcial: boolean;
+
   @ApiProperty()
   frequenciaPercentual: number;
 

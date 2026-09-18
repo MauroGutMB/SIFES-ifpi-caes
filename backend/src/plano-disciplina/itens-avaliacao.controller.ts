@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Param, Patch, Put } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -8,6 +8,7 @@ import { PlanoDisciplinaService } from './plano-disciplina.service';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
 import { HabilitarItemEspecialDto } from './dto/habilitar-item-especial.dto';
+import { AplicarAbaixoMediaDto } from './dto/aplicar-abaixo-media.dto';
 
 @ApiTags('plano-disciplina')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -51,5 +52,14 @@ export class ItensAvaliacaoController {
       dto.habilitado,
       user,
     );
+  }
+
+  @Put(':id/aplicar-abaixo-media')
+  @ApiOkResponse({ type: AplicarAbaixoMediaDto })
+  aplicarAbaixoMedia(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.service.aplicarItemEspecialAbaixoMedia(id, user);
   }
 }
