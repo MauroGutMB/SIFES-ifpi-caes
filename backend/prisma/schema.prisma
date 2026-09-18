@@ -146,8 +146,8 @@ enum StatusSolicitacaoFoto {
 }
 
 /** Guarda o conteúdo binário de qualquer upload (foto, material de aula, anexo, entrega) direto
- * no Postgres — evita depender do filesystem local do servidor, que é efêmero em produção
- * (Render reseta a cada deploy/restart). Servido via GET /arquivos/:id. */
+ * no Postgres — evita depender do filesystem local do servidor, que costuma ser efêmero em
+ * produção (reseta a cada deploy/restart). Servido via GET /arquivos/:id. */
 model Arquivo {
   id        String   @id @default(uuid())
   mimeType  String
