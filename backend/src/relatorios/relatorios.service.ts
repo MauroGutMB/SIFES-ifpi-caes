@@ -54,6 +54,10 @@ export class RelatoriosService {
       include: { frequencias: { include: { aluno: true } } },
       orderBy: { data: 'asc' },
     });
+    const boletim = await this.boletim.calcularBoletimMateria(materiaId);
+    const boletimPorAluno = new Map(
+      boletim.map((linha) => [linha.aluno.id, linha]),
+    );
 
     const linhas: (string | number)[][] = [];
     for (const aula of aulas) {
@@ -66,10 +70,13 @@ export class RelatoriosService {
           '—',
           '—',
           '—',
+          '—',
+          '—',
         ]);
         continue;
       }
       for (const f of aula.frequencias) {
+        const situacaoAluno = boletimPorAluno.get(f.alunoId);
         linhas.push([
           dataStr,
           aula.titulo ?? '',
@@ -77,19 +84,26 @@ export class RelatoriosService {
           f.aluno.nome,
           f.aluno.matricula,
           f.status,
+          situacaoAluno ? situacaoAluno.notaFinal.toFixed(2) : '—',
+          situacaoAluno
+            ? `${situacaoAluno.frequenciaPercentual.toFixed(1)}%`
+            : '—',
         ]);
       }
     }
 
     const tabela: TabelaRelatorio = {
       titulo: `Diario de aula - ${materia.nome} (${materia.professor.nome})`,
+      subtitulo: `Turma: ${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`,
       colunas: [
         'Data',
         'Titulo',
         'Descricao',
         'Aluno',
         'Matricula',
-        'Frequencia',
+        'Presenca na aula',
+        'Media atual',
+        'Frequencia do aluno',
       ],
       linhas,
     };
@@ -197,6 +211,7 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Lista de turma - ${turma.cursoTecnico} ${turma.anoSerie}`,
+      subtitulo: `Turma: ${turma.cursoTecnico} — ${turma.anoSerie}`,
       colunas: [
         'Aluno',
         'Matricula',
@@ -223,6 +238,7 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - ${materia.nome}`,
+      subtitulo: `Turma: ${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`,
       colunas: ['Aluno', 'Matricula', 'Frequencia %'],
       linhas: boletim.map((b) => [
         b.aluno.nome,
@@ -263,6 +279,7 @@ export class RelatoriosService {
 
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - Turma ${turma.cursoTecnico} ${turma.anoSerie}`,
+      subtitulo: `Turma: ${turma.cursoTecnico} — ${turma.anoSerie}`,
       colunas: ['Aluno', 'Matricula', 'Materia', 'Frequencia %'],
       linhas,
     };

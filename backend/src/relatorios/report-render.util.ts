@@ -6,6 +6,10 @@ export type Formato = 'pdf' | 'xlsx';
 
 export interface TabelaRelatorio {
   titulo: string;
+  /** Turma a que o relatório se refere, mostrada no centro do timbre junto com a data de
+   * emissão. Omitido quando o relatório não se refere a uma única turma (ex: boletim de um
+   * aluno que já passou por turmas diferentes). */
+  subtitulo?: string;
   colunas: string[];
   linhas: (string | number)[][];
 }
@@ -15,12 +19,13 @@ const LOGO_SIFES = join(ASSETS_DIR, 'sifes-icone.png');
 const LOGO_IF = join(ASSETS_DIR, 'if-logo.png');
 
 /** Timbre institucional no topo de todo relatório PDF: logo do SIFES à esquerda, logo do
- * Instituto Federal do Piauí à direita, com uma linha divisória abaixo. */
-function desenharCabecalho(doc: PDFKit.PDFDocument) {
+ * Instituto Federal do Piauí à direita, turma + data de emissão ao centro, com uma linha
+ * divisória abaixo. */
+function desenharCabecalho(doc: PDFKit.PDFDocument, subtitulo?: string) {
   const inicioX = doc.page.margins.left;
   const larguraUtil =
     doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const alturaLogo = 32;
+  const alturaLogo = 48;
   const y = doc.y;
 
   doc.image(LOGO_SIFES, inicioX, y, { height: alturaLogo });
@@ -29,6 +34,17 @@ function desenharCabecalho(doc: PDFKit.PDFDocument) {
   doc.image(LOGO_IF, inicioX + larguraUtil - larguraLogoIf, y, {
     height: alturaLogo,
   });
+
+  const dataEmissao = new Date().toLocaleDateString('pt-BR');
+  const textoCentro = subtitulo ? `${subtitulo}\n${dataEmissao}` : dataEmissao;
+  const larguraCentro = larguraUtil - 2 * larguraLogoIf - 20;
+  doc
+    .font('Helvetica')
+    .fontSize(10)
+    .text(textoCentro, inicioX + larguraLogoIf + 10, y + alturaLogo / 2 - 12, {
+      width: larguraCentro,
+      align: 'center',
+    });
 
   doc.y = y + alturaLogo + 8;
   doc
@@ -50,6 +66,7 @@ export function extensaoParaFormato(formato: Formato): string {
 
 export function gerarPdfTabela({
   titulo,
+  subtitulo,
   colunas,
   linhas,
 }: TabelaRelatorio): Promise<Buffer> {
@@ -64,7 +81,7 @@ export function gerarPdfTabela({
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    desenharCabecalho(doc);
+    desenharCabecalho(doc, subtitulo);
 
     doc.fontSize(16).text(titulo, { align: 'left' });
     doc.moveDown();
@@ -95,7 +112,7 @@ export function gerarPdfTabela({
     for (const linha of linhas) {
       if (doc.y > doc.page.height - doc.page.margins.bottom - 20) {
         doc.addPage();
-        desenharCabecalho(doc);
+        desenharCabecalho(doc, subtitulo);
       }
       desenharLinha(linha, false);
     }
