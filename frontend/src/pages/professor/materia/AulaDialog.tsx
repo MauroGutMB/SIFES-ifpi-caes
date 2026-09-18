@@ -33,6 +33,7 @@ import {
   useMateriaisAulaControllerListar,
   useMaterialAulaItemControllerRemover,
 } from '../../../api/generated/materiais-aula/materiais-aula';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 
 interface AulaDialogProps {
   aulaId: string | null;
@@ -66,6 +67,9 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
   const [novoMaterialTitulo, setNovoMaterialTitulo] = useState('');
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [materialParaExcluir, setMaterialParaExcluir] = useState<{ id: string; titulo: string } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (aula) {
@@ -144,13 +148,15 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
     }
   };
 
-  const excluirMaterial = async (id: string) => {
-    await removerMaterial.mutateAsync({ id });
+  const excluirMaterial = async () => {
+    if (!materialParaExcluir) return;
+    await removerMaterial.mutateAsync({ id: materialParaExcluir.id });
     if (aulaId) {
       await queryClient.invalidateQueries({
         queryKey: getMateriaisAulaControllerListarQueryKey(aulaId),
       });
     }
+    setMaterialParaExcluir(null);
   };
 
   return (
@@ -261,7 +267,10 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                       {material.titulo}
                     </a>
                   </Typography>
-                  <IconButton size="small" onClick={() => excluirMaterial(material.id)}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setMaterialParaExcluir({ id: material.id, titulo: material.titulo })}
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Stack>
@@ -304,6 +313,17 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
           </>
         )}
       </DialogContent>
+
+      <ConfirmDialog
+        open={!!materialParaExcluir}
+        title="Excluir material?"
+        description={`Tem certeza que deseja excluir "${materialParaExcluir?.titulo}"? Isso não pode ser desfeito.`}
+        confirmLabel="Excluir material"
+        confirmColor="error"
+        loading={removerMaterial.isPending}
+        onConfirm={excluirMaterial}
+        onClose={() => setMaterialParaExcluir(null)}
+      />
     </Dialog>
   );
 }

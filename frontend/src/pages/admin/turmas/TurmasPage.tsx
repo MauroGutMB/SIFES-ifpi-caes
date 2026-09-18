@@ -31,6 +31,7 @@ import { TurmasControllerCreateBody } from '../../../api/generated/zod/turmas/tu
 import type { TurmaDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof TurmasControllerCreateBody>;
 
@@ -41,6 +42,7 @@ const TURNOS = [
 
 export function TurmasPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useTurmasControllerFindAll();
   const { data: semestres } = useSemestresControllerFindAll();
   const criar = useTurmasControllerCreate();
@@ -100,8 +102,10 @@ export function TurmasPage() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
+        toast.success('Turma atualizada com sucesso');
       } else {
         await criar.mutateAsync({ data: dados });
+        toast.success('Turma criada com sucesso');
       }
       await invalidar();
       setDialogAberto(false);
@@ -120,13 +124,23 @@ export function TurmasPage() {
     await remover.mutateAsync({ id: paraExcluir.id });
     await invalidar();
     setParaExcluir(null);
+    toast.success('Turma excluída com sucesso');
   };
 
   const excluirSelecionados = async () => {
-    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    const total = totalSelecionados;
+    const resultados = await Promise.allSettled(
+      idsSelecionados.map((id) => remover.mutateAsync({ id })),
+    );
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
+    const falhas = resultados.filter((r) => r.status === 'rejected').length;
+    if (falhas > 0) {
+      toast.error(`${falhas} de ${total} exclusões falharam`);
+    } else {
+      toast.success(`${total} turma(s) excluída(s) com sucesso`);
+    }
   };
 
   const salvarEdicaoInline = async (linhaNova: TurmaDto, linhaAntiga: TurmaDto) => {

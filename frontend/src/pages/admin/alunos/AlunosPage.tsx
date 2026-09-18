@@ -37,11 +37,13 @@ import type { AlunoDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof AlunosControllerCreateBody>;
 
 export function AlunosPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useAlunosControllerFindAll();
   const { data: turmas } = useTurmasControllerFindAll();
   const criar = useAlunosControllerCreate();
@@ -103,9 +105,11 @@ export function AlunosPage() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
+        toast.success('Aluno atualizado com sucesso');
       } else {
         const criado = await criar.mutateAsync({ data: dados });
         setSenhaGerada({ nome: criado.nome, login: criado.matricula, senha: criado.senhaInicial });
+        toast.success('Aluno criado com sucesso');
       }
       await invalidar();
       setDialogAberto(false);
@@ -124,6 +128,7 @@ export function AlunosPage() {
     await remover.mutateAsync({ id: paraExcluir.id });
     await invalidar();
     setParaExcluir(null);
+    toast.success('Aluno excluído com sucesso');
   };
 
   const abrirMatricula = (aluno: AlunoDto) => {
@@ -142,6 +147,7 @@ export function AlunosPage() {
       });
       await invalidar();
       setParaMatricular(null);
+      toast.success('Aluno matriculado com sucesso');
     } catch (error) {
       setErro(
         isAxiosError(error)
@@ -155,6 +161,7 @@ export function AlunosPage() {
   const desligar = async (aluno: AlunoDto) => {
     await desligarTurma.mutateAsync({ id: aluno.id });
     await invalidar();
+    toast.success('Aluno desligado da turma');
   };
 
   // A DataGrid alterna para { type: 'exclude', ids } quando "selecionar tudo" é usado
@@ -167,10 +174,19 @@ export function AlunosPage() {
   const totalSelecionados = idsSelecionados.length;
 
   const excluirSelecionados = async () => {
-    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    const total = totalSelecionados;
+    const resultados = await Promise.allSettled(
+      idsSelecionados.map((id) => remover.mutateAsync({ id })),
+    );
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
+    const falhas = resultados.filter((r) => r.status === 'rejected').length;
+    if (falhas > 0) {
+      toast.error(`${falhas} de ${total} exclusões falharam`);
+    } else {
+      toast.success(`${total} aluno(s) excluído(s) com sucesso`);
+    }
   };
 
   const salvarEdicaoInline = async (linhaNova: AlunoDto, linhaAntiga: AlunoDto) => {

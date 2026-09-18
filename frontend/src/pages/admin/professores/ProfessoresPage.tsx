@@ -22,11 +22,13 @@ import type { ProfessorDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof ProfessoresControllerCreateBody>;
 
 export function ProfessoresPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useProfessoresControllerFindAll();
   const criar = useProfessoresControllerCreate();
   const atualizar = useProfessoresControllerUpdate();
@@ -81,9 +83,11 @@ export function ProfessoresPage() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
+        toast.success('Professor atualizado com sucesso');
       } else {
         const criado = await criar.mutateAsync({ data: dados });
         setSenhaGerada({ login: criado.email, senha: criado.senhaInicial });
+        toast.success('Professor criado com sucesso');
       }
       await invalidar();
       setDialogAberto(false);
@@ -102,13 +106,23 @@ export function ProfessoresPage() {
     await remover.mutateAsync({ id: paraExcluir.id });
     await invalidar();
     setParaExcluir(null);
+    toast.success('Professor excluído com sucesso');
   };
 
   const excluirSelecionados = async () => {
-    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    const total = totalSelecionados;
+    const resultados = await Promise.allSettled(
+      idsSelecionados.map((id) => remover.mutateAsync({ id })),
+    );
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
+    const falhas = resultados.filter((r) => r.status === 'rejected').length;
+    if (falhas > 0) {
+      toast.error(`${falhas} de ${total} exclusões falharam`);
+    } else {
+      toast.success(`${total} professor(es) excluído(s) com sucesso`);
+    }
   };
 
   const salvarEdicaoInline = async (linhaNova: ProfessorDto, linhaAntiga: ProfessorDto) => {

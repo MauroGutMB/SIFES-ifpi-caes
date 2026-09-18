@@ -46,6 +46,7 @@ import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { tokens } from '../../../theme/tokens';
 import { DIAS_SEMANA, resumoHorarios } from './dias-semana';
 import { AulasOverrideDialog } from './AulasOverrideDialog';
+import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof MateriasControllerCreateBody>;
 
@@ -66,6 +67,7 @@ function dataParaHora(data: Date | null): string {
 
 export function MateriasPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useMateriasControllerFindAll();
   const { data: turmas } = useTurmasControllerFindAll();
   const { data: professores } = useProfessoresControllerFindAll();
@@ -147,8 +149,10 @@ export function MateriasPage() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
+        toast.success('Disciplina atualizada com sucesso');
       } else {
         await criar.mutateAsync({ data: dados });
+        toast.success('Disciplina criada com sucesso');
       }
       await invalidar();
       setDialogAberto(false);
@@ -167,22 +171,34 @@ export function MateriasPage() {
     await remover.mutateAsync({ id: paraExcluir.id });
     await invalidar();
     setParaExcluir(null);
+    toast.success('Disciplina excluída com sucesso');
   };
 
   const alternarEstado = async (materia: MateriaDto) => {
     if (materia.estado === 'ABERTA') {
       await encerrar.mutateAsync({ id: materia.id });
+      toast.success('Disciplina encerrada');
     } else {
       await reabrir.mutateAsync({ id: materia.id });
+      toast.success('Disciplina reaberta');
     }
     await invalidar();
   };
 
   const excluirSelecionados = async () => {
-    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    const total = totalSelecionados;
+    const resultados = await Promise.allSettled(
+      idsSelecionados.map((id) => remover.mutateAsync({ id })),
+    );
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
+    const falhas = resultados.filter((r) => r.status === 'rejected').length;
+    if (falhas > 0) {
+      toast.error(`${falhas} de ${total} exclusões falharam`);
+    } else {
+      toast.success(`${total} disciplina(s) excluída(s) com sucesso`);
+    }
   };
 
   const salvarEdicaoInline = async (linhaNova: MateriaDto, linhaAntiga: MateriaDto) => {

@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { ptBR } from '@mui/x-data-grid/locales';
 import { tokens } from './tokens';
 
 // Paleta do SIFES — ver pranchas "SIFES Redesign" e "SIFES Formulários".
@@ -6,7 +7,8 @@ import { tokens } from './tokens';
 const displayFont = "'Archivo', system-ui, sans-serif";
 const bodyFont = "'Public Sans', system-ui, -apple-system, sans-serif";
 
-export const theme = createTheme({
+export const theme = createTheme(
+  {
   palette: {
     primary: {
       main: tokens.green,
@@ -197,4 +199,6 @@ export const theme = createTheme({
       },
     },
   },
-});
+  },
+  ptBR,
+);

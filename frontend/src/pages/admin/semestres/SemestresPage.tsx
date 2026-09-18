@@ -21,6 +21,7 @@ import { SemestresControllerCreateBody } from '../../../api/generated/zod/semest
 import type { SemestreDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { useToast } from '../../../components/ToastProvider';
 
 type FormValues = z.infer<typeof SemestresControllerCreateBody>;
 
@@ -30,6 +31,7 @@ function paraInputDate(iso: string): string {
 
 export function SemestresPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useSemestresControllerFindAll();
   const criar = useSemestresControllerCreate();
   const atualizar = useSemestresControllerUpdate();
@@ -87,8 +89,10 @@ export function SemestresPage() {
     try {
       if (editando) {
         await atualizar.mutateAsync({ id: editando.id, data: dados });
+        toast.success('Semestre atualizado com sucesso');
       } else {
         await criar.mutateAsync({ data: dados });
+        toast.success('Semestre criado com sucesso');
       }
       await invalidar();
       setDialogAberto(false);
@@ -107,13 +111,23 @@ export function SemestresPage() {
     await remover.mutateAsync({ id: paraExcluir.id });
     await invalidar();
     setParaExcluir(null);
+    toast.success('Semestre excluído com sucesso');
   };
 
   const excluirSelecionados = async () => {
-    await Promise.all(idsSelecionados.map((id) => remover.mutateAsync({ id })));
+    const total = totalSelecionados;
+    const resultados = await Promise.allSettled(
+      idsSelecionados.map((id) => remover.mutateAsync({ id })),
+    );
     await invalidar();
     setSelecionados({ type: 'include', ids: new Set() });
     setConfirmandoExclusaoEmMassa(false);
+    const falhas = resultados.filter((r) => r.status === 'rejected').length;
+    if (falhas > 0) {
+      toast.error(`${falhas} de ${total} exclusões falharam`);
+    } else {
+      toast.success(`${total} semestre(s) excluído(s) com sucesso`);
+    }
   };
 
   const salvarEdicaoInline = async (linhaNova: SemestreDto, linhaAntiga: SemestreDto) => {
