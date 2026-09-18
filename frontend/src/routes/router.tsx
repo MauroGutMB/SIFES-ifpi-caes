@@ -13,6 +13,7 @@ import { AlunosPage } from '../pages/admin/alunos/AlunosPage';
 import { MateriasPage } from '../pages/admin/materias/MateriasPage';
 import { UsuariosPage } from '../pages/admin/usuarios/UsuariosPage';
 import { SolicitacoesFotoPage } from '../pages/admin/solicitacoes-foto/SolicitacoesFotoPage';
+import { PendenciasPage } from '../pages/admin/pendencias/PendenciasPage';
 import { ProfessorHomePage } from '../pages/professor/HomePage';
 import { MateriaProfessorPage } from '../pages/professor/materia/MateriaProfessorPage';
 import { TurmaProfessorPage } from '../pages/professor/TurmaProfessorPage';
@@ -53,6 +54,7 @@ export const router = createBrowserRouter([
                   { path: 'semestres', element: <SemestresPage /> },
                   { path: 'materias', element: <MateriasPage /> },
                   { path: 'solicitacoes-foto', element: <SolicitacoesFotoPage /> },
+                  { path: 'pendencias', element: <PendenciasPage /> },
                   { path: 'usuarios', element: <UsuariosPage /> },
                 ],
               },

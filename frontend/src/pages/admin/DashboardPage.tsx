@@ -72,7 +72,7 @@ export function AdminDashboardPage() {
             titulo="Alunos com pendência"
             valor={data.alunosComPendencia}
             destaque={data.alunosComPendencia > 0}
-            to="/app/admin/solicitacoes-foto"
+            to="/app/admin/pendencias"
           />
         </Grid>
       )}

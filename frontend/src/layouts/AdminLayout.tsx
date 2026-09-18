@@ -6,6 +6,7 @@ import EventIcon from '@mui/icons-material/EventOutlined';
 import MenuBookIcon from '@mui/icons-material/MenuBookOutlined';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCameraOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
+import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
 import { SidebarLayout } from './SidebarLayout';
 import { SidebarNavList, type SidebarNavItem } from './SidebarNavList';
 
@@ -20,6 +21,11 @@ const ITENS_NAV: SidebarNavItem[] = [
     to: '/app/admin/solicitacoes-foto',
     label: 'Solicitações de foto',
     icon: <PhotoCameraIcon fontSize="small" />,
+  },
+  {
+    to: '/app/admin/pendencias',
+    label: 'Pendências',
+    icon: <ReportProblemIcon fontSize="small" />,
   },
   { to: '/app/admin/usuarios', label: 'Usuários', icon: <BadgeIcon fontSize="small" /> },
 ];
