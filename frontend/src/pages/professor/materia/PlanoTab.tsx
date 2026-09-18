@@ -182,7 +182,6 @@ interface ConfigItem {
   peso: string;
   modoEspecial: '' | 'PONDERADA' | 'SUBSTITUI_ITEM' | 'SUBSTITUI_MEDIA';
   itemSubstituidoId: string;
-  notaMetaMinima: string;
 }
 
 interface RegraAprovacaoDialogProps {
@@ -217,7 +216,6 @@ function RegraAprovacaoDialog({
               peso: item.peso,
               modoEspecial: item.modoEspecial ?? '',
               itemSubstituidoId: item.itemSubstituidoId ?? '',
-              notaMetaMinima: item.notaMetaMinima ?? '',
             },
           ]),
         ),
@@ -247,8 +245,6 @@ function RegraAprovacaoDialog({
                 item.especial && c.modoEspecial === 'SUBSTITUI_ITEM' && c.itemSubstituidoId
                   ? c.itemSubstituidoId
                   : undefined,
-              notaMetaMinima:
-                item.especial && c.notaMetaMinima !== '' ? Number(c.notaMetaMinima) : undefined,
             };
           }),
         },
@@ -282,7 +278,7 @@ function RegraAprovacaoDialog({
         size="small"
         value={notaMinima}
         onChange={(e) => setNotaMinima(e.target.value)}
-        helperText="Média que o aluno precisa atingir na disciplina pra ser aprovado. Padrão: 7."
+        helperText="Média que o aluno precisa atingir na disciplina pra ser aprovado. Também é a nota mínima que um item especial precisa atingir pra valer na nota. Padrão: 7."
         sx={{ mb: 1 }}
       />
 
@@ -355,19 +351,6 @@ function RegraAprovacaoDialog({
                     ))}
                   </TextField>
                 )}
-                <TextField
-                  label="Nota meta mínima (0-10, opcional)"
-                  type="number"
-                  size="small"
-                  value={c.notaMetaMinima}
-                  onChange={(e) =>
-                    setConfig((atual) => ({
-                      ...atual,
-                      [item.id]: { ...atual[item.id], notaMetaMinima: e.target.value },
-                    }))
-                  }
-                  helperText="Abaixo dessa nota, o item especial é ignorado no cálculo do aluno"
-                />
               </>
             )}
           </Stack>
