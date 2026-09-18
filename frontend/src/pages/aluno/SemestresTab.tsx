@@ -1,9 +1,27 @@
-import { Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import { useAlunosControllerMeusSemestres } from '../../api/generated/alunos/alunos';
+import { useState } from 'react';
+import { Button, Chip, Paper, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/DownloadOutlined';
+import { useAlunosControllerMeuPerfil, useAlunosControllerMeusSemestres } from '../../api/generated/alunos/alunos';
 import type { MeuSemestreDto } from '../../api/generated/models';
+import { baixarArquivo } from '../../api/download';
 
 export function SemestresTab() {
+  const { data: perfil } = useAlunosControllerMeuPerfil();
   const { data, isLoading } = useAlunosControllerMeusSemestres();
+  const [baixando, setBaixando] = useState<string | null>(null);
+
+  const baixarBoletim = async (semestreId: string) => {
+    if (!perfil) return;
+    setBaixando(semestreId);
+    try {
+      await baixarArquivo(
+        `/relatorios/boletim/${perfil.id}?formato=pdf&semestreId=${semestreId}`,
+        'boletim.pdf',
+      );
+    } finally {
+      setBaixando(null);
+    }
+  };
 
   return (
     <>
@@ -17,11 +35,11 @@ export function SemestresTab() {
             <TableRow>
               <TableCell>Semestre</TableCell>
               <TableCell>Turma</TableCell>
-              <TableCell>Status</TableCell>
               <TableCell>Disciplinas</TableCell>
               <TableCell>Aprovadas</TableCell>
               <TableCell>Reprovadas</TableCell>
               <TableCell>Cursando</TableCell>
+              <TableCell>Boletim</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -32,6 +50,9 @@ export function SemestresTab() {
                   <TableCell>
                     {item.turma.cursoTecnico} — {item.turma.anoSerie}
                   </TableCell>
+                  <TableCell>{item.totalMaterias}</TableCell>
+                  <TableCell>{item.aprovadas}</TableCell>
+                  <TableCell>{item.reprovadas}</TableCell>
                   <TableCell>
                     <Chip
                       size="small"
@@ -39,10 +60,17 @@ export function SemestresTab() {
                       color={item.atual ? 'success' : 'default'}
                     />
                   </TableCell>
-                  <TableCell>{item.totalMaterias}</TableCell>
-                  <TableCell>{item.aprovadas}</TableCell>
-                  <TableCell>{item.reprovadas}</TableCell>
-                  <TableCell>{item.cursando}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<DownloadIcon />}
+                      disabled={baixando === item.semestre.id}
+                      onClick={() => baixarBoletim(item.semestre.id)}
+                    >
+                      PDF
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             {!isLoading && !data?.length && (
