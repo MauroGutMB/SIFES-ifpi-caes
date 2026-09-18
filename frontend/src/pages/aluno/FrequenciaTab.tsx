@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
+  Button,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   MenuItem,
   Paper,
   Stack,
@@ -53,6 +57,8 @@ export function FrequenciaTab() {
   }, [detalhado]);
 
   const { pagina, setPagina, itensDaPagina: diasDaPagina } = usePaginacao(diasAgrupados);
+  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  const diaAberto = diasAgrupados.find((dia) => dia.data === diaSelecionado);
 
   if (perfil && !perfil.turmaId) {
     return (
@@ -146,24 +152,11 @@ export function FrequenciaTab() {
             {!isLoading &&
               diasDaPagina.map((dia) => (
                 <TableRow key={dia.data}>
-                  <TableCell sx={{ verticalAlign: 'top' }}>
-                    {new Date(dia.data).toLocaleDateString('pt-BR')}
-                  </TableCell>
+                  <TableCell>{new Date(dia.data).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell>
-                    <Stack spacing={0.75}>
-                      {dia.aulas.map((aula, i) => (
-                        <Stack key={i} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                          <Typography variant="body2" sx={{ minWidth: 160 }}>
-                            {aula.materiaNome}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={LABEL_STATUS[aula.status].label}
-                            color={LABEL_STATUS[aula.status].color}
-                          />
-                        </Stack>
-                      ))}
-                    </Stack>
+                    <Button size="small" variant="outlined" onClick={() => setDiaSelecionado(dia.data)}>
+                      Aulas
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -180,6 +173,26 @@ export function FrequenciaTab() {
         </Table>
         <Paginacao total={diasAgrupados.length} pagina={pagina} onChange={setPagina} />
       </Paper>
+
+      <Dialog open={!!diaSelecionado} onClose={() => setDiaSelecionado(null)} fullWidth maxWidth="xs">
+        <DialogTitle>
+          Aulas de {diaAberto && new Date(diaAberto.data).toLocaleDateString('pt-BR')}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={1}>
+            {diaAberto?.aulas.map((aula, i) => (
+              <Stack key={i} direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="body2">{aula.materiaNome}</Typography>
+                <Chip
+                  size="small"
+                  label={LABEL_STATUS[aula.status].label}
+                  color={LABEL_STATUS[aula.status].color}
+                />
+              </Stack>
+            ))}
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

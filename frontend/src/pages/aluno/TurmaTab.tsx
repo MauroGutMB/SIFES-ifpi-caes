@@ -6,6 +6,10 @@ export function TurmaTab() {
   const { data: turmaDetalhe } = useAlunosControllerMinhaTurma();
   const turma = perfil?.turma;
 
+  const fotoPorProfessorId = new Map(
+    (turmaDetalhe?.professores ?? []).map((professor) => [professor.id, professor.fotoUrl]),
+  );
+
   return (
     <>
       <Typography variant="h4" gutterBottom>
@@ -50,7 +54,7 @@ export function TurmaTab() {
           </Paper>
 
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Disciplinas
               </Typography>
@@ -60,6 +64,12 @@ export function TurmaTab() {
                     <div key={disciplina.id}>
                       {i > 0 && <Divider component="li" />}
                       <ListItem>
+                        <ListItemAvatar>
+                          <Avatar
+                            src={fotoPorProfessorId.get(disciplina.professorId) ?? undefined}
+                            sx={{ width: 32, height: 32 }}
+                          />
+                        </ListItemAvatar>
                         <ListItemText primary={disciplina.nome} secondary={disciplina.professorNome} />
                       </ListItem>
                     </div>
@@ -76,36 +86,7 @@ export function TurmaTab() {
               </Paper>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Professores
-              </Typography>
-              <Paper variant="outlined">
-                <List dense>
-                  {(turmaDetalhe?.professores ?? []).map((professor, i) => (
-                    <div key={professor.id}>
-                      {i > 0 && <Divider component="li" />}
-                      <ListItem>
-                        <ListItemAvatar>
-                          <Avatar src={professor.fotoUrl ?? undefined} sx={{ width: 32, height: 32 }} />
-                        </ListItemAvatar>
-                        <ListItemText primary={professor.nome} />
-                      </ListItem>
-                    </div>
-                  ))}
-                  {!turmaDetalhe?.professores.length && (
-                    <ListItem>
-                      <ListItemText
-                        primary="Nenhum professor vinculado ainda."
-                        slotProps={{ primary: { color: 'text.secondary' } }}
-                      />
-                    </ListItem>
-                  )}
-                </List>
-              </Paper>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Alunos
               </Typography>
