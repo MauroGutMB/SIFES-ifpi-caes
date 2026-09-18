@@ -25,6 +25,7 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
+import { useMateriaPlanoControllerDetalhamentoAluno } from '../../api/generated/plano-disciplina/plano-disciplina';
 import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
 import { AulaDialog } from './materia/AulaDialog';
@@ -42,6 +43,41 @@ interface AulaAgrupada {
   data: string;
   presentes: number;
   total: number;
+}
+
+function NotasDetalhadas({
+  materiaId,
+  alunoId,
+  ativo,
+}: {
+  materiaId: string;
+  alunoId: string;
+  ativo: boolean;
+}) {
+  const { data: itens } = useMateriaPlanoControllerDetalhamentoAluno(materiaId, alunoId, {
+    query: { enabled: ativo },
+  });
+
+  if (!itens?.length) {
+    return (
+      <Typography variant="caption" color="text.secondary">
+        Nenhum item de avaliação lançado.
+      </Typography>
+    );
+  }
+
+  return (
+    <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 0.5 }}>
+      {itens.map((item) => (
+        <Chip
+          key={item.id}
+          size="small"
+          variant="outlined"
+          label={`${item.nome}: ${item.valorObtido}/${item.valorMaximo}`}
+        />
+      ))}
+    </Stack>
+  );
 }
 
 function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
@@ -74,8 +110,17 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
                 <TableBody>
                   {aluno.materias.map((m) => (
                     <TableRow key={m.materiaId}>
-                      <TableCell sx={{ border: 0 }}>{m.materiaNome}</TableCell>
-                      <TableCell sx={{ border: 0 }} width={100}>
+                      <TableCell sx={{ border: 0, verticalAlign: 'top' }} width={140}>
+                        {m.materiaNome}
+                      </TableCell>
+                      <TableCell sx={{ border: 0, verticalAlign: 'top' }}>
+                        <NotasDetalhadas
+                          materiaId={m.materiaId}
+                          alunoId={aluno.alunoId}
+                          ativo={aberto}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ border: 0, verticalAlign: 'top' }} width={100}>
                         <Box
                           component="span"
                           sx={{ color: m.frequenciaPercentual < 75 ? 'error.main' : undefined }}
