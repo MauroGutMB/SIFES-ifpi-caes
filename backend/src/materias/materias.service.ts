@@ -233,12 +233,26 @@ export class MateriasService {
     });
   }
 
-  findAll(filtros: {
+  private comFotoDoProfessor<
+    T extends { professor: { userId: string } & Record<string, unknown> },
+  >(
+    materia: T & {
+      professor: T['professor'] & { user: { fotoUrl: string | null } };
+    },
+  ) {
+    const { user, ...professorSemUser } = materia.professor;
+    return {
+      ...materia,
+      professor: { ...professorSemUser, fotoUrl: user.fotoUrl },
+    };
+  }
+
+  async findAll(filtros: {
     turmaId?: string;
     professorId?: string;
     vinculadoAlunoId?: string;
   }) {
-    return this.prisma.materia.findMany({
+    const materias = await this.prisma.materia.findMany({
       where: {
         turmaId: filtros.turmaId,
         professorId: filtros.professorId,
@@ -246,21 +260,27 @@ export class MateriasService {
           ? { some: { alunoId: filtros.vinculadoAlunoId } }
           : undefined,
       },
-      include: { turma: true, professor: true, horarios: true },
+      include: {
+        turma: true,
+        professor: { include: { user: { select: { fotoUrl: true } } } },
+        horarios: true,
+      },
       orderBy: { nome: 'asc' },
     });
+    return materias.map((materia) => this.comFotoDoProfessor(materia));
   }
 
-  findOne(id: string) {
-    return this.prisma.materia.findUniqueOrThrow({
+  async findOne(id: string) {
+    const materia = await this.prisma.materia.findUniqueOrThrow({
       where: { id },
       include: {
         turma: true,
-        professor: true,
+        professor: { include: { user: { select: { fotoUrl: true } } } },
         horarios: true,
         _count: { select: { aulas: true, vinculos: true } },
       },
     });
+    return this.comFotoDoProfessor(materia);
   }
 
   async update(id: string, dto: UpdateMateriaDto) {

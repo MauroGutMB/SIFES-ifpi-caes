@@ -24,14 +24,21 @@ export class ProfessoresService {
           },
         },
       });
-      return { ...professor, senhaInicial };
+      return { ...professor, fotoUrl: null, senhaInicial };
     } catch (error) {
       rethrowAsConflict(error, 'Já existe um professor com este e-mail');
     }
   }
 
-  findAll() {
-    return this.prisma.professor.findMany({ orderBy: { nome: 'asc' } });
+  async findAll() {
+    const professores = await this.prisma.professor.findMany({
+      include: { user: { select: { fotoUrl: true } } },
+      orderBy: { nome: 'asc' },
+    });
+    return professores.map(({ user, ...professor }) => ({
+      ...professor,
+      fotoUrl: user.fotoUrl,
+    }));
   }
 
   findOne(id: string) {

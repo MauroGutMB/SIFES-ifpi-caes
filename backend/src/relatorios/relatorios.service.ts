@@ -123,16 +123,27 @@ export class RelatoriosService {
         alunoId,
         materia: semestreId ? { turma: { semestreId } } : undefined,
       },
-      include: { materia: { include: { turma: true } } },
+      include: {
+        materia: { include: { turma: { include: { semestre: true } } } },
+      },
     });
 
-    const linhas: (string | number)[][] = [];
+    const linhasPorSemestre = new Map<
+      string,
+      { nome: string; dataInicio: Date; linhas: (string | number)[][] }
+    >();
     for (const vinculo of vinculos) {
       const boletim = await this.boletim.calcularBoletimMateria(
         vinculo.materiaId,
       );
       const linha = boletim.find((b) => b.aluno.id === alunoId);
-      linhas.push([
+      const semestre = vinculo.materia.turma.semestre;
+      const grupo = linhasPorSemestre.get(semestre.id) ?? {
+        nome: semestre.nome,
+        dataInicio: semestre.dataInicio,
+        linhas: [],
+      };
+      grupo.linhas.push([
         vinculo.materia.nome,
         vinculo.materia.turma.cursoTecnico,
         vinculo.materia.turma.anoSerie,
@@ -140,7 +151,11 @@ export class RelatoriosService {
         linha?.notaFinal ?? 0,
         linha?.frequenciaPercentual ?? 100,
       ]);
+      linhasPorSemestre.set(semestre.id, grupo);
     }
+    const secoes = [...linhasPorSemestre.values()]
+      .sort((a, b) => a.dataInicio.getTime() - b.dataInicio.getTime())
+      .map((grupo) => ({ titulo: grupo.nome, linhas: grupo.linhas }));
 
     const tabela: TabelaRelatorio = {
       titulo: `Boletim - ${aluno.nome} (${aluno.matricula})`,
@@ -155,7 +170,8 @@ export class RelatoriosService {
         'Nota Final',
         'Frequencia %',
       ],
-      linhas,
+      linhas: secoes.flatMap((s) => s.linhas),
+      secoes,
     };
     return {
       buffer: await gerarRelatorio(tabela, formato),

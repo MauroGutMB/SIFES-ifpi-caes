@@ -12,6 +12,9 @@ export class ProfessorDto {
 
   @ApiProperty()
   email: string;
+
+  @ApiProperty({ nullable: true, type: String })
+  fotoUrl: string | null;
 }
 
 export class ProfessorCriadoDto extends ProfessorDto {
