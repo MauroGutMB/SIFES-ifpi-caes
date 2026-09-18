@@ -19,10 +19,14 @@ import EventNoteIcon from '@mui/icons-material/EventNoteOutlined';
 import LockIcon from '@mui/icons-material/LockOutlined';
 import LockOpenIcon from '@mui/icons-material/LockOpenOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import type { z } from 'zod';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ptBR } from 'date-fns/locale/pt-BR';
 import {
   getMateriasControllerFindAllQueryKey,
   useMateriasControllerCreate,
@@ -43,6 +47,19 @@ import { DIAS_SEMANA, resumoHorarios } from './dias-semana';
 import { AulasOverrideDialog } from './AulasOverrideDialog';
 
 type FormValues = z.infer<typeof MateriasControllerCreateBody>;
+
+function horaParaData(hora: string): Date | null {
+  if (!/^\d{2}:\d{2}$/.test(hora)) return null;
+  const [h, m] = hora.split(':').map(Number);
+  const data = new Date();
+  data.setHours(h, m, 0, 0);
+  return data;
+}
+
+function dataParaHora(data: Date | null): string {
+  if (!data) return '';
+  return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`;
+}
 
 export function MateriasPage() {
   const queryClient = useQueryClient();
@@ -292,6 +309,7 @@ export function MateriasPage() {
         />
 
         <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>Horários</Typography>
+        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
         <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.75, bgcolor: '#FAFBFA' }}>
           <Stack spacing={1}>
             {fields.map((field, index) => (
@@ -310,13 +328,23 @@ export function MateriasPage() {
                     </MenuItem>
                   ))}
                 </TextField>
-                <TextField
-                  {...register(`horarios.${index}.horaInicio`)}
-                  label="Início"
-                  type="time"
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  error={!!errors.horarios?.[index]?.horaInicio}
-                  sx={{ width: 120 }}
+                <Controller
+                  control={control}
+                  name={`horarios.${index}.horaInicio`}
+                  render={({ field: campo }) => (
+                    <TimePicker
+                      label="Início"
+                      ampm={false}
+                      value={horaParaData(campo.value)}
+                      onChange={(data) => campo.onChange(dataParaHora(data))}
+                      slotProps={{
+                        textField: {
+                          error: !!errors.horarios?.[index]?.horaInicio,
+                          sx: { width: 140 },
+                        },
+                      }}
+                    />
+                  )}
                 />
                 <IconButton
                   onClick={() => remove(index)}
@@ -348,6 +376,7 @@ export function MateriasPage() {
             Adicionar horário
           </Button>
         </Box>
+        </LocalizationProvider>
         <Typography sx={{ fontSize: 12, color: tokens.textSecondary, minHeight: 18, mt: 0.75 }}>
           {errors.horarios?.message ?? 'A última linha fica sempre disponível para um novo horário'}
         </Typography>
