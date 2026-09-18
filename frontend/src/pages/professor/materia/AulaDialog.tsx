@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -313,6 +314,9 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
           </>
         )}
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
 
       <ConfirmDialog
         open={!!materialParaExcluir}

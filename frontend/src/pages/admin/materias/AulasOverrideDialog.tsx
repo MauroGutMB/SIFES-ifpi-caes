@@ -1,6 +1,8 @@
 import {
+  Button,
   Chip,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   MenuItem,
@@ -112,6 +114,9 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
         </Table>
         <Paginacao total={aulas.length} pagina={pagina} onChange={setPagina} />
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   );
 }

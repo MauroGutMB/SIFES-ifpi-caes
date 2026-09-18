@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -99,6 +107,9 @@ export function EntregaAlunoDialog({ atividade, onClose }: EntregaAlunoDialogPro
           )}
         </Stack>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   );
 }

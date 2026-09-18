@@ -6,6 +6,7 @@ import {
   Chip,
   Collapse,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -197,6 +198,9 @@ function DetalheDisciplinaDialog({
           </TableBody>
         </Table>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   );
 }

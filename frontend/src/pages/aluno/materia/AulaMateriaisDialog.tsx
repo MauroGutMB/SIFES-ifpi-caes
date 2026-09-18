@@ -1,5 +1,7 @@
 import {
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   List,
@@ -44,6 +46,9 @@ export function AulaMateriaisDialog({ aulaId, onClose }: AulaMateriaisDialogProp
           )}
         </List>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   );
 }

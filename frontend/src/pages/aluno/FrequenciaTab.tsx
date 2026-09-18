@@ -3,6 +3,7 @@ import {
   Button,
   Chip,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   MenuItem,
@@ -192,6 +193,9 @@ export function FrequenciaTab() {
             ))}
           </Stack>
         </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDiaSelecionado(null)}>Fechar</Button>
+        </DialogActions>
       </Dialog>
     </>
   );

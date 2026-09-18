@@ -1,5 +1,7 @@
 import {
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Table,
@@ -63,6 +65,9 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
         </Table>
         <Paginacao total={entregas.length} pagina={pagina} onChange={setPagina} />
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
     </Dialog>
   );
 }
