@@ -2,24 +2,61 @@ import {
   calcularFrequenciaPercentual,
   calcularNotaFinal,
   calcularSituacao,
+  ItemParaNotaFinal,
 } from './boletim.util';
 import { StatusFrequencia } from '../../generated/prisma/client';
+
+/** Item normal — peso nasce igual ao valorMaximo (regra real do PlanoDisciplinaService). */
+function itemNormal(
+  id: string,
+  valorMaximo: number,
+  valorObtido: number,
+  peso = valorMaximo,
+): ItemParaNotaFinal {
+  return {
+    id,
+    valorMaximo,
+    valorObtido,
+    peso,
+    especial: false,
+    modoEspecial: null,
+    itemSubstituidoId: null,
+    notaMetaMinima: null,
+    habilitadoParaAluno: false,
+  };
+}
+
+function itemEspecial(
+  overrides: Partial<ItemParaNotaFinal> & { id: string },
+): ItemParaNotaFinal {
+  return {
+    valorMaximo: 10,
+    valorObtido: 0,
+    peso: 10,
+    especial: true,
+    modoEspecial: 'PONDERADA',
+    itemSubstituidoId: null,
+    notaMetaMinima: null,
+    habilitadoParaAluno: true,
+    ...overrides,
+  };
+}
 
 describe('boletim.util', () => {
   describe('calcularNotaFinal', () => {
     it('item sem nota lançada conta como 0 (não é excluído do denominador)', () => {
       const nota = calcularNotaFinal([
-        { valorMaximo: 10, valorObtido: 10 },
-        { valorMaximo: 10, valorObtido: 0 },
-        { valorMaximo: 10, valorObtido: 0 },
+        itemNormal('1', 10, 10),
+        itemNormal('2', 10, 0),
+        itemNormal('3', 10, 0),
       ]);
       expect(nota).toBeCloseTo(3.33, 2);
     });
 
-    it('normaliza pra escala 0-10 mesmo com itens que não somam 10', () => {
+    it('normaliza pra escala 0-10 mesmo com itens que não somam 10 (peso = valorMaximo reproduz a média simples de antes)', () => {
       const nota = calcularNotaFinal([
-        { valorMaximo: 30, valorObtido: 15 },
-        { valorMaximo: 70, valorObtido: 70 },
+        itemNormal('1', 30, 15),
+        itemNormal('2', 70, 70),
       ]);
       // (15+70)/(30+70) * 10 = 8.5
       expect(nota).toBeCloseTo(8.5, 2);
@@ -27,6 +64,84 @@ describe('boletim.util', () => {
 
     it('sem nenhum item retorna 0 (evita divisão por zero)', () => {
       expect(calcularNotaFinal([])).toBe(0);
+    });
+
+    it('item especial não habilitado pro aluno é ignorado, mesmo com nota lançada', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5),
+        itemEspecial({ id: 'e1', valorObtido: 10, habilitadoParaAluno: false }),
+      ]);
+      expect(nota).toBe(5);
+    });
+
+    it('modo PONDERADA: item especial entra como mais um componente da média, com peso próprio', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5, 2),
+        itemNormal('2', 10, 5, 2),
+        itemEspecial({
+          id: 'e1',
+          modoEspecial: 'PONDERADA',
+          peso: 1,
+          valorObtido: 10,
+        }),
+      ]);
+      // (5*2 + 5*2 + 10*1) / (2+2+1) = 30/5 = 6
+      expect(nota).toBe(6);
+    });
+
+    it('modo SUBSTITUI_ITEM: troca o componente do item indicado pelo do especial', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5),
+        itemNormal('2', 10, 4),
+        itemEspecial({
+          id: 'e1',
+          modoEspecial: 'SUBSTITUI_ITEM',
+          itemSubstituidoId: '2',
+          peso: 10,
+          valorObtido: 8,
+        }),
+      ]);
+      // item 2 (nota 4) sai, entra o especial (nota 8): (5+8)/2 = 6.5
+      expect(nota).toBe(6.5);
+    });
+
+    it('modo SUBSTITUI_MEDIA: nota final vira a nota normalizada do item especial', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 2),
+        itemNormal('2', 10, 3),
+        itemEspecial({
+          id: 'e1',
+          modoEspecial: 'SUBSTITUI_MEDIA',
+          valorObtido: 9,
+        }),
+      ]);
+      expect(nota).toBe(9);
+    });
+
+    it('item especial abaixo da nota meta mínima é ignorado', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5),
+        itemEspecial({
+          id: 'e1',
+          modoEspecial: 'SUBSTITUI_MEDIA',
+          notaMetaMinima: 6,
+          valorObtido: 5, // normalizado = 5, abaixo da meta
+        }),
+      ]);
+      expect(nota).toBe(5); // ignora o especial, fica só a média normal
+    });
+
+    it('item especial que atinge a nota meta mínima é considerado', () => {
+      const nota = calcularNotaFinal([
+        itemNormal('1', 10, 5),
+        itemEspecial({
+          id: 'e1',
+          modoEspecial: 'SUBSTITUI_MEDIA',
+          notaMetaMinima: 6,
+          valorObtido: 6,
+        }),
+      ]);
+      expect(nota).toBe(6);
     });
   });
 

@@ -15,7 +15,9 @@ export class BoletimService {
     const materia = await this.prisma.materia.findUniqueOrThrow({
       where: { id: materiaId },
       include: {
-        itensAvaliacao: { include: { notas: true } },
+        itensAvaliacao: {
+          include: { notas: true, alunosHabilitados: true },
+        },
         vinculos: {
           include: {
             aluno: { select: { id: true, nome: true, matricula: true } },
@@ -39,8 +41,19 @@ export class BoletimService {
       const itensDoAluno = materia.itensAvaliacao.map((item) => {
         const nota = item.notas.find((n) => n.alunoId === aluno.id);
         return {
+          id: item.id,
           valorMaximo: item.valorMaximo.toNumber(),
           valorObtido: nota ? nota.valorObtido.toNumber() : 0,
+          peso: item.peso.toNumber(),
+          especial: item.especial,
+          modoEspecial: item.modoEspecial,
+          itemSubstituidoId: item.itemSubstituidoId,
+          notaMetaMinima: item.notaMetaMinima
+            ? item.notaMetaMinima.toNumber()
+            : null,
+          habilitadoParaAluno: item.alunosHabilitados.some(
+            (h) => h.alunoId === aluno.id,
+          ),
         };
       });
       const frequenciasDoAluno = frequencias.filter(

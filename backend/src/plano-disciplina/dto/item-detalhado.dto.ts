@@ -12,4 +12,13 @@ export class ItemDetalhadoDto {
 
   @ApiProperty({ description: 'Decimal serializado como string', type: String })
   valorObtido: string;
+
+  @ApiProperty()
+  especial: boolean;
+
+  @ApiProperty({
+    description:
+      'Só relevante quando especial é true — se o item vale pra nota deste aluno',
+  })
+  habilitadoParaAluno: boolean;
 }

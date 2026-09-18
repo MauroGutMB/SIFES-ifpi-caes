@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -9,6 +9,7 @@ import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { ItemAvaliacaoDto } from './dto/item-avaliacao.dto';
 import { BoletimLinhaDto } from './dto/boletim-linha.dto';
 import { ItemDetalhadoDto } from './dto/item-detalhado.dto';
+import { ConfigurarRegraDto } from './dto/configurar-regra.dto';
 
 @ApiTags('plano-disciplina')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -32,6 +33,16 @@ export class MateriaPlanoController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<ItemAvaliacaoDto[]> {
     return this.service.listarItens(materiaId, user);
+  }
+
+  @Put('regra-aprovacao')
+  @ApiOkResponse({ type: ItemAvaliacaoDto, isArray: true })
+  configurarRegra(
+    @Param('materiaId') materiaId: string,
+    @Body() dto: ConfigurarRegraDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<ItemAvaliacaoDto[]> {
+    return this.service.configurarRegra(materiaId, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)

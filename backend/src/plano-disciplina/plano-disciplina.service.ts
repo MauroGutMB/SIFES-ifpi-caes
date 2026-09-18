@@ -15,6 +15,7 @@ import {
 import { CreateItemAvaliacaoDto } from './dto/create-item-avaliacao.dto';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
+import { ConfigurarRegraDto } from './dto/configurar-regra.dto';
 
 @Injectable()
 export class PlanoDisciplinaService {
@@ -71,7 +72,15 @@ export class PlanoDisciplinaService {
     const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     return this.prisma.itemAvaliacao.create({
-      data: { materiaId, nome: dto.nome, valorMaximo: dto.valorMaximo },
+      data: {
+        materiaId,
+        nome: dto.nome,
+        valorMaximo: dto.valorMaximo,
+        // Nasce igual ao valorMaximo: reproduz a média simples de antes até o professor
+        // customizar pesos pela regra de aprovação.
+        peso: dto.valorMaximo,
+        especial: dto.especial ?? false,
+      },
     });
   }
 
@@ -83,7 +92,106 @@ export class PlanoDisciplinaService {
     return itens.map((item) => ({
       ...item,
       valorMaximo: item.valorMaximo.toString(),
+      peso: item.peso.toString(),
+      notaMetaMinima: item.notaMetaMinima?.toString() ?? null,
     }));
+  }
+
+  /** Pesos, modo dos itens especiais (ponderada/substitui item/substitui média) e nota meta
+   * mínima — configurados de uma vez pra disciplina inteira, normais e especiais juntos. */
+  async configurarRegra(
+    materiaId: string,
+    dto: ConfigurarRegraDto,
+    user: AuthenticatedUser,
+  ) {
+    const materia = await this.carregarMateria(materiaId, user);
+    garantirPosseProfessor(
+      user,
+      materia.professorId,
+      'Disciplina não encontrada',
+    );
+    this.garantirAberta(materia);
+
+    const itensDaMateria = await this.prisma.itemAvaliacao.findMany({
+      where: { materiaId },
+    });
+    const itensPorId = new Map(itensDaMateria.map((item) => [item.id, item]));
+
+    for (const config of dto.itens) {
+      const item = itensPorId.get(config.itemAvaliacaoId);
+      if (!item) {
+        throw new BadRequestException(
+          'Todos os itens configurados devem pertencer a esta Disciplina',
+        );
+      }
+      if (config.modoEspecial && !item.especial) {
+        throw new BadRequestException(
+          `"${item.nome}" não é um item especial, não pode ter modoEspecial`,
+        );
+      }
+      if (config.itemSubstituidoId) {
+        const substituido = itensPorId.get(config.itemSubstituidoId);
+        if (!substituido || substituido.especial) {
+          throw new BadRequestException(
+            'O item substituído precisa ser um item normal desta mesma Disciplina',
+          );
+        }
+      }
+    }
+
+    await this.prisma.$transaction(
+      dto.itens.map((config) =>
+        this.prisma.itemAvaliacao.update({
+          where: { id: config.itemAvaliacaoId },
+          data: {
+            peso: config.peso,
+            modoEspecial: config.modoEspecial,
+            itemSubstituidoId: config.itemSubstituidoId,
+            notaMetaMinima: config.notaMetaMinima,
+          },
+        }),
+      ),
+    );
+
+    return this.listarItens(materiaId, user);
+  }
+
+  /** Marca (ou desmarca) se um item especial vale pra nota de UM aluno específico —
+   * recuperação/prova final não é pra turma inteira. */
+  async definirItemEspecialAluno(
+    itemId: string,
+    alunoId: string,
+    habilitado: boolean,
+    user: AuthenticatedUser,
+  ) {
+    const item = await this.carregarItemComPosse(itemId, user);
+    this.garantirAberta(item.materia);
+    if (!item.especial) {
+      throw new BadRequestException('Este item não é um item especial');
+    }
+    const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
+      where: { alunoId_materiaId: { alunoId, materiaId: item.materiaId } },
+    });
+    if (!vinculado) {
+      throw new BadRequestException(
+        'Aluno não está vinculado a esta Disciplina',
+      );
+    }
+
+    if (habilitado) {
+      await this.prisma.itemEspecialAluno.upsert({
+        where: {
+          itemAvaliacaoId_alunoId: { itemAvaliacaoId: itemId, alunoId },
+        },
+        create: { itemAvaliacaoId: itemId, alunoId },
+        update: {},
+      });
+    } else {
+      await this.prisma.itemEspecialAluno.deleteMany({
+        where: { itemAvaliacaoId: itemId, alunoId },
+      });
+    }
+    return { habilitado };
   }
 
   async atualizarItem(
@@ -179,13 +287,18 @@ export class PlanoDisciplinaService {
 
     const itens = await this.prisma.itemAvaliacao.findMany({
       where: { materiaId },
-      include: { notas: { where: { alunoId } } },
+      include: {
+        notas: { where: { alunoId } },
+        alunosHabilitados: { where: { alunoId } },
+      },
     });
     return itens.map((item) => ({
       id: item.id,
       nome: item.nome,
       valorMaximo: item.valorMaximo.toString(),
       valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+      especial: item.especial,
+      habilitadoParaAluno: item.alunosHabilitados.length > 0,
     }));
   }
 
@@ -194,13 +307,18 @@ export class PlanoDisciplinaService {
 
     const itens = await this.prisma.itemAvaliacao.findMany({
       where: { materiaId },
-      include: { notas: { where: { alunoId: user.alunoId! } } },
+      include: {
+        notas: { where: { alunoId: user.alunoId! } },
+        alunosHabilitados: { where: { alunoId: user.alunoId! } },
+      },
     });
     return itens.map((item) => ({
       id: item.id,
       nome: item.nome,
       valorMaximo: item.valorMaximo.toString(),
       valorObtido: item.notas[0] ? item.notas[0].valorObtido.toString() : '0',
+      especial: item.especial,
+      habilitadoParaAluno: item.alunosHabilitados.length > 0,
     }));
   }
 }

@@ -7,6 +7,7 @@ import { Role } from '../../generated/prisma/client';
 import { PlanoDisciplinaService } from './plano-disciplina.service';
 import { UpdateItemAvaliacaoDto } from './dto/update-item-avaliacao.dto';
 import { SetNotasDto } from './dto/set-notas.dto';
+import { HabilitarItemEspecialDto } from './dto/habilitar-item-especial.dto';
 
 @ApiTags('plano-disciplina')
 @Roles(Role.ADMIN, Role.PROFESSOR)
@@ -35,5 +36,20 @@ export class ItensAvaliacaoController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.service.setNotas(id, dto, user);
+  }
+
+  @Put(':id/alunos/:alunoId')
+  definirItemEspecialAluno(
+    @Param('id') id: string,
+    @Param('alunoId') alunoId: string,
+    @Body() dto: HabilitarItemEspecialDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.service.definirItemEspecialAluno(
+      id,
+      alunoId,
+      dto.habilitado,
+      user,
+    );
   }
 }

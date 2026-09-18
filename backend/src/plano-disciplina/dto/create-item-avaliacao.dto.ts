@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class CreateItemAvaliacaoDto {
   @ApiProperty({ example: 'Prova 1' })
@@ -11,4 +18,13 @@ export class CreateItemAvaliacaoDto {
   @IsNumber()
   @Min(0.01)
   valorMaximo: number;
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Item especial (recuperação, prova final) — só conta pros alunos habilitados individualmente, não pra turma inteira.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  especial?: boolean;
 }

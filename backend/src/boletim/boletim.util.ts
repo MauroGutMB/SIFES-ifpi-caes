@@ -5,14 +5,82 @@ export const FREQUENCIA_MINIMA_PERCENTUAL = 75;
 
 export type Situacao = 'CURSANDO' | 'APROVADO' | 'REPROVADO';
 
-/** Nota final normalizada 0–10: item sem nota lançada conta como 0 (entra no denominador). */
-export function calcularNotaFinal(
-  itens: { valorMaximo: number; valorObtido: number }[],
-): number {
-  const somaMaxima = itens.reduce((acc, item) => acc + item.valorMaximo, 0);
-  if (somaMaxima === 0) return 0;
-  const somaObtida = itens.reduce((acc, item) => acc + item.valorObtido, 0);
-  return (somaObtida / somaMaxima) * 10;
+export type ModoItemEspecial =
+  'PONDERADA' | 'SUBSTITUI_ITEM' | 'SUBSTITUI_MEDIA';
+
+export interface ItemParaNotaFinal {
+  id: string;
+  valorMaximo: number;
+  valorObtido: number;
+  peso: number;
+  especial: boolean;
+  modoEspecial: ModoItemEspecial | null;
+  itemSubstituidoId: string | null;
+  notaMetaMinima: number | null;
+  /** Só é relevante quando `especial` é true — se o aluno não foi habilitado (professor não
+   * marcou recuperação/prova final pra ele), o item é ignorado no cálculo dele. */
+  habilitadoParaAluno: boolean;
+}
+
+/**
+ * Média ponderada 0–10 dos itens normais (item sem nota lançada conta como 0), com os itens
+ * especiais habilitados pro aluno entrando conforme o `modoEspecial` configurado:
+ * - PONDERADA: mais um componente na mesma média ponderada, com seu próprio peso.
+ * - SUBSTITUI_ITEM: troca o componente do item indicado (`itemSubstituidoId`) pelo do especial.
+ * - SUBSTITUI_MEDIA: a nota final vira diretamente a nota (normalizada) do item especial.
+ * Um item especial só entra se atingir a `notaMetaMinima` (quando configurada) — abaixo disso é
+ * ignorado e o cálculo segue como se o aluno não tivesse acesso a ele.
+ *
+ * `peso` nasce igual a `valorMaximo` na criação do item (ver PlanoDisciplinaService.criarItem),
+ * o que faz essa fórmula reproduzir exatamente a média simples de antes (soma obtida / soma
+ * máxima) quando o professor nunca configurou pesos customizados.
+ */
+export function calcularNotaFinal(itens: ItemParaNotaFinal[]): number {
+  const normalizar = (item: ItemParaNotaFinal) =>
+    item.valorMaximo === 0 ? 0 : (item.valorObtido / item.valorMaximo) * 10;
+
+  let componentes = itens
+    .filter((item) => !item.especial)
+    .map((item) => ({ id: item.id, peso: item.peso, nota: normalizar(item) }));
+
+  const especiaisValidos = itens.filter((item) => {
+    if (!item.especial || !item.habilitadoParaAluno) return false;
+    if (item.notaMetaMinima == null) return true;
+    return normalizar(item) >= item.notaMetaMinima;
+  });
+
+  let substituicaoDeMedia: number | null = null;
+  for (const especial of especiaisValidos) {
+    const notaEspecial = normalizar(especial);
+    if (especial.modoEspecial === 'SUBSTITUI_MEDIA') {
+      substituicaoDeMedia = notaEspecial;
+    } else if (especial.modoEspecial === 'SUBSTITUI_ITEM') {
+      componentes = componentes.filter(
+        (c) => c.id !== especial.itemSubstituidoId,
+      );
+      componentes.push({
+        id: especial.id,
+        peso: especial.peso,
+        nota: notaEspecial,
+      });
+    } else {
+      componentes.push({
+        id: especial.id,
+        peso: especial.peso,
+        nota: notaEspecial,
+      });
+    }
+  }
+
+  if (substituicaoDeMedia !== null) return substituicaoDeMedia;
+
+  const somaPesos = componentes.reduce((acc, c) => acc + c.peso, 0);
+  if (somaPesos === 0) return 0;
+  const somaPonderada = componentes.reduce(
+    (acc, c) => acc + c.peso * c.nota,
+    0,
+  );
+  return somaPonderada / somaPesos;
 }
 
 /** % de presença sobre as aulas não justificadas (falta justificada não entra no denominador). */
