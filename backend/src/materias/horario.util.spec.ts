@@ -21,18 +21,23 @@ describe('horario.util', () => {
   });
 
   describe('validarHorario', () => {
-    it('aceita horários dentro da janela 7h–18h (considerando 1h de duração)', () => {
+    it('aceita horários em hora cheia dentro da janela 7h–18h (considerando 1h de duração)', () => {
       expect(validarHorario('07:00')).toBeNull();
       expect(validarHorario('17:00')).toBeNull();
-      expect(validarHorario('12:30')).toBeNull();
+      expect(validarHorario('12:00')).toBeNull();
+    });
+
+    it('rejeita hora quebrada — aulas só começam em hora cheia', () => {
+      expect(validarHorario('12:30')).not.toBeNull();
+      expect(validarHorario('08:15')).not.toBeNull();
     });
 
     it('rejeita horário antes das 7h', () => {
-      expect(validarHorario('06:59')).not.toBeNull();
+      expect(validarHorario('06:00')).not.toBeNull();
     });
 
-    it('rejeita horário que ultrapassaria as 18h (ex.: 17:30 -> terminaria 18:30)', () => {
-      expect(validarHorario('17:30')).not.toBeNull();
+    it('rejeita horário que ultrapassaria as 18h (ex.: 18:00 -> terminaria 19:00)', () => {
+      expect(validarHorario('18:00')).not.toBeNull();
     });
 
     it('não restringe mais por turno (matéria pode estar em contraturno)', () => {

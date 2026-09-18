@@ -31,9 +31,15 @@ export function parseHoraMinuto(hora: string): number {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-/** Valida que o horário (HH:mm) cabe na janela geral 7h–18h (considerando 1h de duração). */
+/** Valida que o horário (HH:mm) é hora cheia e cabe na janela geral 7h–18h (considerando
+ * 1h de duração) — aulas nunca começam em hora quebrada. */
 export function validarHorario(hora: string): string | null {
   const minutos = parseHoraMinuto(hora);
+
+  if (minutos % 60 !== 0) {
+    return 'Horário deve começar em hora cheia (ex: 08:00), sem minutos';
+  }
+
   const fimAula = minutos + DURACAO_AULA_MINUTOS;
 
   if (minutos < JANELA_MINUTOS.inicio || fimAula > JANELA_MINUTOS.fim) {
