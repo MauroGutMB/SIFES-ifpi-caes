@@ -186,10 +186,10 @@ async function main() {
     });
 
     const item1 = await prisma.itemAvaliacao.create({
-      data: { materiaId: materia.id, nome: 'Prova 1', valorMaximo: 10, peso: 10 },
+      data: { materiaId: materia.id, nome: 'Prova 1', valorMaximo: 10, peso: 1 },
     });
     const item2 = await prisma.itemAvaliacao.create({
-      data: { materiaId: materia.id, nome: 'Prova 2', valorMaximo: 10, peso: 10 },
+      data: { materiaId: materia.id, nome: 'Prova 2', valorMaximo: 10, peso: 1 },
     });
     for (const alunoId of alunoIds) {
       await prisma.nota.create({

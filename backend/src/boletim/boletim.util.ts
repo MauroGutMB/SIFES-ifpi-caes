@@ -31,9 +31,8 @@ export interface ItemParaNotaFinal {
  * Um item especial só entra se atingir a `notaMetaMinima` (quando configurada) — abaixo disso é
  * ignorado e o cálculo segue como se o aluno não tivesse acesso a ele.
  *
- * `peso` nasce igual a `valorMaximo` na criação do item (ver PlanoDisciplinaService.criarItem),
- * o que faz essa fórmula reproduzir exatamente a média simples de antes (soma obtida / soma
- * máxima) quando o professor nunca configurou pesos customizados.
+ * `peso` nasce como 1 na criação do item (ver PlanoDisciplinaService.criarItem) — todo item
+ * conta igual na média até o professor customizar pesos pela regra de aprovação.
  */
 export function calcularNotaFinal(itens: ItemParaNotaFinal[]): number {
   const normalizar = (item: ItemParaNotaFinal) =>

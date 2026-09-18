@@ -14,9 +14,9 @@ ADD COLUMN     "modoEspecial" "ModoItemEspecial",
 ADD COLUMN     "notaMetaMinima" DECIMAL(5,2),
 ADD COLUMN     "peso" DECIMAL(6,2);
 
--- Backfill: peso nasce igual a valorMaximo pra reproduzir a média simples de antes
--- (soma obtida / soma máxima) sem exigir configuração do professor.
-UPDATE "itens_avaliacao" SET "peso" = "valorMaximo" WHERE "peso" IS NULL;
+-- Backfill: peso inicial 1 pra todo item já existente — cada item conta igual na média até
+-- o professor customizar pesos pela regra de aprovação.
+UPDATE "itens_avaliacao" SET "peso" = 1 WHERE "peso" IS NULL;
 
 ALTER TABLE "itens_avaliacao" ALTER COLUMN "peso" SET NOT NULL;
 

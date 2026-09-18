@@ -76,9 +76,9 @@ export class PlanoDisciplinaService {
         materiaId,
         nome: dto.nome,
         valorMaximo: dto.valorMaximo,
-        // Nasce igual ao valorMaximo: reproduz a média simples de antes até o professor
-        // customizar pesos pela regra de aprovação.
-        peso: dto.valorMaximo,
+        // Peso inicial 1: item conta igual aos outros na média até o professor customizar
+        // pesos pela regra de aprovação.
+        peso: 1,
         especial: dto.especial ?? false,
       },
     });

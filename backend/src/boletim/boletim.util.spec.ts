@@ -6,12 +6,13 @@ import {
 } from './boletim.util';
 import { StatusFrequencia } from '../../generated/prisma/client';
 
-/** Item normal — peso nasce igual ao valorMaximo (regra real do PlanoDisciplinaService). */
+/** Item normal — peso nasce 1 (regra real do PlanoDisciplinaService: todo item conta igual
+ * até o professor customizar pesos pela regra de aprovação). */
 function itemNormal(
   id: string,
   valorMaximo: number,
   valorObtido: number,
-  peso = valorMaximo,
+  peso = 1,
 ): ItemParaNotaFinal {
   return {
     id,
@@ -32,7 +33,7 @@ function itemEspecial(
   return {
     valorMaximo: 10,
     valorObtido: 0,
-    peso: 10,
+    peso: 1,
     especial: true,
     modoEspecial: 'PONDERADA',
     itemSubstituidoId: null,
@@ -53,13 +54,12 @@ describe('boletim.util', () => {
       expect(nota).toBeCloseTo(3.33, 2);
     });
 
-    it('normaliza pra escala 0-10 mesmo com itens que não somam 10 (peso = valorMaximo reproduz a média simples de antes)', () => {
+    it('normaliza cada item pra escala 0-10 antes de fazer a média (peso 1 = todo item conta igual, mesmo com valorMaximo diferente)', () => {
       const nota = calcularNotaFinal([
-        itemNormal('1', 30, 15),
-        itemNormal('2', 70, 70),
+        itemNormal('1', 30, 15), // normalizado: 15/30*10 = 5.0
+        itemNormal('2', 70, 70), // normalizado: 70/70*10 = 10.0
       ]);
-      // (15+70)/(30+70) * 10 = 8.5
-      expect(nota).toBeCloseTo(8.5, 2);
+      expect(nota).toBeCloseTo(7.5, 2);
     });
 
     it('sem nenhum item retorna 0 (evita divisão por zero)', () => {
@@ -97,7 +97,7 @@ describe('boletim.util', () => {
           id: 'e1',
           modoEspecial: 'SUBSTITUI_ITEM',
           itemSubstituidoId: '2',
-          peso: 10,
+          peso: 1,
           valorObtido: 8,
         }),
       ]);
