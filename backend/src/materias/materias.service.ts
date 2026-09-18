@@ -234,7 +234,10 @@ export class MateriasService {
   }
 
   private comFotoDoProfessor<
-    T extends { professor: { userId: string } & Record<string, unknown> },
+    T extends {
+      notaMinimaAprovacao: { toString(): string };
+      professor: { userId: string } & Record<string, unknown>;
+    },
   >(
     materia: T & {
       professor: T['professor'] & { user: { fotoUrl: string | null } };
@@ -243,6 +246,7 @@ export class MateriasService {
     const { user, ...professorSemUser } = materia.professor;
     return {
       ...materia,
+      notaMinimaAprovacao: materia.notaMinimaAprovacao.toString(),
       professor: { ...professorSemUser, fotoUrl: user.fotoUrl },
     };
   }

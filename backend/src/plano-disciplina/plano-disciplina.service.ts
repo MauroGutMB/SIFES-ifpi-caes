@@ -139,8 +139,8 @@ export class PlanoDisciplinaService {
       }
     }
 
-    await this.prisma.$transaction(
-      dto.itens.map((config) =>
+    await this.prisma.$transaction([
+      ...dto.itens.map((config) =>
         this.prisma.itemAvaliacao.update({
           where: { id: config.itemAvaliacaoId },
           data: {
@@ -151,7 +151,15 @@ export class PlanoDisciplinaService {
           },
         }),
       ),
-    );
+      ...(dto.notaMinimaAprovacao != null
+        ? [
+            this.prisma.materia.update({
+              where: { id: materiaId },
+              data: { notaMinimaAprovacao: dto.notaMinimaAprovacao },
+            }),
+          ]
+        : []),
+    ]);
 
     return this.listarItens(materiaId, user);
   }

@@ -39,6 +39,13 @@ export class MateriaDto {
   @ApiProperty({ nullable: true, type: Date })
   encerradaEm: Date | null;
 
+  @ApiProperty({
+    description:
+      'Decimal serializado como string — média mínima pra aprovação, padrão 7',
+    type: String,
+  })
+  notaMinimaAprovacao: string;
+
   @ApiProperty({ type: TurmaResumoDto })
   turma: TurmaResumoDto;
 

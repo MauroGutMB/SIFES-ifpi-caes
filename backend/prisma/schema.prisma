@@ -179,6 +179,9 @@ model Materia {
   cargaHorariaReferencia   Int
   estado                   EstadoMateria @default(ABERTA)
   encerradaEm              DateTime?
+  /** Média mínima (0-10) que o aluno precisa atingir na disciplina pra ser aprovado —
+   * configurável pelo professor na regra de aprovação, padrão 7. */
+  notaMinimaAprovacao      Decimal       @default(7) @db.Decimal(4, 2)
 
   horarios                 HorarioMateria[]
   vinculos                 VinculoAlunoMateria[]
@@ -266,9 +269,9 @@ enum ModoItemEspecial {
 }
 
 /** Item de avaliação normal (prova, trabalho) ou especial (recuperação, prova final — só conta
- * pros alunos explicitamente habilitados via ItemEspecialAluno). `peso` é usado na média
- * ponderada da disciplina; por padrão nasce igual a `valorMaximo`, o que reproduz exatamente a
- * média simples de antes (soma obtida / soma máxima) sem o professor precisar configurar nada. */
+ * pros alunos explicitamente habilitados via ItemEspecialAluno). `peso` multiplica a nota do
+ * item na média ponderada da disciplina — nasce como 1 (todo item conta igual) até o professor
+ * customizar pesos pela regra de aprovação. */
 model ItemAvaliacao {
   id                String            @id @default(uuid())
   materiaId         String

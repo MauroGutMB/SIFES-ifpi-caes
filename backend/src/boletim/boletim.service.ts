@@ -36,6 +36,7 @@ export class BoletimService {
     });
 
     const materiaAberta = materia.estado === 'ABERTA';
+    const notaMinimaAprovacao = materia.notaMinimaAprovacao.toNumber();
 
     return materia.vinculos.map(({ aluno }) => {
       const itensDoAluno = materia.itensAvaliacao.map((item) => {
@@ -67,6 +68,7 @@ export class BoletimService {
         materiaAberta,
         notaFinal,
         frequenciaPercentual,
+        notaMinimaAprovacao,
       );
       const faltas = frequenciasDoAluno.filter(
         (f) => f.status === StatusFrequencia.FALTA,

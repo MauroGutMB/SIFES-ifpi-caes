@@ -96,14 +96,17 @@ export function calcularFrequenciaPercentual(
   return (presentes / consideradas.length) * 100;
 }
 
-/** Cursando enquanto a Matéria está aberta; Aprovado/Reprovado só é definido no encerramento. */
+/** Cursando enquanto a Matéria está aberta; Aprovado/Reprovado só é definido no encerramento.
+ * `notaMinimaAprovacao` é configurável por disciplina (padrão NOTA_CORTE = 7, ver
+ * Materia.notaMinimaAprovacao) — o professor define na regra de aprovação. */
 export function calcularSituacao(
   materiaAberta: boolean,
   notaFinal: number,
   frequenciaPercentual: number,
+  notaMinimaAprovacao: number = NOTA_CORTE,
 ): Situacao {
   if (materiaAberta) return 'CURSANDO';
-  return notaFinal >= NOTA_CORTE &&
+  return notaFinal >= notaMinimaAprovacao &&
     frequenciaPercentual >= FREQUENCIA_MINIMA_PERCENTUAL
     ? 'APROVADO'
     : 'REPROVADO';

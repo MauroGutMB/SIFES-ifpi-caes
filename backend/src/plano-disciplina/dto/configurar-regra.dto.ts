@@ -60,4 +60,15 @@ export class ConfigurarRegraDto {
   @ValidateNested({ each: true })
   @Type(() => ConfiguracaoItemDto)
   itens: ConfiguracaoItemDto[];
+
+  @ApiProperty({
+    required: false,
+    description:
+      'Média mínima (0-10) pra aprovação na disciplina — fora da lista de itens, vale pra disciplina inteira. Padrão 7 se nunca configurada.',
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  notaMinimaAprovacao?: number;
 }
