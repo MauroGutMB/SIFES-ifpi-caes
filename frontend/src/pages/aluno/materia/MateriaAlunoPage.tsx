@@ -43,7 +43,14 @@ export function MateriaAlunoPage() {
         </Box>
       )}
 
-      <Tabs value={tab} onChange={(_e, v) => setTab(v)} sx={{ mb: 2 }}>
+      <Tabs
+        value={tab}
+        onChange={(_e, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ mb: 2 }}
+      >
         <Tab label="Situação" />
         <Tab label="Aulas" />
         <Tab label="Atividades" />
