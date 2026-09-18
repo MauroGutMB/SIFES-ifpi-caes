@@ -45,13 +45,13 @@ export class AulasService {
       where: { id: materiaId },
     });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
     await garantirAcessoLeituraMateria(
       this.prisma,
       user,
       materia,
-      'Matéria não encontrada',
+      'Disciplina não encontrada',
     );
     return materia;
   }
@@ -147,7 +147,7 @@ export class AulasService {
     });
     if (vinculados !== alunoIds.length) {
       throw new BadRequestException(
-        'Todos os alunos devem estar vinculados a esta Matéria',
+        'Todos os alunos devem estar vinculados a esta Disciplina',
       );
     }
 

@@ -28,13 +28,13 @@ export class PlanoDisciplinaService {
       where: { id: materiaId },
     });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
     await garantirAcessoLeituraMateria(
       this.prisma,
       user,
       materia,
-      'Matéria não encontrada',
+      'Disciplina não encontrada',
     );
     return materia;
   }
@@ -42,7 +42,7 @@ export class PlanoDisciplinaService {
   private garantirAberta(materia: { estado: EstadoMateria }) {
     if (materia.estado !== EstadoMateria.ABERTA) {
       throw new BadRequestException(
-        'Só é possível editar o plano de disciplina enquanto a Matéria estiver aberta',
+        'Só é possível editar o plano de disciplina enquanto a Disciplina estiver aberta',
       );
     }
   }
@@ -115,7 +115,7 @@ export class PlanoDisciplinaService {
     });
     if (vinculados !== alunoIds.length) {
       throw new BadRequestException(
-        'Todos os alunos devem estar vinculados a esta Matéria',
+        'Todos os alunos devem estar vinculados a esta Disciplina',
       );
     }
     const excedeu = dto.notas.some(
@@ -174,7 +174,7 @@ export class PlanoDisciplinaService {
       where: { alunoId_materiaId: { alunoId, materiaId } },
     });
     if (!vinculado) {
-      throw new NotFoundException('Aluno não vinculado a esta matéria');
+      throw new NotFoundException('Aluno não vinculado a esta disciplina');
     }
 
     const itens = await this.prisma.itemAvaliacao.findMany({

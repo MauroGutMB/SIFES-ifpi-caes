@@ -349,18 +349,22 @@ export class MateriasService {
       include: { turma: { include: { semestre: true } } },
     });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    garantirPosseProfessor(
+      user,
+      materia.professorId,
+      'Disciplina não encontrada',
+    );
     if (materia.estado === EstadoMateria.ENCERRADA) {
-      throw new BadRequestException('Matéria já está encerrada');
+      throw new BadRequestException('Disciplina já está encerrada');
     }
     // Professor só encerra após o fim do Semestre; admin pode a qualquer momento (override).
     if (user.role === Role.PROFESSOR) {
       const agora = agoraComoBrasiliaFake();
       if (agora < materia.turma.semestre.dataFim) {
         throw new BadRequestException(
-          'Só é possível encerrar a Matéria após o fim do Semestre',
+          'Só é possível encerrar a Disciplina após o fim do Semestre',
         );
       }
     }
@@ -385,7 +389,7 @@ export class MateriasService {
   async reabrir(id: string) {
     const materia = await this.prisma.materia.findUnique({ where: { id } });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
     return this.prisma.materia.update({
       where: { id },

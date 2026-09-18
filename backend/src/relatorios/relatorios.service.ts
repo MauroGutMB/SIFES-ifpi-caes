@@ -36,9 +36,13 @@ export class RelatoriosService {
       include: { turma: true, professor: true },
     });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
-    garantirPosseProfessor(user, materia.professorId, 'Matéria não encontrada');
+    garantirPosseProfessor(
+      user,
+      materia.professorId,
+      'Disciplina não encontrada',
+    );
     return materia;
   }
 
@@ -163,7 +167,7 @@ export class RelatoriosService {
         ? `Turma: ${aluno.turma.cursoTecnico} — ${aluno.turma.anoSerie}`
         : undefined,
       colunas: [
-        'Materia',
+        'Disciplina',
         'Curso',
         'Turma',
         'Situacao',
@@ -223,7 +227,7 @@ export class RelatoriosService {
       colunas: [
         'Aluno',
         'Matricula',
-        'Materia',
+        'Disciplina',
         'Situacao',
         'Nota Final',
         'Frequencia %',
@@ -270,7 +274,7 @@ export class RelatoriosService {
       throw new NotFoundException('Turma não encontrada');
     }
     if (turma.materias.length === 0) {
-      throw new BadRequestException('Turma não possui Matérias cadastradas');
+      throw new BadRequestException('Turma não possui Disciplinas cadastradas');
     }
 
     const linhas: (string | number)[][] = [];
@@ -290,7 +294,7 @@ export class RelatoriosService {
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - Turma ${turma.cursoTecnico} ${turma.anoSerie}`,
       subtitulo: `Turma: ${turma.cursoTecnico} — ${turma.anoSerie}`,
-      colunas: ['Aluno', 'Matricula', 'Materia', 'Faltas', 'Frequencia %'],
+      colunas: ['Aluno', 'Matricula', 'Disciplina', 'Faltas', 'Frequencia %'],
       linhas,
     };
     return {

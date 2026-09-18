@@ -24,13 +24,13 @@ export class AtividadesService {
       where: { id: materiaId },
     });
     if (!materia) {
-      throw new NotFoundException('Matéria não encontrada');
+      throw new NotFoundException('Disciplina não encontrada');
     }
     await garantirAcessoLeituraMateria(
       this.prisma,
       user,
       materia,
-      'Matéria não encontrada',
+      'Disciplina não encontrada',
     );
     return materia;
   }
@@ -38,7 +38,7 @@ export class AtividadesService {
   private garantirAberta(materia: { estado: EstadoMateria }) {
     if (materia.estado !== EstadoMateria.ABERTA) {
       throw new BadRequestException(
-        'Só é possível gerenciar Atividades enquanto a Matéria estiver aberta',
+        'Só é possível gerenciar Atividades enquanto a Disciplina estiver aberta',
       );
     }
   }
@@ -168,7 +168,7 @@ export class AtividadesService {
     });
     if (!vinculado) {
       throw new BadRequestException(
-        'Você não está vinculado à Matéria desta Atividade',
+        'Você não está vinculado à Disciplina desta Atividade',
       );
     }
 

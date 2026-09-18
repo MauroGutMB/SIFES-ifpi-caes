@@ -13,6 +13,7 @@ import { UpdateAlunoDto } from './dto/update-aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
 import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
 import { AtividadePendenteDto } from './dto/atividade-pendente.dto';
+import { MinhaTurmaDetalheDto } from './dto/minha-turma-detalhe.dto';
 
 @Injectable()
 export class AlunosService {
@@ -135,7 +136,7 @@ export class AlunosService {
         data: { alunoId, materiaId },
       });
     } catch (error) {
-      rethrowAsConflict(error, 'Aluno já está vinculado a esta matéria');
+      rethrowAsConflict(error, 'Aluno já está vinculado a esta disciplina');
     }
   }
 
@@ -144,7 +145,7 @@ export class AlunosService {
       where: { alunoId, materiaId },
     });
     if (resultado.count === 0) {
-      throw new NotFoundException('Aluno não está vinculado a esta matéria');
+      throw new NotFoundException('Aluno não está vinculado a esta disciplina');
     }
     return resultado;
   }
@@ -301,5 +302,59 @@ export class AlunosService {
     });
 
     return pendentes.slice(0, limite);
+  }
+
+  /** Disciplinas, professores e colegas da turma atual do aluno — sempre a própria turma
+   * (nunca recebe turmaId por parâmetro), já que aluno não tem acesso a outras turmas. */
+  async minhaTurmaDetalhada(
+    alunoId: string,
+  ): Promise<MinhaTurmaDetalheDto | null> {
+    const aluno = await this.prisma.aluno.findUniqueOrThrow({
+      where: { id: alunoId },
+    });
+    if (!aluno.turmaId) return null;
+
+    const turma = await this.prisma.turma.findUniqueOrThrow({
+      where: { id: aluno.turmaId },
+      include: {
+        materias: {
+          include: { professor: { include: { user: true } } },
+          orderBy: { nome: 'asc' },
+        },
+        alunos: {
+          include: { user: true },
+          orderBy: { nome: 'asc' },
+        },
+      },
+    });
+
+    const professoresPorId = new Map(
+      turma.materias.map((materia) => [
+        materia.professorId,
+        {
+          id: materia.professor.id,
+          nome: materia.professor.nome,
+          fotoUrl: materia.professor.user.fotoUrl,
+        },
+      ]),
+    );
+
+    return {
+      cursoTecnico: turma.cursoTecnico,
+      anoSerie: turma.anoSerie,
+      disciplinas: turma.materias.map((materia) => ({
+        id: materia.id,
+        nome: materia.nome,
+        professorId: materia.professorId,
+        professorNome: materia.professor.nome,
+      })),
+      professores: [...professoresPorId.values()],
+      alunos: turma.alunos.map((a) => ({
+        id: a.id,
+        nome: a.nome,
+        matricula: a.matricula,
+        fotoUrl: a.user.fotoUrl,
+      })),
+    };
   }
 }

@@ -21,6 +21,7 @@ import { AlunoCriadoDto, AlunoDto, AlunoMeDto } from './dto/aluno.dto';
 import { MeuSemestreDto } from './dto/meu-semestre.dto';
 import { AtividadesResumoMateriaDto } from './dto/atividades-resumo.dto';
 import { AtividadePendenteDto } from './dto/atividade-pendente.dto';
+import { MinhaTurmaDetalheDto } from './dto/minha-turma-detalhe.dto';
 
 @ApiTags('alunos')
 @Roles(Role.ADMIN)
@@ -54,6 +55,15 @@ export class AlunosController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<MeuSemestreDto[]> {
     return this.service.meusSemestres(user.alunoId!);
+  }
+
+  @Roles(Role.ALUNO)
+  @Get('me/turma')
+  @ApiOkResponse({ type: MinhaTurmaDetalheDto })
+  minhaTurma(
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<MinhaTurmaDetalheDto | null> {
+    return this.service.minhaTurmaDetalhada(user.alunoId!);
   }
 
   @Roles(Role.ALUNO)
