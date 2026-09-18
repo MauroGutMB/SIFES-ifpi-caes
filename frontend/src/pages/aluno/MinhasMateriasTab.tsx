@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
+import { Avatar, Box, Card, CardActionArea, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import ScheduleIcon from '@mui/icons-material/ScheduleOutlined';
@@ -60,7 +60,11 @@ export function MinhasMateriasTab() {
 
                     <Stack spacing={0.75}>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                        <PersonOutlineIcon fontSize="inherit" sx={{ color: 'text.secondary' }} />
+                        {materia.professor.fotoUrl ? (
+                          <Avatar src={materia.professor.fotoUrl} sx={{ width: 18, height: 18 }} />
+                        ) : (
+                          <PersonOutlineIcon fontSize="inherit" sx={{ color: 'text.secondary' }} />
+                        )}
                         <Typography variant="body2" color="text.secondary">
                           {materia.professor.nome}
                         </Typography>
