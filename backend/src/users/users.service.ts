@@ -1,13 +1,38 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { removerArquivo, salvarArquivo } from '../common/arquivos.util';
 import { gerarSenhaInicial } from '../common/password.util';
+import { parseCsv } from '../common/csv.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { Role } from '../../generated/prisma/client';
+import { AlunosService } from '../alunos/alunos.service';
+import { ProfessoresService } from '../professores/professores.service';
+import { CreateAlunoDto } from '../alunos/dto/create-aluno.dto';
+import { CreateProfessorDto } from '../professores/dto/create-professor.dto';
+import type {
+  ErroImportacaoDto,
+  ImportarUsuariosResultadoDto,
+  UsuarioImportadoDto,
+} from './dto/importar-usuarios-resultado.dto';
+
+const COLUNAS_MODELO = ['nome', 'login', 'cargo'];
+export const MODELO_IMPORTACAO_CSV =
+  'nome,login,cargo\r\nMaria da Silva,12345678,ALUNO\r\nJoão Souza,joao.souza@ifpi.edu.br,PROFESSOR\r\n';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly alunosService: AlunosService,
+    private readonly professoresService: ProfessoresService,
+  ) {}
 
   findAll(role?: Role) {
     return this.prisma.user.findMany({
@@ -100,5 +125,108 @@ export class UsersService {
       data: { fotoUrl: null },
       select: { id: true, fotoUrl: true },
     });
+  }
+
+  gerarModeloImportacao(): Buffer {
+    return Buffer.from(MODELO_IMPORTACAO_CSV, 'utf-8');
+  }
+
+  /** Cria alunos e professores em lote a partir de um CSV (nome,login,cargo) — cada linha é
+   * criada com o mesmo fluxo de sempre (senha inicial gerada, precisaTrocarSenha=true por
+   * padrão), então uma linha ruim não afeta as outras: erro por linha, não aborta o lote. */
+  async importarUsuarios(
+    arquivo: Buffer,
+  ): Promise<ImportarUsuariosResultadoDto> {
+    const linhas = parseCsv(arquivo.toString('utf-8'));
+    if (linhas.length === 0) {
+      throw new BadRequestException('Arquivo CSV vazio');
+    }
+
+    const [cabecalho, ...dados] = linhas;
+    const cabecalhoValido = COLUNAS_MODELO.every(
+      (coluna, indice) => cabecalho[indice]?.toLowerCase() === coluna,
+    );
+    if (!cabecalhoValido) {
+      throw new BadRequestException(
+        `Cabeçalho do CSV deve ser exatamente "nome,login,cargo" (recebido: "${cabecalho.join(',')}")`,
+      );
+    }
+
+    const importados: UsuarioImportadoDto[] = [];
+    const erros: ErroImportacaoDto[] = [];
+
+    for (const [indice, colunas] of dados.entries()) {
+      const linha = indice + 2; // +1 pra base 1, +1 pelo cabeçalho
+      const [nome, login, cargoBruto] = colunas;
+      const cargo = cargoBruto?.trim().toUpperCase();
+
+      if (!nome?.trim() || !login?.trim() || !cargo) {
+        erros.push({ linha, motivo: 'nome, login e cargo são obrigatórios' });
+        continue;
+      }
+      if (cargo !== 'ALUNO' && cargo !== 'PROFESSOR') {
+        erros.push({
+          linha,
+          motivo: `cargo deve ser "ALUNO" ou "PROFESSOR" (recebido: "${cargoBruto}")`,
+        });
+        continue;
+      }
+
+      try {
+        if (cargo === 'ALUNO') {
+          const dto = plainToInstance(CreateAlunoDto, {
+            nome,
+            matricula: login,
+          });
+          const problemas = await validate(dto);
+          if (problemas.length > 0) {
+            throw new BadRequestException(
+              problemas
+                .flatMap((p) => Object.values(p.constraints ?? {}))
+                .join('; '),
+            );
+          }
+          const criado = await this.alunosService.create(dto);
+          importados.push({
+            linha,
+            nome,
+            login,
+            cargo,
+            senhaInicial: criado.senhaInicial,
+          });
+        } else {
+          const dto = plainToInstance(CreateProfessorDto, {
+            nome,
+            email: login,
+          });
+          const problemas = await validate(dto);
+          if (problemas.length > 0) {
+            throw new BadRequestException(
+              problemas
+                .flatMap((p) => Object.values(p.constraints ?? {}))
+                .join('; '),
+            );
+          }
+          const criado = await this.professoresService.create(dto);
+          importados.push({
+            linha,
+            nome,
+            login,
+            cargo,
+            senhaInicial: criado.senhaInicial,
+          });
+        }
+      } catch (error) {
+        const motivo =
+          error instanceof ConflictException ||
+          error instanceof BadRequestException
+            ? ((error.getResponse() as { message?: string }).message ??
+              error.message)
+            : 'Não foi possível criar esse usuário';
+        erros.push({ linha, motivo });
+      }
+    }
+
+    return { importados, erros };
   }
 }

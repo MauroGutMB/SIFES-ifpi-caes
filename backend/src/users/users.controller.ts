@@ -7,11 +7,14 @@ import {
   Post,
   Put,
   Query,
+  Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -26,6 +29,9 @@ import { UsersService } from './users.service';
 import { UserMeDto } from './dto/user-me.dto';
 import { UserDto } from './dto/user.dto';
 import { SenhaRedefinidaDto } from './dto/senha-redefinida.dto';
+import { ImportarUsuariosResultadoDto } from './dto/importar-usuarios-resultado.dto';
+
+const MAX_IMPORTACAO_BYTES = 2 * 1024 * 1024; // 2MB — bem além do que uma lista de nomes precisa
 
 @ApiTags('users')
 @Controller('users')
@@ -82,5 +88,39 @@ export class UsersController {
   @ApiOkResponse({ type: SenhaRedefinidaDto })
   redefinirSenha(@Param('id') id: string): Promise<SenhaRedefinidaDto> {
     return this.usersService.resetarSenha(id);
+  }
+
+  @Roles(Role.ADMIN)
+  @Get('modelo-importacao')
+  modeloImportacao(@Res({ passthrough: true }) res: Response): StreamableFile {
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition':
+        'attachment; filename="modelo-importacao-usuarios.csv"',
+    });
+    return new StreamableFile(this.usersService.gerarModeloImportacao());
+  }
+
+  @Roles(Role.ADMIN)
+  @Post('importar')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['arquivo'],
+      properties: { arquivo: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiOkResponse({ type: ImportarUsuariosResultadoDto })
+  @UseInterceptors(FileInterceptor('arquivo'))
+  importar(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({ maxSize: MAX_IMPORTACAO_BYTES })
+        .build(),
+    )
+    arquivo: Express.Multer.File,
+  ): Promise<ImportarUsuariosResultadoDto> {
+    return this.usersService.importarUsuarios(arquivo.buffer);
   }
 }
