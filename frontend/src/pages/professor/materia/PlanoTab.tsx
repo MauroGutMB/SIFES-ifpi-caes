@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
+  Checkbox,
+  FormControlLabel,
   IconButton,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -11,12 +14,15 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import GradeIcon from '@mui/icons-material/GradeOutlined';
+import StarIcon from '@mui/icons-material/Star';
+import RuleIcon from '@mui/icons-material/RuleOutlined';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
@@ -27,12 +33,14 @@ import {
   getMateriaPlanoControllerDetalhamentoAlunoQueryKey,
   getMateriaPlanoControllerListarItensQueryKey,
   useMateriaPlanoControllerBoletim,
+  useMateriaPlanoControllerConfigurarRegra,
   useMateriaPlanoControllerCriarItem,
   useMateriaPlanoControllerDetalhamentoAluno,
   useMateriaPlanoControllerListarItens,
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
 import {
   useItensAvaliacaoControllerAtualizar,
+  useItensAvaliacaoControllerDefinirItemEspecialAluno,
   useItensAvaliacaoControllerRemover,
   useItensAvaliacaoControllerSetNotas,
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
@@ -40,6 +48,7 @@ import { MateriaPlanoControllerCriarItemBody } from '../../../api/generated/zod/
 import type { BoletimLinhaDto, ItemAvaliacaoDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
+import { tokens } from '../../../theme/tokens';
 
 type FormValues = z.infer<typeof MateriaPlanoControllerCriarItemBody>;
 
@@ -73,12 +82,17 @@ function EditarNotasAlunoDialog({
     { query: { enabled: !!aluno } },
   );
   const setNotas = useItensAvaliacaoControllerSetNotas();
+  const definirItemEspecial = useItensAvaliacaoControllerDefinirItemEspecialAluno();
   const [valores, setValores] = useState<Record<string, string>>({});
+  const [habilitados, setHabilitados] = useState<Record<string, boolean>>({});
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (itens) {
       setValores(Object.fromEntries(itens.map((item) => [item.id, item.valorObtido])));
+      setHabilitados(
+        Object.fromEntries(itens.map((item) => [item.id, item.habilitadoParaAluno])),
+      );
     }
   }, [itens]);
 
@@ -86,14 +100,23 @@ function EditarNotasAlunoDialog({
     if (!aluno || !itens) return;
     setErro(null);
     try {
-      await Promise.all(
-        itens.map((item) =>
+      await Promise.all([
+        ...itens.map((item) =>
           setNotas.mutateAsync({
             id: item.id,
             data: { notas: [{ alunoId: aluno.id, valorObtido: Number(valores[item.id]) || 0 }] },
           }),
         ),
-      );
+        ...itens
+          .filter((item) => item.especial)
+          .map((item) =>
+            definirItemEspecial.mutateAsync({
+              id: item.id,
+              alunoId: aluno.id,
+              data: { habilitado: !!habilitados[item.id] },
+            }),
+          ),
+      ]);
       onSalvo();
     } catch (error) {
       setErro(
@@ -112,7 +135,7 @@ function EditarNotasAlunoDialog({
       onClose={onClose}
       onSubmit={salvar}
       error={erro}
-      submitting={setNotas.isPending}
+      submitting={setNotas.isPending || definirItemEspecial.isPending}
       submitLabel="Salvar notas"
     >
       {isLoading || !itens ? (
@@ -121,17 +144,218 @@ function EditarNotasAlunoDialog({
         <Typography color="text.secondary">Nenhum item de avaliação cadastrado ainda.</Typography>
       ) : (
         itens.map((item) => (
-          <TextField
-            key={item.id}
-            label={`${item.nome} (máx. ${item.valorMaximo})`}
-            type="number"
-            size="small"
-            fullWidth
-            value={valores[item.id] ?? ''}
-            onChange={(e) => setValores((atual) => ({ ...atual, [item.id]: e.target.value }))}
-          />
+          <Stack key={item.id} spacing={0.5}>
+            <TextField
+              label={`${item.nome} (máx. ${item.valorMaximo})`}
+              type="number"
+              size="small"
+              fullWidth
+              disabled={item.especial && !habilitados[item.id]}
+              value={valores[item.id] ?? ''}
+              onChange={(e) => setValores((atual) => ({ ...atual, [item.id]: e.target.value }))}
+            />
+            {item.especial && (
+              <FormControlLabel
+                sx={{ ml: 0 }}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={!!habilitados[item.id]}
+                    onChange={(e) =>
+                      setHabilitados((atual) => ({ ...atual, [item.id]: e.target.checked }))
+                    }
+                  />
+                }
+                label={`Este item vale para ${aluno?.nome ?? 'o aluno'}`}
+              />
+            )}
+          </Stack>
         ))
       )}
+    </FormDialog>
+  );
+}
+
+interface ConfigItem {
+  peso: string;
+  modoEspecial: '' | 'PONDERADA' | 'SUBSTITUI_ITEM' | 'SUBSTITUI_MEDIA';
+  itemSubstituidoId: string;
+  notaMetaMinima: string;
+}
+
+interface RegraAprovacaoDialogProps {
+  materiaId: string;
+  itens: ItemAvaliacaoDto[];
+  open: boolean;
+  onClose: () => void;
+  onSalvo: () => void;
+}
+
+function RegraAprovacaoDialog({
+  materiaId,
+  itens,
+  open,
+  onClose,
+  onSalvo,
+}: RegraAprovacaoDialogProps) {
+  const configurar = useMateriaPlanoControllerConfigurarRegra();
+  const [config, setConfig] = useState<Record<string, ConfigItem>>({});
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setConfig(
+        Object.fromEntries(
+          itens.map((item) => [
+            item.id,
+            {
+              peso: item.peso,
+              modoEspecial: item.modoEspecial ?? '',
+              itemSubstituidoId: item.itemSubstituidoId ?? '',
+              notaMetaMinima: item.notaMetaMinima ?? '',
+            },
+          ]),
+        ),
+      );
+      setErro(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const itensNormais = itens.filter((item) => !item.especial);
+
+  const salvar = async () => {
+    setErro(null);
+    try {
+      await configurar.mutateAsync({
+        materiaId,
+        data: {
+          itens: itens.map((item) => {
+            const c = config[item.id];
+            return {
+              itemAvaliacaoId: item.id,
+              peso: Number(c.peso) || 0,
+              modoEspecial: item.especial && c.modoEspecial ? c.modoEspecial : undefined,
+              itemSubstituidoId:
+                item.especial && c.modoEspecial === 'SUBSTITUI_ITEM' && c.itemSubstituidoId
+                  ? c.itemSubstituidoId
+                  : undefined,
+              notaMetaMinima:
+                item.especial && c.notaMetaMinima !== '' ? Number(c.notaMetaMinima) : undefined,
+            };
+          }),
+        },
+      });
+      onSalvo();
+    } catch (error) {
+      setErro(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível salvar a regra')
+          : 'Não foi possível salvar a regra',
+      );
+    }
+  };
+
+  return (
+    <FormDialog
+      open={open}
+      title="Regra de aprovação"
+      subtitle="Defina o peso de cada item na média e, para itens especiais, como eles entram na nota final."
+      onClose={onClose}
+      onSubmit={salvar}
+      error={erro}
+      submitting={configurar.isPending}
+      submitLabel="Salvar regra"
+      width={560}
+    >
+      {itens.length === 0 && (
+        <Typography color="text.secondary">Nenhum item de avaliação cadastrado ainda.</Typography>
+      )}
+      {itens.map((item) => {
+        const c = config[item.id];
+        if (!c) return null;
+        return (
+          <Stack
+            key={item.id}
+            spacing={1}
+            sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}
+          >
+            <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+              {item.especial && <StarIcon fontSize="small" sx={{ color: tokens.yellow }} />}
+              <Typography variant="subtitle2">{item.nome}</Typography>
+            </Stack>
+            <TextField
+              label="Peso"
+              type="number"
+              size="small"
+              value={c.peso}
+              onChange={(e) =>
+                setConfig((atual) => ({
+                  ...atual,
+                  [item.id]: { ...atual[item.id], peso: e.target.value },
+                }))
+              }
+            />
+            {item.especial && (
+              <>
+                <TextField
+                  select
+                  label="Como conta na nota final"
+                  size="small"
+                  value={c.modoEspecial}
+                  onChange={(e) =>
+                    setConfig((atual) => ({
+                      ...atual,
+                      [item.id]: {
+                        ...atual[item.id],
+                        modoEspecial: e.target.value as ConfigItem['modoEspecial'],
+                      },
+                    }))
+                  }
+                >
+                  <MenuItem value="PONDERADA">Entra na média ponderada (N nota)</MenuItem>
+                  <MenuItem value="SUBSTITUI_ITEM">Substitui a nota de um item</MenuItem>
+                  <MenuItem value="SUBSTITUI_MEDIA">Substitui a média inteira</MenuItem>
+                </TextField>
+                {c.modoEspecial === 'SUBSTITUI_ITEM' && (
+                  <TextField
+                    select
+                    label="Item substituído"
+                    size="small"
+                    value={c.itemSubstituidoId}
+                    onChange={(e) =>
+                      setConfig((atual) => ({
+                        ...atual,
+                        [item.id]: { ...atual[item.id], itemSubstituidoId: e.target.value },
+                      }))
+                    }
+                  >
+                    {itensNormais.map((normal) => (
+                      <MenuItem key={normal.id} value={normal.id}>
+                        {normal.nome}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+                <TextField
+                  label="Nota meta mínima (0-10, opcional)"
+                  type="number"
+                  size="small"
+                  value={c.notaMetaMinima}
+                  onChange={(e) =>
+                    setConfig((atual) => ({
+                      ...atual,
+                      [item.id]: { ...atual[item.id], notaMetaMinima: e.target.value },
+                    }))
+                  }
+                  helperText="Abaixo dessa nota, o item especial é ignorado no cálculo do aluno"
+                />
+              </>
+            )}
+          </Stack>
+        );
+      })}
     </FormDialog>
   );
 }
@@ -155,29 +379,32 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
     null,
   );
   const [erro, setErro] = useState<string | null>(null);
+  const [regraDialogAberto, setRegraDialogAberto] = useState(false);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(MateriaPlanoControllerCriarItemBody) });
+  const criandoEspecial = watch('especial');
 
   const invalidarItens = () =>
     queryClient.invalidateQueries({
       queryKey: getMateriaPlanoControllerListarItensQueryKey(materiaId),
     });
 
-  const abrirNovo = () => {
+  const abrirNovo = (especial: boolean) => {
     setEditando(null);
-    reset({ nome: '', valorMaximo: 10 });
+    reset({ nome: '', valorMaximo: 10, especial });
     setErro(null);
     setDialogAberto(true);
   };
 
   const abrirEdicao = (item: ItemAvaliacaoDto) => {
     setEditando(item);
-    reset({ nome: item.nome, valorMaximo: Number(item.valorMaximo) });
+    reset({ nome: item.nome, valorMaximo: Number(item.valorMaximo), especial: item.especial });
     setErro(null);
     setDialogAberto(true);
   };
@@ -247,9 +474,32 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Itens de avaliação</Typography>
         {materiaAberta && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovo}>
-            Novo item
-          </Button>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<RuleIcon />}
+              onClick={() => setRegraDialogAberto(true)}
+            >
+              Regra de aprovação
+            </Button>
+            <Tooltip title="Item especial (recuperação, prova final) — só vale pros alunos habilitados individualmente">
+              <Button
+                variant="contained"
+                startIcon={<StarIcon />}
+                onClick={() => abrirNovo(true)}
+                sx={{
+                  bgcolor: tokens.yellow,
+                  color: tokens.yellowText,
+                  '&:hover': { bgcolor: tokens.yellow, opacity: 0.85 },
+                }}
+              >
+                Novo item especial
+              </Button>
+            </Tooltip>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => abrirNovo(false)}>
+              Novo item
+            </Button>
+          </Stack>
         )}
       </Box>
 
@@ -266,7 +516,16 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
             {!isLoading &&
               (itens ?? []).map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{item.nome}</TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                      {item.especial && (
+                        <Tooltip title="Item especial">
+                          <StarIcon fontSize="small" sx={{ color: tokens.yellow }} />
+                        </Tooltip>
+                      )}
+                      <span>{item.nome}</span>
+                    </Stack>
+                  </TableCell>
                   <TableCell>{item.valorMaximo}</TableCell>
                   <TableCell>
                     <Stack direction="row">
@@ -337,7 +596,13 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
 
       <FormDialog
         open={dialogAberto}
-        title={editando ? 'Editar item' : 'Novo item de avaliação'}
+        title={
+          editando
+            ? 'Editar item'
+            : criandoEspecial
+              ? 'Novo item especial'
+              : 'Novo item de avaliação'
+        }
         submitLabel={editando ? 'Salvar item' : 'Criar item'}
         onClose={() => setDialogAberto(false)}
         onSubmit={salvar}
@@ -417,6 +682,20 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
             });
           }
           setAlunoParaEditarNotas(null);
+        }}
+      />
+
+      <RegraAprovacaoDialog
+        materiaId={materiaId}
+        itens={itens ?? []}
+        open={regraDialogAberto}
+        onClose={() => setRegraDialogAberto(false)}
+        onSalvo={async () => {
+          await invalidarItens();
+          await queryClient.invalidateQueries({
+            queryKey: getMateriaPlanoControllerBoletimQueryKey(materiaId),
+          });
+          setRegraDialogAberto(false);
         }}
       />
     </>
