@@ -38,6 +38,7 @@ import {
   useMateriaPlanoControllerDetalhamentoAluno,
   useMateriaPlanoControllerListarItens,
 } from '../../../api/generated/plano-disciplina/plano-disciplina';
+import { getMateriasControllerFindAllQueryKey } from '../../../api/generated/materias/materias';
 import {
   useItensAvaliacaoControllerAtualizar,
   useItensAvaliacaoControllerDefinirItemEspecialAluno,
@@ -61,6 +62,7 @@ const LABEL_SITUACAO: Record<string, string> = {
 interface PlanoTabProps {
   materiaId: string;
   materiaAberta: boolean;
+  notaMinimaAprovacao: string;
 }
 
 interface EditarNotasAlunoDialogProps {
@@ -186,6 +188,7 @@ interface ConfigItem {
 interface RegraAprovacaoDialogProps {
   materiaId: string;
   itens: ItemAvaliacaoDto[];
+  notaMinimaAprovacao: string;
   open: boolean;
   onClose: () => void;
   onSalvo: () => void;
@@ -194,12 +197,14 @@ interface RegraAprovacaoDialogProps {
 function RegraAprovacaoDialog({
   materiaId,
   itens,
+  notaMinimaAprovacao,
   open,
   onClose,
   onSalvo,
 }: RegraAprovacaoDialogProps) {
   const configurar = useMateriaPlanoControllerConfigurarRegra();
   const [config, setConfig] = useState<Record<string, ConfigItem>>({});
+  const [notaMinima, setNotaMinima] = useState(notaMinimaAprovacao);
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -217,6 +222,7 @@ function RegraAprovacaoDialog({
           ]),
         ),
       );
+      setNotaMinima(notaMinimaAprovacao);
       setErro(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,6 +236,7 @@ function RegraAprovacaoDialog({
       await configurar.mutateAsync({
         materiaId,
         data: {
+          notaMinimaAprovacao: Number(notaMinima) || 7,
           itens: itens.map((item) => {
             const c = config[item.id];
             return {
@@ -269,6 +276,16 @@ function RegraAprovacaoDialog({
       submitLabel="Salvar regra"
       width={560}
     >
+      <TextField
+        label="Nota mínima para aprovação"
+        type="number"
+        size="small"
+        value={notaMinima}
+        onChange={(e) => setNotaMinima(e.target.value)}
+        helperText="Média que o aluno precisa atingir na disciplina pra ser aprovado. Padrão: 7."
+        sx={{ mb: 1 }}
+      />
+
       {itens.length === 0 && (
         <Typography color="text.secondary">Nenhum item de avaliação cadastrado ainda.</Typography>
       )}
@@ -360,7 +377,11 @@ function RegraAprovacaoDialog({
   );
 }
 
-export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
+export function PlanoTab({
+  materiaId,
+  materiaAberta,
+  notaMinimaAprovacao,
+}: PlanoTabProps) {
   const queryClient = useQueryClient();
   const { data: itens, isLoading } = useMateriaPlanoControllerListarItens(materiaId);
   const { data: boletim, isLoading: carregandoBoletim } =
@@ -688,12 +709,16 @@ export function PlanoTab({ materiaId, materiaAberta }: PlanoTabProps) {
       <RegraAprovacaoDialog
         materiaId={materiaId}
         itens={itens ?? []}
+        notaMinimaAprovacao={notaMinimaAprovacao}
         open={regraDialogAberto}
         onClose={() => setRegraDialogAberto(false)}
         onSalvo={async () => {
           await invalidarItens();
           await queryClient.invalidateQueries({
             queryKey: getMateriaPlanoControllerBoletimQueryKey(materiaId),
+          });
+          await queryClient.invalidateQueries({
+            queryKey: getMateriasControllerFindAllQueryKey(),
           });
           setRegraDialogAberto(false);
         }}

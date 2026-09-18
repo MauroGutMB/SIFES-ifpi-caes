@@ -51,7 +51,13 @@ export function MateriaProfessorPage() {
       {materia && (
         <>
           {tab === 0 && <LancarAulaTab materiaId={materiaId} />}
-          {tab === 1 && <PlanoTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
+          {tab === 1 && (
+            <PlanoTab
+              materiaId={materiaId}
+              materiaAberta={materia.estado === 'ABERTA'}
+              notaMinimaAprovacao={materia.notaMinimaAprovacao}
+            />
+          )}
           {tab === 2 && <DiarioTab materiaId={materiaId} />}
           {tab === 3 && <AtividadesTab materiaId={materiaId} materiaAberta={materia.estado === 'ABERTA'} />}
           {tab === 4 && <RelatoriosTab materiaId={materiaId} />}
