@@ -231,10 +231,11 @@ export class RelatoriosService {
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - ${materia.nome}`,
       subtitulo: `Turma: ${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`,
-      colunas: ['Aluno', 'Matricula', 'Frequencia %'],
+      colunas: ['Aluno', 'Matricula', 'Faltas', 'Frequencia %'],
       linhas: boletim.map((b) => [
         b.aluno.nome,
         b.aluno.matricula,
+        b.faltas,
         b.frequenciaPercentual,
       ]),
     };
@@ -264,6 +265,7 @@ export class RelatoriosService {
           b.aluno.nome,
           b.aluno.matricula,
           materia.nome,
+          b.faltas,
           b.frequenciaPercentual,
         ]);
       }
@@ -272,7 +274,7 @@ export class RelatoriosService {
     const tabela: TabelaRelatorio = {
       titulo: `Frequencia consolidada - Turma ${turma.cursoTecnico} ${turma.anoSerie}`,
       subtitulo: `Turma: ${turma.cursoTecnico} — ${turma.anoSerie}`,
-      colunas: ['Aluno', 'Matricula', 'Materia', 'Frequencia %'],
+      colunas: ['Aluno', 'Matricula', 'Materia', 'Faltas', 'Frequencia %'],
       linhas,
     };
     return {

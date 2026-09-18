@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StatusFrequencia } from '../../generated/prisma/client';
 import {
   calcularFrequenciaPercentual,
   calcularNotaFinal,
@@ -54,12 +55,16 @@ export class BoletimService {
         notaFinal,
         frequenciaPercentual,
       );
+      const faltas = frequenciasDoAluno.filter(
+        (f) => f.status === StatusFrequencia.FALTA,
+      ).length;
 
       return {
         aluno,
         notaFinal: Number(notaFinal.toFixed(2)),
         frequenciaPercentual: Number(frequenciaPercentual.toFixed(2)),
         situacao,
+        faltas,
       };
     });
   }
