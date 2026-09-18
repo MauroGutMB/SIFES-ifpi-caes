@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Box, Button, Chip, Tab, Tabs, Typography } from '@mui/material';
+import { Avatar, Box, Button, Chip, Stack, Tab, Tabs, Typography } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBackOutlined';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../../api/generated/materias/materias';
+import { urlArquivo } from '../../../api/arquivo-url';
 import { resumoHorarios } from '../../admin/materias/dias-semana';
 import { SituacaoTab } from './SituacaoTab';
 import { AulasAlunoTab } from './AulasAlunoTab';
@@ -27,20 +28,26 @@ export function MateriaAlunoPage() {
       </Button>
 
       {materia && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="h4">{materia.nome}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {materia.turma.cursoTecnico} — {materia.turma.anoSerie}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            Professor(a) {materia.professor.nome} · {resumoHorarios(materia.horarios)}
-            <Chip
-              size="small"
-              label={materia.estado === 'ABERTA' ? 'Aberta' : 'Encerrada'}
-              color={materia.estado === 'ABERTA' ? 'success' : 'default'}
-            />
-          </Typography>
-        </Box>
+        <Stack direction="row" spacing={2} sx={{ mb: 2, alignItems: 'center' }}>
+          <Avatar
+            src={urlArquivo(materia.professor.fotoUrl)}
+            sx={{ width: 56, height: 56 }}
+          />
+          <Box>
+            <Typography variant="h4">{materia.nome}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {materia.turma.cursoTecnico} — {materia.turma.anoSerie}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              Professor(a) {materia.professor.nome} · {resumoHorarios(materia.horarios)}
+              <Chip
+                size="small"
+                label={materia.estado === 'ABERTA' ? 'Aberta' : 'Encerrada'}
+                color={materia.estado === 'ABERTA' ? 'success' : 'default'}
+              />
+            </Typography>
+          </Box>
+        </Stack>
       )}
 
       <Tabs
