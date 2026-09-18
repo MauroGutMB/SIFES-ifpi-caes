@@ -524,7 +524,7 @@ export function PlanoTab({
         )}
       </Box>
 
-      <Paper variant="outlined" sx={{ mb: 3 }}>
+      <Paper variant="outlined" sx={{ mb: 3, overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -583,7 +583,7 @@ export function PlanoTab({
       <Typography variant="h6" sx={{ mb: 1 }}>
         Boletim
       </Typography>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

@@ -102,7 +102,7 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: aberto ? undefined : 'none' }}>
           <Collapse in={aberto} unmountOnExit>
-            <Box sx={{ py: 1.5, pl: 5 }}>
+            <Box sx={{ py: 1.5, pl: 5, overflowX: 'auto' }}>
               <Typography variant="caption" color="text.secondary">
                 Detalhamento por disciplina
               </Typography>
@@ -158,7 +158,7 @@ function DetalheDisciplinaDialog({
   return (
     <Dialog open={!!materiaId} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{materiaNome} — aulas</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -361,7 +361,7 @@ export function TurmaProfessorPage() {
       <Typography variant="subtitle1" gutterBottom>
         Resumo por aluno
       </Typography>
-      <Paper variant="outlined" sx={{ mb: 3 }}>
+      <Paper variant="outlined" sx={{ mb: 3, overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -397,7 +397,7 @@ export function TurmaProfessorPage() {
       <Typography variant="subtitle1" gutterBottom>
         Detalhado por disciplina
       </Typography>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

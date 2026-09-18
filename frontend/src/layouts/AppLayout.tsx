@@ -1,4 +1,4 @@
-import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, IconButton, Slide, Toolbar, Typography, useScrollTrigger } from '@mui/material';
 import MenuIcon from '@mui/icons-material/MenuOutlined';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -24,6 +24,7 @@ function BotaoMenu() {
 export function AppLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const escondeHero = useScrollTrigger();
 
   const sair = async () => {
     await logout();
@@ -33,7 +34,8 @@ export function AppLayout() {
   return (
     <SidebarProvider>
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-        <AppBar position="static" sx={{ position: 'relative' }}>
+        <Slide appear={false} direction="down" in={!escondeHero}>
+        <AppBar position="fixed">
           <Toolbar sx={{ gap: { xs: 0.75, sm: 1.75 } }}>
             <BotaoMenu />
             <Box
@@ -93,6 +95,8 @@ export function AppLayout() {
           </Toolbar>
           <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: -4, height: 4, bgcolor: tokens.yellow }} />
         </AppBar>
+        </Slide>
+        <Toolbar />
 
         <Box component="main" sx={{ p: 2.5 }}>
           <Outlet />

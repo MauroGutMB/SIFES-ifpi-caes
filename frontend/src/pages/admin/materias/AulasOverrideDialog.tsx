@@ -56,7 +56,7 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
   return (
     <Dialog open={!!materiaId} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Aulas e estado de lançamento</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

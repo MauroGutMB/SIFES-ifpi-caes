@@ -63,18 +63,18 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
     );
   }
 
-  // Em celular a grade precisa caber na largura da tela sem arrastar — colunas encolhem
-  // livremente (minmax(0,1fr)) em vez de ter um piso fixo em pixels.
-  const colunaHora = isMobile ? 22 : 64;
+  // As colunas têm largura mínima fixa para caber "matéria — turma" sem cortar; em telas
+  // menores que isso, a box rola na horizontal em vez de encolher o texto.
+  const colunaHora = isMobile ? 40 : 64;
+  const colunaDia = isMobile ? 110 : 150;
 
   return (
-    <Paper variant="outlined" sx={{ overflowX: isMobile ? 'hidden' : 'auto' }}>
+    <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: `${colunaHora}px repeat(${dias.length}, minmax(0, 1fr))`,
-          minWidth: isMobile ? 0 : 120 * dias.length + 64,
-          width: '100%',
+          gridTemplateColumns: `${colunaHora}px repeat(${dias.length}, minmax(${colunaDia}px, 1fr))`,
+          minWidth: colunaDia * dias.length + colunaHora,
         }}
       >
         <Box sx={{ p: isMobile ? 0.25 : 1 }} />
@@ -88,7 +88,6 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
               fontSize: isMobile ? '0.62rem' : '0.8rem',
               borderLeft: 1,
               borderColor: 'divider',
-              overflow: 'hidden',
               whiteSpace: 'nowrap',
             }}
           >
@@ -124,7 +123,6 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 0.5,
-                    overflow: 'hidden',
                   }}
                 >
                   {celulas.map(({ item, horario }) => (
@@ -141,16 +139,13 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
                           py: 0.25,
                           fontSize: isMobile ? '0.55rem' : '0.7rem',
                           lineHeight: 1.3,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          whiteSpace: 'normal',
+                          wordBreak: 'break-word',
                         }}
                       >
-                        {isMobile
-                          ? item.titulo.slice(0, 3)
-                          : mostrarTurma && item.subtitulo
-                            ? `${item.titulo} — ${item.subtitulo}`
-                            : item.titulo}
+                        {mostrarTurma && item.subtitulo
+                          ? `${item.titulo} — ${item.subtitulo}`
+                          : item.titulo}
                       </Box>
                     </Tooltip>
                   ))}

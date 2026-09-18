@@ -17,7 +17,7 @@ export function AulasAlunoTab({ materiaId }: AulasAlunoTabProps) {
 
   return (
     <>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

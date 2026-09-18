@@ -28,7 +28,7 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
   return (
     <Dialog open={!!atividadeId} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Entregas</DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

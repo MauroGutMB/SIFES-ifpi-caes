@@ -158,7 +158,7 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
       <DialogTitle>
         Aula {aula ? new Date(aula.data).toLocaleDateString('pt-BR') : ''}
       </DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, overflowX: 'auto' }}>
         {isLoading || !aula ? (
           <Typography color="text.secondary">Carregando…</Typography>
         ) : (

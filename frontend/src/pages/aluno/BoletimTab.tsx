@@ -69,7 +69,7 @@ export function BoletimTab() {
         Toque em uma disciplina para ver o detalhamento nota a nota.
       </Typography>
 
-      <Paper variant="outlined" sx={{ mb: 3 }}>
+      <Paper variant="outlined" sx={{ mb: 3, overflowX: 'auto' }}>
         {materias?.length ? (
           <Table size="small">
             <TableHead>

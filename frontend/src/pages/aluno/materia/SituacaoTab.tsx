@@ -61,7 +61,7 @@ export function SituacaoTab({ materiaId }: SituacaoTabProps) {
       <Typography variant="h6" sx={{ mb: 1 }}>
         Detalhamento por item
       </Typography>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

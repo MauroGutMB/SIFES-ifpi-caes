@@ -102,7 +102,7 @@ export function FrequenciaTab() {
       <Typography variant="subtitle1" gutterBottom>
         Resumo por disciplina
       </Typography>
-      <Paper variant="outlined" sx={{ mb: 3 }}>
+      <Paper variant="outlined" sx={{ mb: 3, overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -140,7 +140,7 @@ export function FrequenciaTab() {
       <Typography variant="subtitle1" gutterBottom>
         Detalhado por dia
       </Typography>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

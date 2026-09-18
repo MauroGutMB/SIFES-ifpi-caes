@@ -17,7 +17,7 @@ export function DiarioTab({ materiaId }: DiarioTabProps) {
 
   return (
     <>
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>

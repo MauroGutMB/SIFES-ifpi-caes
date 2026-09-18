@@ -142,7 +142,7 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
         )}
       </Box>
 
-      <Paper variant="outlined">
+      <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
