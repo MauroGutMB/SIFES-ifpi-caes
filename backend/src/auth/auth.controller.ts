@@ -8,6 +8,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -41,6 +42,7 @@ export class AuthController {
       httpOnly: true,
       secure,
       // 'strict'/'lax' nunca são enviados em requisição cross-site — necessário aqui porque
+      // frontend (Cloudflare) e backend (Render) ficam em domínios diferentes em produção.
       // 'none' exige secure:true, por isso só liga quando COOKIE_SECURE=true.
       sameSite: secure ? 'none' : 'lax',
       path: REFRESH_COOKIE_PATH,
@@ -48,6 +50,10 @@ export class AuthController {
     });
   }
 
+  // 30 tentativas/min por IP — abaixo do default de 100/min (login é o alvo de
+  // brute-force óbvio, já que a matrícula do aluno é previsível: 8 dígitos), mas alto o
+  // suficiente pra não travar uma sala de aula inteira atrás do mesmo IP/NAT.
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -67,6 +73,9 @@ export class AuthController {
     return { accessToken, role, precisaTrocarSenha };
   }
 
+  // Mesmo limite do login (não é alvo direto de brute-force — precisa de um refresh token
+  // válido), mas ainda limitado porque também é @Public() e aceita qualquer token opaco.
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)

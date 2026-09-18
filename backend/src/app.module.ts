@@ -1,5 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LoggerMiddleware } from './common/logger.middleware';
@@ -24,6 +26,11 @@ import { ArquivosModule } from './arquivos/arquivos.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Bucket 'default' cobre a API em geral. A contagem do ThrottlerGuard é por
+    // Controller+Handler+IP (não por bucket sozinho), então @Throttle({ default: {...} })
+    // no AuthController sobrescreve o limite só para login/refresh, sem afetar o resto da
+    // API — login é o alvo de brute-force aqui (matrícula do aluno é previsível, 8 dígitos).
+    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -43,7 +50,7 @@ import { ArquivosModule } from './arquivos/arquivos.module';
     ArquivosModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
