@@ -481,26 +481,33 @@ export function PlanoTab({
           <Stack direction="row" spacing={1}>
             <Button
               variant="outlined"
-              startIcon={<RuleIcon />}
+              startIcon={<RuleIcon fontSize="small" />}
               onClick={() => setRegraDialogAberto(true)}
+              sx={{ '& .MuiButton-startIcon': { mr: 0.5 } }}
             >
               Regra de aprovação
             </Button>
             <Tooltip title="Item especial (recuperação, prova final) — só vale pros alunos habilitados individualmente">
               <Button
                 variant="contained"
-                startIcon={<StarIcon />}
+                startIcon={<StarIcon fontSize="small" />}
                 onClick={() => abrirNovo(true)}
                 sx={{
                   bgcolor: tokens.yellow,
                   color: tokens.yellowText,
                   '&:hover': { bgcolor: tokens.yellow, opacity: 0.85 },
+                  '& .MuiButton-startIcon': { mr: 0.5 },
                 }}
               >
                 Novo item especial
               </Button>
             </Tooltip>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => abrirNovo(false)}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon fontSize="small" />}
+              onClick={() => abrirNovo(false)}
+              sx={{ '& .MuiButton-startIcon': { mr: 0.5 } }}
+            >
               Novo item
             </Button>
           </Stack>
