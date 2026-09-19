@@ -376,9 +376,55 @@ export class RelatoriosService {
       ),
     ];
 
+    // Professor pode lecionar em várias turmas — listar todas soltas no cabeçalho (área de
+    // altura fixa, ao lado dos logos) quebra o layout quando são muitas. Em vez disso, o
+    // cabeçalho mostra só "Agenda da semana" (tamanho constante) e a lista turma→horários vira
+    // uma legenda no corpo do documento, que pode crescer livremente sem estourar nada.
+    const DIA_ABREV: Record<string, string> = {
+      SEGUNDA: 'Seg',
+      TERCA: 'Ter',
+      QUARTA: 'Qua',
+      QUINTA: 'Qui',
+      SEXTA: 'Sex',
+      SABADO: 'Sáb',
+    };
+    const horariosPorTurma = new Map<
+      string,
+      { diaSemana: string; horaInicio: string }[]
+    >();
+    for (const materia of materias) {
+      const turmaLabel = `${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`;
+      const lista = horariosPorTurma.get(turmaLabel) ?? [];
+      lista.push(...materia.horarios);
+      horariosPorTurma.set(turmaLabel, lista);
+    }
+    const legendaTurmas = [...horariosPorTurma.entries()].map(
+      ([turma, horarios]) => {
+        const unicos = [
+          ...new Set(
+            horarios
+              .sort(
+                (a, b) =>
+                  ORDEM_DIA[a.diaSemana] - ORDEM_DIA[b.diaSemana] ||
+                  a.horaInicio.localeCompare(b.horaInicio),
+              )
+              .map(
+                (h) =>
+                  `${DIA_ABREV[h.diaSemana] ?? h.diaSemana} ${h.horaInicio.slice(0, 2)}h`,
+              ),
+          ),
+        ];
+        return `${turma}: ${unicos.join(', ')}`;
+      },
+    );
+
     const tabela: TabelaRelatorio = {
       titulo: 'Agenda da semana',
-      subtitulo: turmas.length > 0 ? turmas.join(', ') : undefined,
+      subtitulo:
+        user.role === Role.PROFESSOR
+          ? 'Agenda da semana'
+          : (turmas[0] ?? undefined),
+      legenda: user.role === Role.PROFESSOR ? legendaTurmas : undefined,
       tituloAlinhamento: 'center',
       colunas: ['Hora', ...dias.map((d) => LABEL_DIA[d])],
       linhas: HORAS.map((hora) => [
