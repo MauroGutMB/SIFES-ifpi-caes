@@ -95,7 +95,7 @@ function LinhaAluno({ aluno }: { aluno: AlunoAgrupado }) {
     <>
       <TableRow hover sx={{ cursor: 'pointer' }} onClick={() => setAberto((v) => !v)}>
         <TableCell width={40}>
-          <IconButton size="small">
+          <IconButton size="small" tabIndex={-1} aria-hidden="true">
             {aberto ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
           </IconButton>
         </TableCell>

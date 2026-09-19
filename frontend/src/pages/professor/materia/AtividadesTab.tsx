@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -181,17 +182,35 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
                   </TableCell>
                   <TableCell>
                     <Stack direction="row">
-                      <IconButton size="small" onClick={() => setEntregasDe(atividade.id)}>
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
+                      <Tooltip title="Ver entregas">
+                        <IconButton
+                          size="small"
+                          aria-label="Ver entregas"
+                          onClick={() => setEntregasDe(atividade.id)}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       {materiaAberta && (
                         <>
-                          <IconButton size="small" onClick={() => abrirEdicao(atividade)}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => setParaExcluir(atividade)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          <Tooltip title="Editar atividade">
+                            <IconButton
+                              size="small"
+                              aria-label="Editar atividade"
+                              onClick={() => abrirEdicao(atividade)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Excluir atividade">
+                            <IconButton
+                              size="small"
+                              aria-label="Excluir atividade"
+                              onClick={() => setParaExcluir(atividade)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </>
                       )}
                     </Stack>

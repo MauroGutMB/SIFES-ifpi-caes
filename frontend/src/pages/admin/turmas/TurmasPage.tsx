@@ -7,6 +7,7 @@ import {
   Paper,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
@@ -183,12 +184,24 @@ export function TurmasPage() {
       width: 100,
       renderCell: (params) => (
         <Stack direction="row">
-          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Editar turma">
+            <IconButton
+              size="small"
+              aria-label="Editar turma"
+              onClick={() => abrirEdicao(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Excluir turma">
+            <IconButton
+              size="small"
+              aria-label="Excluir turma"
+              onClick={() => setParaExcluir(params.row)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },

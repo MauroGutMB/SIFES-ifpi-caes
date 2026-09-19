@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -16,8 +17,10 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmberOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutlineOutlined';
 import UploadIcon from '@mui/icons-material/UploadFileOutlined';
 import { isAxiosError } from 'axios';
@@ -36,6 +39,7 @@ import {
 } from '../../../api/generated/materiais-aula/materiais-aula';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { urlArquivo } from '../../../api/arquivo-url';
+import { tokens } from '../../../theme/tokens';
 
 interface AulaDialogProps {
   aulaId: string | null;
@@ -193,8 +197,11 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                 size="small"
                 onClick={salvarAula}
                 disabled={atualizarAula.isPending}
+                startIcon={
+                  atualizarAula.isPending ? <CircularProgress size={14} color="inherit" /> : undefined
+                }
               >
-                Salvar título/descrição
+                {atualizarAula.isPending ? 'Salvando…' : 'Salvar título/descrição'}
               </Button>
             </Box>
 
@@ -243,8 +250,11 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                   size="small"
                   onClick={salvarFrequencias}
                   disabled={setFrequencias.isPending}
+                  startIcon={
+                    setFrequencias.isPending ? <CircularProgress size={14} color="inherit" /> : undefined
+                  }
                 >
-                  Salvar frequência
+                  {setFrequencias.isPending ? 'Salvando…' : 'Salvar frequência'}
                 </Button>
               </Box>
             )}
@@ -269,12 +279,15 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                       {material.titulo}
                     </a>
                   </Typography>
-                  <IconButton
-                    size="small"
-                    onClick={() => setMaterialParaExcluir({ id: material.id, titulo: material.titulo })}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+                  <Tooltip title="Excluir material">
+                    <IconButton
+                      size="small"
+                      aria-label={`Excluir material "${material.titulo}"`}
+                      onClick={() => setMaterialParaExcluir({ id: material.id, titulo: material.titulo })}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </Stack>
               ))}
               {!materiais?.length && (
@@ -298,19 +311,42 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
                   onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
                 />
               </Button>
-              <IconButton
-                color="primary"
-                onClick={enviarMaterial}
-                disabled={!arquivo || !novoMaterialTitulo || criarMaterial.isPending}
-              >
-                <UploadIcon />
-              </IconButton>
+              <Tooltip title="Enviar material">
+                <span>
+                  <IconButton
+                    color="primary"
+                    aria-label="Enviar material"
+                    onClick={enviarMaterial}
+                    disabled={!arquivo || !novoMaterialTitulo || criarMaterial.isPending}
+                  >
+                    {criarMaterial.isPending ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      <UploadIcon />
+                    )}
+                  </IconButton>
+                </span>
+              </Tooltip>
             </Stack>
 
             {erro && (
-              <Typography color="error" variant="body2">
-                {erro}
-              </Typography>
+              <Box
+                role="alert"
+                sx={{
+                  display: 'flex',
+                  gap: 1.25,
+                  alignItems: 'flex-start',
+                  p: '12px 14px',
+                  bgcolor: tokens.redBg,
+                  border: `1px solid ${tokens.red}`,
+                  borderRadius: 1,
+                }}
+              >
+                <WarningAmberIcon sx={{ color: tokens.redText, fontSize: 18, mt: '1px' }} />
+                <Typography sx={{ fontSize: 13, color: tokens.redText, lineHeight: 1.5 }}>
+                  {erro}
+                </Typography>
+              </Box>
             )}
           </>
         )}

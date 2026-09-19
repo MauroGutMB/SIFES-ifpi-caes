@@ -281,12 +281,24 @@ export function MateriasPage() {
               )}
             </IconButton>
           </Tooltip>
-          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Editar disciplina">
+            <IconButton
+              size="small"
+              aria-label="Editar disciplina"
+              onClick={() => abrirEdicao(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Excluir disciplina">
+            <IconButton
+              size="small"
+              aria-label="Excluir disciplina"
+              onClick={() => setParaExcluir(params.row)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },

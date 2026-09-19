@@ -607,12 +607,24 @@ export function PlanoTab({
                       </Tooltip>
                       {materiaAberta && (
                         <>
-                          <IconButton size="small" onClick={() => abrirEdicao(item)}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => setParaExcluir(item)}>
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                          <Tooltip title="Editar item">
+                            <IconButton
+                              size="small"
+                              aria-label="Editar item"
+                              onClick={() => abrirEdicao(item)}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Excluir item">
+                            <IconButton
+                              size="small"
+                              aria-label="Excluir item"
+                              onClick={() => setParaExcluir(item)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </>
                       )}
                     </Stack>
@@ -688,9 +700,15 @@ export function PlanoTab({
                   <TableCell>{linha.frequenciaPercentual.toFixed(0)}%</TableCell>
                   <TableCell>{LABEL_SITUACAO[linha.situacao]}</TableCell>
                   <TableCell>
-                    <IconButton size="small" onClick={() => setAlunoParaEditarNotas(linha.aluno)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Editar notas do aluno">
+                      <IconButton
+                        size="small"
+                        aria-label="Editar notas do aluno"
+                        onClick={() => setAlunoParaEditarNotas(linha.aluno)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}

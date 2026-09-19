@@ -250,12 +250,24 @@ export function AlunosPage() {
               </IconButton>
             </Tooltip>
           )}
-          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Editar aluno">
+            <IconButton
+              size="small"
+              aria-label="Editar aluno"
+              onClick={() => abrirEdicao(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Excluir aluno">
+            <IconButton
+              size="small"
+              aria-label="Excluir aluno"
+              onClick={() => setParaExcluir(params.row)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },

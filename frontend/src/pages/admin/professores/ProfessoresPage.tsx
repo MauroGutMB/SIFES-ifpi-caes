@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, IconButton, Paper, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRowSelectionModel } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweepOutlined';
@@ -164,12 +164,24 @@ export function ProfessoresPage() {
       width: 100,
       renderCell: (params) => (
         <Stack direction="row">
-          <IconButton size="small" onClick={() => abrirEdicao(params.row)}>
-            <EditIcon fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => setParaExcluir(params.row)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Editar professor">
+            <IconButton
+              size="small"
+              aria-label="Editar professor"
+              onClick={() => abrirEdicao(params.row)}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Excluir professor">
+            <IconButton
+              size="small"
+              aria-label="Excluir professor"
+              onClick={() => setParaExcluir(params.row)}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },

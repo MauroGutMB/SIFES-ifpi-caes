@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { isAxiosError } from 'axios';
-import { Box, Button, Paper, TextField, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, Paper, TextField, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { AuthControllerChangePasswordBody } from '../api/generated/zod/auth/auth';
 import { authControllerChangePassword } from '../api/generated/auth/auth';
@@ -21,7 +21,7 @@ const schema = AuthControllerChangePasswordBody.extend({
 type ChangePasswordForm = z.infer<typeof schema>;
 
 export function ChangePasswordPage() {
-  const { user, marcarSenhaTrocada } = useAuth();
+  const { user, marcarSenhaTrocada, logout } = useAuth();
   const navigate = useNavigate();
   const [erro, setErro] = useState<string | null>(null);
 
@@ -120,8 +120,24 @@ export function ChangePasswordPage() {
 
             {erro && <Typography sx={{ fontSize: 13, color: tokens.redText, mt: 1 }}>{erro}</Typography>}
 
-            <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={isSubmitting}>
-              Salvar nova senha
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{ mt: 2 }}
+              disabled={isSubmitting}
+              startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              {isSubmitting ? 'Salvando…' : 'Salvar nova senha'}
+            </Button>
+            <Button
+              variant="text"
+              size="small"
+              fullWidth
+              sx={{ mt: 1 }}
+              onClick={() => void logout()}
+            >
+              Sair
             </Button>
           </Box>
         </Paper>
