@@ -74,21 +74,43 @@ export class FotoSolicitacoesService {
 
   async aprovar(id: string) {
     const solicitacao = await this.buscarPendente(id);
-    const arquivoId = solicitacao.arquivoStagingUrl.split('/').pop()!;
-    const arquivo = await this.prisma.arquivo.findUniqueOrThrow({
-      where: { id: arquivoId },
-    });
 
-    await this.usersService.setFoto(
-      solicitacao.aluno.userId,
-      Buffer.from(arquivo.conteudo),
-      arquivo.mimeType,
-    );
-    await this.prisma.arquivo.delete({ where: { id: arquivoId } });
-
-    const atualizada = await this.prisma.solicitacaoFoto.update({
-      where: { id },
+    // Reivindica a solicitação atomicamente: só a chamada que ainda encontrar
+    // status PENDENTE consegue transicionar pra APROVADA. Evita que um duplo
+    // clique (ou dois admins) aprovem a mesma solicitação em paralelo, o que
+    // criava um Arquivo órfão e travava a segunda chamada com 404 no meio do caminho.
+    const reivindicada = await this.prisma.solicitacaoFoto.updateMany({
+      where: { id, status: StatusSolicitacaoFoto.PENDENTE },
       data: { status: StatusSolicitacaoFoto.APROVADA, resolvidaEm: new Date() },
+    });
+    if (reivindicada.count === 0) {
+      throw new BadRequestException('Solicitação já foi resolvida');
+    }
+
+    try {
+      const arquivoId = solicitacao.arquivoStagingUrl.split('/').pop()!;
+      const arquivo = await this.prisma.arquivo.findUniqueOrThrow({
+        where: { id: arquivoId },
+      });
+
+      await this.usersService.setFoto(
+        solicitacao.aluno.userId,
+        Buffer.from(arquivo.conteudo),
+        arquivo.mimeType,
+      );
+      await this.prisma.arquivo.delete({ where: { id: arquivoId } });
+    } catch (error) {
+      // Já reivindicamos a solicitação, mas a aprovação não completou de fato —
+      // devolve pra PENDENTE em vez de deixá-la presa como "aprovada" sem a foto trocada.
+      await this.prisma.solicitacaoFoto.update({
+        where: { id },
+        data: { status: StatusSolicitacaoFoto.PENDENTE, resolvidaEm: null },
+      });
+      throw error;
+    }
+
+    const atualizada = await this.prisma.solicitacaoFoto.findUniqueOrThrow({
+      where: { id },
     });
     return { ...atualizada, alunoNome: solicitacao.aluno.nome };
   }
