@@ -373,6 +373,13 @@ export class MateriasService {
       }
     }
 
+    return this.fecharMateria(id);
+  }
+
+  /** Efetivamente fecha a Matéria (estado + desligamento automático de quem passou) — usado
+   * tanto pelo encerramento manual (professor/admin) quanto pelo job automático que fecha
+   * Matérias de Semestres já terminados (ver encerrarMateriasDeSemestresEncerrados). */
+  private async fecharMateria(id: string) {
     const atualizada = await this.prisma.materia.update({
       where: { id },
       data: { estado: EstadoMateria.ENCERRADA, encerradaEm: new Date() },
@@ -387,6 +394,27 @@ export class MateriasService {
     }
 
     return atualizada;
+  }
+
+  /** Fecha automaticamente toda Matéria ainda ABERTA cujo Semestre já passou do fim — sem
+   * isso, uma Matéria só fecha se alguém (professor/admin) lembrar de encerrar manualmente, e
+   * até lá ela continua contando como "cursando" (aparece na agenda, não gera pendência mesmo
+   * reprovada, boletim mostra situação errada). Chamado por um cron (ver materias.module.ts)
+   * e uma vez na subida do processo, pra não depender de ninguém acessar o sistema no dia
+   * exato em que o Semestre termina. */
+  async encerrarMateriasDeSemestresEncerrados(): Promise<number> {
+    const agora = agoraComoBrasiliaFake();
+    const materias = await this.prisma.materia.findMany({
+      where: {
+        estado: EstadoMateria.ABERTA,
+        turma: { semestre: { dataFim: { lt: agora } } },
+      },
+      select: { id: true },
+    });
+    for (const { id } of materias) {
+      await this.fecharMateria(id);
+    }
+    return materias.length;
   }
 
   /** Admin reabre uma Matéria já encerrada (correção). */

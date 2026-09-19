@@ -315,6 +315,10 @@ export class RelatoriosService {
 
     const materias = await this.prisma.materia.findMany({
       where: {
+        // A agenda é o horário de aulas em curso — matéria encerrada usa os mesmos slots de
+        // dia/hora de sempre (ex: sempre Segunda 08h pro turno da manhã), então incluí-la
+        // faria duas disciplinas de semestres diferentes aparecerem empilhadas na mesma célula.
+        estado: 'ABERTA',
         professorId:
           user.role === Role.PROFESSOR ? user.professorId : undefined,
         vinculos:

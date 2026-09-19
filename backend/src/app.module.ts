@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -28,6 +29,7 @@ import { LogsModule } from './logs/logs.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     // Bucket 'default' cobre a API em geral. A contagem do ThrottlerGuard é por
     // Controller+Handler+IP (não por bucket sozinho), então @Throttle({ default: {...} })
     // no AuthController sobrescreve o limite só para login/refresh, sem afetar o resto da
