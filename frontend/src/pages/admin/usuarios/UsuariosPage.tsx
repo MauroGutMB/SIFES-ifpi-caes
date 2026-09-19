@@ -43,32 +43,29 @@ function nomeDoUsuario(user: UserDto): string {
   return user.professor?.nome ?? user.aluno?.nome ?? '—';
 }
 
-/** Box com o mesmo peso visual do filtro de Cargo (borda + legenda "flutuante", mesma altura
- * de um TextField outlined size="small") — usada tanto pra importação quanto exportação. */
+/** Rótulo pequeno acima + caixa com borda abaixo (mesma linguagem visual do rótulo
+ * "Login"/"Senha inicial" do SenhaGeradaDialog) — usada pra importação e exportação. */
 function LabeledActionBox({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <Box
-      component="fieldset"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1,
-        height: 40,
-        m: 0,
-        px: 1.25,
-        border: `1px solid ${tokens.border}`,
-        borderRadius: 1,
-        '& legend': {
-          px: 0.5,
-          ml: 1,
-          fontSize: 12,
+    <Stack spacing={0.5}>
+      <Typography
+        sx={{
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
           color: tokens.textSecondary,
-        },
-      }}
-    >
-      <Typography component="legend">{titulo}</Typography>
-      {children}
-    </Box>
+        }}
+      >
+        {titulo}
+      </Typography>
+      <Paper
+        variant="outlined"
+        sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, py: 0.75, borderRadius: 1 }}
+      >
+        {children}
+      </Paper>
+    </Stack>
   );
 }
 
@@ -221,7 +218,7 @@ export function UsuariosPage() {
     <>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Usuários</Typography>
-        <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <LabeledActionBox titulo="Exportação">
             <Button size="small" disabled={exportando === 'pdf'} onClick={() => exportarUsuarios('pdf')}>
               PDF
