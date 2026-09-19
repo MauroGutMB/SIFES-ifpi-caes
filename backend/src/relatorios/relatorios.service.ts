@@ -20,6 +20,25 @@ export interface FiltrosFrequenciaTurma {
   dataFim?: string;
 }
 
+function formatarDataBR(iso: string): string {
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+/** Deixa explícito no relatório qual período foi filtrado — sem isso, quem abre o arquivo
+ * depois não tem como saber se os dados são de um recorte ou de tudo que já existe. */
+function formatarPeriodo(
+  dataInicio?: string,
+  dataFim?: string,
+): string | undefined {
+  if (dataInicio && dataFim) {
+    return `${formatarDataBR(dataInicio)} a ${formatarDataBR(dataFim)}`;
+  }
+  if (dataInicio) return `a partir de ${formatarDataBR(dataInicio)}`;
+  if (dataFim) return `até ${formatarDataBR(dataFim)}`;
+  return undefined;
+}
+
 @Injectable()
 export class RelatoriosService {
   constructor(
@@ -646,11 +665,13 @@ export class RelatoriosService {
     }
 
     const secoes = [...porMateria.values()];
+    const turmaLabel = turma
+      ? `${turma.cursoTecnico} — ${turma.anoSerie}`
+      : undefined;
+    const periodo = formatarPeriodo(filtros.dataInicio, filtros.dataFim);
     const tabela: TabelaRelatorio = {
       titulo: 'Frequência por disciplina',
-      subtitulo: turma
-        ? `${turma.cursoTecnico} — ${turma.anoSerie}`
-        : undefined,
+      subtitulo: [turmaLabel, periodo].filter(Boolean).join(' · ') || undefined,
       tituloAlinhamento: 'center',
       colunas: [
         'Aluno',
