@@ -255,11 +255,13 @@ export class MateriasService {
     turmaId?: string;
     professorId?: string;
     vinculadoAlunoId?: string;
+    estado?: EstadoMateria;
   }) {
     const materias = await this.prisma.materia.findMany({
       where: {
         turmaId: filtros.turmaId,
         professorId: filtros.professorId,
+        estado: filtros.estado,
         vinculos: filtros.vinculadoAlunoId
           ? { some: { alunoId: filtros.vinculadoAlunoId } }
           : undefined,

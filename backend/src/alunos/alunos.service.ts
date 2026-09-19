@@ -230,8 +230,10 @@ export class AlunosService {
   async resumoAtividades(
     alunoId: string,
   ): Promise<AtividadesResumoMateriaDto[]> {
+    // Só disciplina em curso — de uma já encerrada não faz sentido continuar cobrando
+    // atividade do aluno.
     const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
-      where: { alunoId },
+      where: { alunoId, materia: { estado: 'ABERTA' } },
       include: {
         materia: {
           include: {
@@ -275,7 +277,7 @@ export class AlunosService {
     limite = 5,
   ): Promise<AtividadePendenteDto[]> {
     const vinculos = await this.prisma.vinculoAlunoMateria.findMany({
-      where: { alunoId },
+      where: { alunoId, materia: { estado: 'ABERTA' } },
       include: {
         materia: {
           include: {
