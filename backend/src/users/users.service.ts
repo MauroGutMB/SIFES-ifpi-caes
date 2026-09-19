@@ -88,10 +88,10 @@ export class UsersService {
     return this.setFoto(userId, file.buffer, file.mimetype);
   }
 
-  /** Gera uma nova senha temporária pro usuário e força a troca no próximo login — usado só
-   * quando ele ainda NÃO está marcado pra trocar senha (senão já vai trocar de qualquer jeito
-   * no próximo login, e refazer isso só invalidaria a sessão dele à toa). Revoga as sessões
-   * ativas (refresh tokens), já que a senha antiga não vale mais a partir de agora. */
+  /** Gera uma nova senha temporária pro usuário e força a troca no próximo login — disponível
+   * em qualquer estado (ex: o admin perdeu a senha gerada antes do usuário conseguir usá-la).
+   * Revoga as sessões ativas (refresh tokens), já que a senha antiga não vale mais a partir
+   * de agora. */
   async resetarSenha(userId: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
