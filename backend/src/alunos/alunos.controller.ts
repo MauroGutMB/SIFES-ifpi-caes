@@ -131,10 +131,13 @@ export class AlunosController {
   }
 
   @Post(':id/materias/:materiaId')
-  @LogAcao(({ resultado }) => ({
-    acao: 'Vinculou aluno a disciplina',
-    alvo: (resultado as { alunoId?: string })?.alunoId ?? 'aluno',
-  }))
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Vinculou aluno a disciplina',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   adicionarMateria(
     @Param('id') id: string,
     @Param('materiaId') materiaId: string,
@@ -143,10 +146,13 @@ export class AlunosController {
   }
 
   @Delete(':id/materias/:materiaId')
-  @LogAcao(({ params }) => ({
-    acao: 'Removeu vínculo de aluno com disciplina',
-    alvo: `aluno ${params.id} — disciplina ${params.materiaId}`,
-  }))
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Removeu vínculo de aluno com disciplina',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   removerMateria(
     @Param('id') id: string,
     @Param('materiaId') materiaId: string,

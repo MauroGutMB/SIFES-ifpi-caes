@@ -40,10 +40,14 @@ export class ItensAvaliacaoController {
   }
 
   @Put(':id/notas')
-  @LogAcao(({ params, body }) => ({
-    acao: 'Lançou notas',
-    alvo: `item ${params.id} — ${(body as { notas?: unknown[] })?.notas?.length ?? 0} aluno(s)`,
-  }))
+  @LogAcao(({ resultado, body }) => {
+    const r = resultado as { itemNome?: string; materiaNome?: string };
+    const qtd = (body as { notas?: unknown[] })?.notas?.length ?? 0;
+    return {
+      acao: 'Lançou notas',
+      alvo: `${r?.itemNome ?? 'item'} — ${r?.materiaNome ?? 'disciplina'} (${qtd} aluno(s))`,
+    };
+  })
   setNotas(
     @Param('id') id: string,
     @Body() dto: SetNotasDto,
@@ -53,12 +57,15 @@ export class ItensAvaliacaoController {
   }
 
   @Put(':id/alunos/:alunoId')
-  @LogAcao(({ params, body }) => ({
-    acao: (body as { habilitado?: boolean })?.habilitado
-      ? 'Habilitou item especial para aluno'
-      : 'Desabilitou item especial para aluno',
-    alvo: `item ${params.id} — aluno ${params.alunoId}`,
-  }))
+  @LogAcao(({ body, resultado }) => {
+    const r = resultado as { itemNome?: string; alunoNome?: string };
+    return {
+      acao: (body as { habilitado?: boolean })?.habilitado
+        ? 'Habilitou item especial para aluno'
+        : 'Desabilitou item especial para aluno',
+      alvo: `${r?.itemNome ?? 'item'} — ${r?.alunoNome ?? 'aluno'}`,
+    };
+  })
   definirItemEspecialAluno(
     @Param('id') id: string,
     @Param('alunoId') alunoId: string,
@@ -75,9 +82,9 @@ export class ItensAvaliacaoController {
 
   @Put(':id/aplicar-abaixo-media')
   @ApiOkResponse({ type: AplicarAbaixoMediaDto })
-  @LogAcao(({ params }) => ({
+  @LogAcao(({ resultado }) => ({
     acao: 'Aplicou item especial aos alunos abaixo da média',
-    alvo: `item ${params.id}`,
+    alvo: (resultado as { itemNome?: string })?.itemNome ?? 'item',
   }))
   aplicarAbaixoMedia(
     @Param('id') id: string,

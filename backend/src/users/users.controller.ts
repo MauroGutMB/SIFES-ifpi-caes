@@ -80,9 +80,9 @@ export class UsersController {
 
   @Roles(Role.ADMIN)
   @Delete(':id/foto')
-  @LogAcao(({ params }) => ({
+  @LogAcao(({ resultado }) => ({
     acao: 'Removeu foto de usuário',
-    alvo: `usuário ${params.id}`,
+    alvo: (resultado as { nome?: string })?.nome ?? 'usuário',
   }))
   removerFoto(@Param('id') id: string) {
     return this.usersService.removerFoto(id);

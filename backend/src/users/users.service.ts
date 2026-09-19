@@ -116,17 +116,27 @@ export class UsersService {
   }
 
   async removerFoto(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        professor: { select: { nome: true } },
+        aluno: { select: { nome: true } },
+      },
+    });
     if (!user) {
       throw new NotFoundException('Usuário não encontrado');
     }
 
     await removerArquivo(this.prisma, user.fotoUrl);
-    return this.prisma.user.update({
+    const atualizado = await this.prisma.user.update({
       where: { id: userId },
       data: { fotoUrl: null },
       select: { id: true, fotoUrl: true },
     });
+    return {
+      ...atualizado,
+      nome: user.professor?.nome ?? user.aluno?.nome ?? user.login,
+    };
   }
 
   gerarModeloImportacao(): Buffer {

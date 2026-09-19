@@ -123,18 +123,38 @@ export class PendenciasService {
   }
 
   async resolver(alunoId: string, materiaId: string) {
+    const [aluno, materia] = await Promise.all([
+      this.prisma.aluno.findUnique({
+        where: { id: alunoId },
+        select: { nome: true },
+      }),
+      this.prisma.materia.findUnique({
+        where: { id: materiaId },
+        select: { nome: true },
+      }),
+    ]);
     await this.prisma.pendenciaResolvida.upsert({
       where: { alunoId_materiaId: { alunoId, materiaId } },
       create: { alunoId, materiaId },
       update: {},
     });
-    return { resolvida: true };
+    return {
+      resolvida: true,
+      alunoNome: aluno?.nome,
+      materiaNome: materia?.nome,
+    };
   }
 
   /** Resolve de uma vez todas as pendências ainda pendentes de um aluno — usado pela seleção
    * em massa da tabela (marcar vários alunos como resolvidos sem abrir o popup de cada um). */
   async resolverTodasDoAluno(alunoId: string) {
-    const pendencias = await this.pendenciasDoAluno(alunoId);
+    const [aluno, pendencias] = await Promise.all([
+      this.prisma.aluno.findUnique({
+        where: { id: alunoId },
+        select: { nome: true },
+      }),
+      this.pendenciasDoAluno(alunoId),
+    ]);
     const pendentes = pendencias.filter((p) => !p.resolvida);
     if (pendentes.length > 0) {
       await this.prisma.$transaction(
@@ -149,7 +169,7 @@ export class PendenciasService {
         ),
       );
     }
-    return { resolvidas: pendentes.length };
+    return { resolvidas: pendentes.length, alunoNome: aluno?.nome };
   }
 
   async relatorio(

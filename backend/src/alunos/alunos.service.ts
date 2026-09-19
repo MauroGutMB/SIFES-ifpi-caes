@@ -138,26 +138,35 @@ export class AlunosService {
   }
 
   async adicionarMateria(alunoId: string, materiaId: string) {
-    await this.prisma.aluno.findUniqueOrThrow({ where: { id: alunoId } });
-    await this.prisma.materia.findUniqueOrThrow({ where: { id: materiaId } });
+    const aluno = await this.prisma.aluno.findUniqueOrThrow({
+      where: { id: alunoId },
+    });
+    const materia = await this.prisma.materia.findUniqueOrThrow({
+      where: { id: materiaId },
+    });
 
     try {
-      return await this.prisma.vinculoAlunoMateria.create({
+      const vinculo = await this.prisma.vinculoAlunoMateria.create({
         data: { alunoId, materiaId },
       });
+      return { ...vinculo, alunoNome: aluno.nome, materiaNome: materia.nome };
     } catch (error) {
       rethrowAsConflict(error, 'Aluno já está vinculado a esta disciplina');
     }
   }
 
   async removerMateria(alunoId: string, materiaId: string) {
+    const [aluno, materia] = await Promise.all([
+      this.prisma.aluno.findUnique({ where: { id: alunoId } }),
+      this.prisma.materia.findUnique({ where: { id: materiaId } }),
+    ]);
     const resultado = await this.prisma.vinculoAlunoMateria.deleteMany({
       where: { alunoId, materiaId },
     });
     if (resultado.count === 0) {
       throw new NotFoundException('Aluno não está vinculado a esta disciplina');
     }
-    return resultado;
+    return { ...resultado, alunoNome: aluno?.nome, materiaNome: materia?.nome };
   }
 
   /**

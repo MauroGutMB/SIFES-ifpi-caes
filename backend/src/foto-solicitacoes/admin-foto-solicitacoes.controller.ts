@@ -30,18 +30,18 @@ export class AdminFotoSolicitacoesController {
   }
 
   @Post(':id/aprovar')
-  @LogAcao(({ params }) => ({
+  @LogAcao(({ resultado }) => ({
     acao: 'Aprovou solicitação de foto',
-    alvo: `solicitação ${params.id}`,
+    alvo: (resultado as { alunoNome?: string })?.alunoNome ?? 'aluno',
   }))
   aprovar(@Param('id') id: string) {
     return this.service.aprovar(id);
   }
 
   @Post(':id/rejeitar')
-  @LogAcao(({ params }) => ({
+  @LogAcao(({ resultado }) => ({
     acao: 'Rejeitou solicitação de foto',
-    alvo: `solicitação ${params.id}`,
+    alvo: (resultado as { alunoNome?: string })?.alunoNome ?? 'aluno',
   }))
   rejeitar(@Param('id') id: string) {
     return this.service.rejeitar(id);

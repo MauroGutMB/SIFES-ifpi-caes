@@ -68,10 +68,13 @@ export class PendenciasController {
   }
 
   @Put(':alunoId/:materiaId/resolver')
-  @LogAcao(({ params }) => ({
-    acao: 'Resolveu pendência',
-    alvo: `aluno ${params.alunoId} — disciplina ${params.materiaId}`,
-  }))
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Resolveu pendência',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   resolver(
     @Param('alunoId') alunoId: string,
     @Param('materiaId') materiaId: string,
@@ -81,10 +84,13 @@ export class PendenciasController {
 
   @Put(':alunoId/resolver-todas')
   @ApiOkResponse({ type: ResolverTodasDto })
-  @LogAcao(({ params, resultado }) => ({
-    acao: 'Resolveu todas as pendências do aluno',
-    alvo: `aluno ${params.alunoId} — ${(resultado as { resolvidas?: number })?.resolvidas ?? 0} pendência(s)`,
-  }))
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; resolvidas?: number };
+    return {
+      acao: 'Resolveu todas as pendências do aluno',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.resolvidas ?? 0} pendência(s)`,
+    };
+  })
   resolverTodas(@Param('alunoId') alunoId: string): Promise<ResolverTodasDto> {
     return this.service.resolverTodasDoAluno(alunoId);
   }
