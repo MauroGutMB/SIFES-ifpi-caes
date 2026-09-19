@@ -152,12 +152,24 @@ export class PendenciasService {
     return { resolvidas: pendentes.length };
   }
 
-  async relatorio(formato: Formato) {
-    const todas = await this.calcularTodas();
+  async relatorio(
+    formato: Formato,
+    status: 'PENDENTE' | 'RESOLVIDA' = 'PENDENTE',
+  ) {
+    const [todas, resolvidas] = await Promise.all([
+      this.calcularTodas(),
+      this.carregarResolvidas(),
+    ]);
+    const doStatus = todas.filter((p) => {
+      const chave = `${p.alunoId}:${p.materiaId}`;
+      return status === 'RESOLVIDA'
+        ? resolvidas.has(chave)
+        : !resolvidas.has(chave);
+    });
     const tabela: TabelaRelatorio = {
-      titulo: 'Relatório de pendências',
+      titulo: `Relatório de pendências (${status === 'RESOLVIDA' ? 'resolvidas' : 'pendentes'})`,
       colunas: ['Nome', 'Matrícula', 'Semestre', 'Disciplina', 'Nota'],
-      linhas: todas.map((p) => [
+      linhas: doStatus.map((p) => [
         p.alunoNome,
         p.matricula,
         p.semestreNome,

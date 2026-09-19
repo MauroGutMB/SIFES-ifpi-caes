@@ -46,9 +46,13 @@ export class PendenciasController {
   }
 
   @Get('relatorio')
-  async relatorio(@Query('formato') formatoQuery?: string) {
+  async relatorio(
+    @Query('formato') formatoQuery?: string,
+    @Query('status') statusQuery?: string,
+  ) {
     const formato = parseFormato(formatoQuery);
-    const resultado = await this.service.relatorio(formato);
+    const status = parseStatus(statusQuery);
+    const resultado = await this.service.relatorio(formato, status);
     return new StreamableFile(resultado.buffer, {
       type: mimeParaFormato(formato),
       disposition: `attachment; filename="${resultado.nomeBase}.${extensaoParaFormato(formato)}"`,
