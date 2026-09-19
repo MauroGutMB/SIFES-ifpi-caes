@@ -69,10 +69,7 @@ describe('Importação de usuários via CSV (e2e)', () => {
       where: { login: { in: [loginAlunoNovo, loginProfessorNovo] } },
       select: { id: true },
     });
-    const todosOsIds = [
-      ...userIds,
-      ...criadosPelaImportacao.map((u) => u.id),
-    ];
+    const todosOsIds = [...userIds, ...criadosPelaImportacao.map((u) => u.id)];
     await prisma.aluno.deleteMany({ where: { userId: { in: todosOsIds } } });
     await prisma.professor.deleteMany({
       where: { userId: { in: todosOsIds } },
@@ -87,7 +84,7 @@ describe('Importação de usuários via CSV (e2e)', () => {
       .set('Authorization', `Bearer ${adminToken}`);
     expect(resposta.status).toBe(200);
     expect(resposta.headers['content-type']).toContain('text/csv');
-    const texto = resposta.text.replace(/^﻿/, '');
+    const texto = resposta.text.replace(/^\uFEFF/, '');
     expect(texto.split(/\r?\n/)[0].trim()).toBe('nome,login,cargo');
   });
 

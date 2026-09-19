@@ -157,9 +157,9 @@ describe('Aprovação de foto de perfil (e2e)', () => {
       .get('/admin/foto-solicitacoes')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(resposta.status).toBe(200);
-    const alunosListados = (
-      resposta.body as { aluno: { id: string } }[]
-    ).map((s) => s.aluno.id);
+    const alunosListados = (resposta.body as { aluno: { id: string } }[]).map(
+      (s) => s.aluno.id,
+    );
     expect(alunosListados).toContain(alunoId);
   });
 

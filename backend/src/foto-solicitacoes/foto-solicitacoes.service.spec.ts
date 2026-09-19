@@ -59,9 +59,11 @@ function criarServicoAprovar(opts: {
       }),
     },
     arquivo: {
-      findUniqueOrThrow: jest
-        .fn()
-        .mockResolvedValue({ id: 'arquivo-1', conteudo: Buffer.from('x'), mimeType: 'image/png' }),
+      findUniqueOrThrow: jest.fn().mockResolvedValue({
+        id: 'arquivo-1',
+        conteudo: Buffer.from('x'),
+        mimeType: 'image/png',
+      }),
       delete: jest.fn().mockResolvedValue({}),
     },
   };

@@ -29,7 +29,10 @@ function criarServico(materiaEncontrada: unknown) {
     },
   };
   const boletim = {};
-  return { service: new MateriasService(prisma as never, boletim as never), prisma };
+  return {
+    service: new MateriasService(prisma as never, boletim as never),
+    prisma,
+  };
 }
 
 describe('MateriasService.encerrar — limite de data do fim do Semestre (off-by-one)', () => {
@@ -61,7 +64,11 @@ describe('MateriasService.encerrar — limite de data do fim do Semestre (off-by
   it('professor não consegue encerrar antes do fim do Semestre', async () => {
     const amanha = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const dataFimFutura = new Date(
-      Date.UTC(amanha.getUTCFullYear(), amanha.getUTCMonth(), amanha.getUTCDate()),
+      Date.UTC(
+        amanha.getUTCFullYear(),
+        amanha.getUTCMonth(),
+        amanha.getUTCDate(),
+      ),
     );
     const { service } = criarServico(materiaAberta(dataFimFutura));
     await expect(

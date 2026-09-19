@@ -36,7 +36,10 @@ describe('Geração de relatórios — PDF e Excel (e2e)', () => {
   // Cria só o User (sem logar ainda) — logar antes de vincular Professor/Aluno gravaria
   // professorId/alunoId undefined no JWT pra sempre, já que esse claim vem de user.professor?.id
   // /user.aluno?.id lidos no momento exato do login (ver auth.service.ts).
-  async function criarUsuarioSemLogin(login: string, role: 'ADMIN' | 'PROFESSOR' | 'ALUNO') {
+  async function criarUsuarioSemLogin(
+    login: string,
+    role: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+  ) {
     const senhaHash = await bcrypt.hash(senha, 10);
     const user = await prisma.user.create({
       data: { login, senhaHash, role, precisaTrocarSenha: false },
@@ -96,7 +99,10 @@ describe('Geração de relatórios — PDF e Excel (e2e)', () => {
     adminToken = await login(loginAdmin);
 
     const loginProfessor = `e2e-prof-relatorios-${sufixo}@teste.com`;
-    const userProfessorId = await criarUsuarioSemLogin(loginProfessor, 'PROFESSOR');
+    const userProfessorId = await criarUsuarioSemLogin(
+      loginProfessor,
+      'PROFESSOR',
+    );
     const professor = await prisma.professor.create({
       data: {
         userId: userProfessorId,
@@ -164,7 +170,11 @@ describe('Geração de relatórios — PDF e Excel (e2e)', () => {
 
   describe.each([
     ['pdf', 'application/pdf', '%PDF'],
-    ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'PK'],
+    [
+      'xlsx',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'PK',
+    ],
   ])('formato=%s', (formato, contentTypeEsperado, assinaturaEsperada) => {
     it('diário da matéria (professor)', async () => {
       const resposta = await request(app.getHttpServer())

@@ -36,7 +36,10 @@ describe('Encerramento e reabertura de Matéria (e2e)', () => {
   // Cria só o User (sem logar ainda) — logar antes de vincular Professor/Aluno gravaria
   // professorId/alunoId undefined no JWT pra sempre, já que esse claim vem de user.professor?.id
   // /user.aluno?.id lidos no momento exato do login (ver auth.service.ts).
-  async function criarUsuarioSemLogin(login: string, role: 'ADMIN' | 'PROFESSOR' | 'ALUNO') {
+  async function criarUsuarioSemLogin(
+    login: string,
+    role: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
+  ) {
     const senhaHash = await bcrypt.hash(senha, 10);
     const user = await prisma.user.create({
       data: { login, senhaHash, role, precisaTrocarSenha: false },
@@ -74,7 +77,10 @@ describe('Encerramento e reabertura de Matéria (e2e)', () => {
     adminToken = await login(loginAdmin);
 
     const loginProfessor = `e2e-prof-materias-${sufixo}@teste.com`;
-    const userProfessorId = await criarUsuarioSemLogin(loginProfessor, 'PROFESSOR');
+    const userProfessorId = await criarUsuarioSemLogin(
+      loginProfessor,
+      'PROFESSOR',
+    );
     const professor = await prisma.professor.create({
       data: {
         userId: userProfessorId,
@@ -166,7 +172,11 @@ describe('Encerramento e reabertura de Matéria (e2e)', () => {
       },
     });
     await prisma.nota.create({
-      data: { itemAvaliacaoId: item.id, alunoId: alunoAprovadoId, valorObtido: 9 },
+      data: {
+        itemAvaliacaoId: item.id,
+        alunoId: alunoAprovadoId,
+        valorObtido: 9,
+      },
     });
   });
 
@@ -259,16 +269,16 @@ describe('Encerramento e reabertura de Matéria (e2e)', () => {
     const pendentes = await request(app.getHttpServer())
       .get('/admin/pendencias?status=PENDENTE')
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(
-      (pendentes.body as { id: string }[]).map((p) => p.id),
-    ).not.toContain(alunoReprovadoId);
+    expect((pendentes.body as { id: string }[]).map((p) => p.id)).not.toContain(
+      alunoReprovadoId,
+    );
 
     const resolvidas = await request(app.getHttpServer())
       .get('/admin/pendencias?status=RESOLVIDA')
       .set('Authorization', `Bearer ${adminToken}`);
-    expect(
-      (resolvidas.body as { id: string }[]).map((p) => p.id),
-    ).toContain(alunoReprovadoId);
+    expect((resolvidas.body as { id: string }[]).map((p) => p.id)).toContain(
+      alunoReprovadoId,
+    );
   });
 
   it('admin reabre a matéria', async () => {

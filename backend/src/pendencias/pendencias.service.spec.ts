@@ -8,7 +8,11 @@ const MATERIA_ENCERRADA = {
   turma: { semestre: { nome: '2026/1' } },
 };
 
-function boletimComReprovado(alunoId: string, alunoNome: string, matricula: string) {
+function boletimComReprovado(
+  alunoId: string,
+  alunoNome: string,
+  matricula: string,
+) {
   return [
     {
       aluno: { id: alunoId, nome: alunoNome, matricula },
@@ -26,7 +30,9 @@ function criarServico(opts: {
 }) {
   const prisma = {
     materia: {
-      findMany: jest.fn().mockResolvedValue(opts.materias ?? [MATERIA_ENCERRADA]),
+      findMany: jest
+        .fn()
+        .mockResolvedValue(opts.materias ?? [MATERIA_ENCERRADA]),
       findUnique: jest.fn().mockResolvedValue({ nome: 'Matemática' }),
     },
     pendenciaResolvida: {
@@ -104,7 +110,9 @@ describe('PendenciasService — cálculo ao vivo a partir de disciplinas encerra
     expect(prisma.pendenciaResolvida.upsert).toHaveBeenCalledTimes(2);
     expect(prisma.pendenciaResolvida.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { alunoId_materiaId: { alunoId: 'aluno-1', materiaId: 'materia-1' } },
+        where: {
+          alunoId_materiaId: { alunoId: 'aluno-1', materiaId: 'materia-1' },
+        },
       }),
     );
   });

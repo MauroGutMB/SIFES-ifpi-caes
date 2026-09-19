@@ -30,19 +30,14 @@ describe('UsersService.importarUsuarios — encoding do CSV', () => {
   it('aceita normalmente um CSV em UTF-8 válido com acentos', async () => {
     const prisma = { user: { findUnique: jest.fn().mockResolvedValue(null) } };
     const alunosService = {
-      create: jest
-        .fn()
-        .mockResolvedValue({ senhaInicial: 'abc123' }),
+      create: jest.fn().mockResolvedValue({ senhaInicial: 'abc123' }),
     };
     const service = new UsersService(
       prisma as never,
       alunosService as never,
       {} as never,
     );
-    const csvUtf8 = Buffer.from(
-      'nome,login,cargo\nJosé,jose,ALUNO\n',
-      'utf-8',
-    );
+    const csvUtf8 = Buffer.from('nome,login,cargo\nJosé,jose,ALUNO\n', 'utf-8');
     const resultado = await service.importarUsuarios(csvUtf8);
     expect(resultado.importados).toHaveLength(1);
     expect(resultado.importados[0].nome).toBe('José');
