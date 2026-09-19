@@ -92,7 +92,8 @@ export class AlunosService {
   async remove(id: string) {
     const aluno = await this.prisma.aluno.findUniqueOrThrow({ where: { id } });
     // Cascata: remover o User remove o Aluno junto (onDelete: Cascade no schema).
-    return this.prisma.user.delete({ where: { id: aluno.userId } });
+    await this.prisma.user.delete({ where: { id: aluno.userId } });
+    return { id, nome: aluno.nome };
   }
 
   async vincularTurma(id: string, turmaId: string) {

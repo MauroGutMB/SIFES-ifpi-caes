@@ -66,6 +66,7 @@ model User {
   professor           Professor?
   aluno               Aluno?
   refreshTokens       RefreshToken[]
+  logsAuditoria       LogAuditoria[]
 
   @@map("users")
 }
@@ -90,8 +91,29 @@ model Semestre {
   dataFim      DateTime
 
   turmas       Turma[]
+  logsAuditoria LogAuditoria[]
 
   @@map("semestres")
+}
+
+/** Log de auditoria de ações administrativas/acadêmicas de alteração ou exclusão — nunca de
+ * criação simples (ver `LogAcao`, que é o que decide o que gera log). `usuarioNome` é uma
+ * cópia do nome de quem fez a ação no momento em que ela aconteceu, pra o log continuar legível
+ * mesmo que o usuário seja excluído depois (por isso `usuario` é opcional/SetNull). Vinculado
+ * ao semestre vigente no momento da ação — o admin decide apagar os logs de um semestre inteiro
+ * quando ele encerra (ver LogsService.apagarDoSemestre). */
+model LogAuditoria {
+  id           String    @id @default(uuid())
+  acao         String
+  alvo         String
+  usuarioId    String?
+  usuario      User?     @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuarioNome  String
+  semestreId   String?
+  semestre     Semestre? @relation(fields: [semestreId], references: [id], onDelete: SetNull)
+  criadoEm     DateTime  @default(now())
+
+  @@map("logs_auditoria")
 }
 
 model Turma {

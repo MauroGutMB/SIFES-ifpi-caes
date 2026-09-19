@@ -30,6 +30,7 @@ import { UserMeDto } from './dto/user-me.dto';
 import { UserDto } from './dto/user.dto';
 import { SenhaRedefinidaDto } from './dto/senha-redefinida.dto';
 import { ImportarUsuariosResultadoDto } from './dto/importar-usuarios-resultado.dto';
+import { LogAcao } from '../logs/log-acao.decorator';
 
 const MAX_IMPORTACAO_BYTES = 2 * 1024 * 1024; // 2MB — bem além do que uma lista de nomes precisa
 
@@ -79,6 +80,10 @@ export class UsersController {
 
   @Roles(Role.ADMIN)
   @Delete(':id/foto')
+  @LogAcao(({ params }) => ({
+    acao: 'Removeu foto de usuário',
+    alvo: `usuário ${params.id}`,
+  }))
   removerFoto(@Param('id') id: string) {
     return this.usersService.removerFoto(id);
   }
@@ -86,6 +91,10 @@ export class UsersController {
   @Roles(Role.ADMIN)
   @Put(':id/redefinir-senha')
   @ApiOkResponse({ type: SenhaRedefinidaDto })
+  @LogAcao(({ resultado }) => ({
+    acao: 'Redefiniu senha',
+    alvo: (resultado as { login?: string })?.login ?? 'usuário',
+  }))
   redefinirSenha(@Param('id') id: string): Promise<SenhaRedefinidaDto> {
     return this.usersService.resetarSenha(id);
   }
@@ -113,6 +122,10 @@ export class UsersController {
   })
   @ApiOkResponse({ type: ImportarUsuariosResultadoDto })
   @UseInterceptors(FileInterceptor('arquivo'))
+  @LogAcao(({ resultado }) => ({
+    acao: 'Importou usuários via CSV',
+    alvo: `${(resultado as { importados?: unknown[] })?.importados?.length ?? 0} usuário(s) importado(s)`,
+  }))
   importar(
     @UploadedFile(
       new ParseFilePipeBuilder()

@@ -68,6 +68,7 @@ export class ProfessoresService {
       where: { id },
     });
     // Cascata: remover o User remove o Professor junto (onDelete: Cascade no schema).
-    return this.prisma.user.delete({ where: { id: professor.userId } });
+    await this.prisma.user.delete({ where: { id: professor.userId } });
+    return { id, nome: professor.nome };
   }
 }

@@ -23,6 +23,7 @@ import { AdminDashboardModule } from './admin-dashboard/admin-dashboard.module';
 import { RelatoriosModule } from './relatorios/relatorios.module';
 import { ArquivosModule } from './arquivos/arquivos.module';
 import { PendenciasModule } from './pendencias/pendencias.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { PendenciasModule } from './pendencias/pendencias.module';
     RelatoriosModule,
     ArquivosModule,
     PendenciasModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
