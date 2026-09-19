@@ -12,14 +12,18 @@ export function ProfessorLayout() {
     { to: '/app/professor', label: 'Início', icon: <HomeIcon fontSize="small" />, end: true },
   ];
 
-  const itensDisciplinas: SidebarNavItem[] = (materias ?? []).map((m) => ({
+  // Só as disciplinas em curso — as de semestres já encerrados ficam de fora da navegação
+  // do dia a dia (continuam acessíveis pelo histórico do aluno/relatórios, só não aqui).
+  const materiasAbertas = (materias ?? []).filter((m) => m.estado === 'ABERTA');
+
+  const itensDisciplinas: SidebarNavItem[] = materiasAbertas.map((m) => ({
     to: `/app/professor/materias/${m.id}`,
     label: m.nome,
     icon: <MenuBookIcon fontSize="small" />,
   }));
 
   const turmasUnicas = new Map<string, { cursoTecnico: string; anoSerie: string }>();
-  for (const m of materias ?? []) {
+  for (const m of materiasAbertas) {
     turmasUnicas.set(m.turmaId, {
       cursoTecnico: m.turma.cursoTecnico,
       anoSerie: m.turma.anoSerie,

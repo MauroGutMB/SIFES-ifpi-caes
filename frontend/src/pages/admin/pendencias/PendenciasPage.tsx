@@ -150,7 +150,10 @@ export function PendenciasPage() {
   const baixarRelatorio = async (formato: 'pdf' | 'xlsx') => {
     setBaixando(formato);
     try {
-      await baixarArquivo(`/admin/pendencias/relatorio?formato=${formato}`, `pendencias.${formato}`);
+      await baixarArquivo(
+        `/admin/pendencias/relatorio?formato=${formato}&status=${status}`,
+        `pendencias-${status.toLowerCase()}.${formato}`,
+      );
     } finally {
       setBaixando(null);
     }

@@ -22,11 +22,13 @@ import {
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
 import { useMateriaPlanoControllerDetalhamentoAluno } from '../../api/generated/plano-disciplina/plano-disciplina';
 import { urlArquivo } from '../../api/arquivo-url';
+import { baixarArquivo } from '../../api/download';
 import { FotoPopup } from '../../components/FotoPopup';
 import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
@@ -221,6 +223,7 @@ export function TurmaProfessorPage() {
   const [dataFim, setDataFim] = useState('');
   const [aulaSelecionada, setAulaSelecionada] = useState<string | null>(null);
   const [materiaDetalheId, setMateriaDetalheId] = useState<string | null>(null);
+  const [exportando, setExportando] = useState<'pdf' | 'xlsx' | null>(null);
 
   const materiasDaTurma = (materias ?? []).filter((m) => m.turmaId === turmaId);
 
@@ -287,6 +290,23 @@ export function TurmaProfessorPage() {
     }
     return [...mapa.entries()];
   }, [resumo]);
+
+  const exportarFrequencias = async (formato: 'pdf' | 'xlsx') => {
+    setExportando(formato);
+    try {
+      const params = new URLSearchParams({ formato });
+      if (materiaId) params.set('materiaId', materiaId);
+      if (alunoId) params.set('alunoId', alunoId);
+      if (dataInicio) params.set('dataInicio', dataInicio);
+      if (dataFim) params.set('dataFim', dataFim);
+      await baixarArquivo(
+        `/relatorios/turma/${turmaId}/frequencia-por-disciplina?${params}`,
+        `frequencia-turma.${formato}`,
+      );
+    } finally {
+      setExportando(null);
+    }
+  };
 
   if (isLoading) return null;
   if (materiasDaTurma.length === 0) {
@@ -364,6 +384,26 @@ export function TurmaProfessorPage() {
             slotProps={{ inputLabel: { shrink: true } }}
             sx={{ minWidth: 160 }}
           />
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', ml: { sm: 'auto' } }}>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={exportando === 'pdf'}
+              onClick={() => exportarFrequencias('pdf')}
+            >
+              PDF
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<DownloadIcon />}
+              disabled={exportando === 'xlsx'}
+              onClick={() => exportarFrequencias('xlsx')}
+            >
+              Excel
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 

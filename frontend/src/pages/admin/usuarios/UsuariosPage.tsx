@@ -143,7 +143,9 @@ export function UsuariosPage() {
   const exportarUsuarios = async (formato: 'pdf' | 'xlsx') => {
     setExportando(formato);
     try {
-      await baixarArquivo(`/relatorios/usuarios?formato=${formato}`, `usuarios.${formato}`);
+      const params = new URLSearchParams({ formato });
+      if (role) params.set('role', role);
+      await baixarArquivo(`/relatorios/usuarios?${params}`, `usuarios.${formato}`);
     } catch {
       toast.error('Não foi possível exportar os usuários');
     } finally {
