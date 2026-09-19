@@ -299,9 +299,19 @@ export function TurmaProfessorPage() {
       if (alunoId) params.set('alunoId', alunoId);
       if (dataInicio) params.set('dataInicio', dataInicio);
       if (dataFim) params.set('dataFim', dataFim);
+      // O Excel não tem cabeçalho institucional (só a tabela), então o período filtrado
+      // entra no nome do arquivo — no PDF já aparece no cabeçalho.
+      const periodo =
+        dataInicio && dataFim
+          ? `_${dataInicio}_a_${dataFim}`
+          : dataInicio
+            ? `_a-partir-de_${dataInicio}`
+            : dataFim
+              ? `_ate_${dataFim}`
+              : '';
       await baixarArquivo(
         `/relatorios/turma/${turmaId}/frequencia-por-disciplina?${params}`,
-        `frequencia-turma.${formato}`,
+        `frequencia-turma${periodo}.${formato}`,
       );
     } finally {
       setExportando(null);
