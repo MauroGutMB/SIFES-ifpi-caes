@@ -2,8 +2,18 @@
 // Referência de regras de negócio: docs/regras-negocio.md
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider           = "prisma-client"
+  output             = "../generated/prisma"
+  // Sem isso, o Prisma tenta adivinhar o formato pelo tsconfig ("module": "nodenext" sem
+  // "type" no package.json é ambíguo) e às vezes gera client.ts usando `import.meta.url` —
+  // válido só em ESM de verdade. O projeto inteiro é CommonJS (Nest, Jest, build via tsc
+  // visando "commonjs" na prática), então força explicitamente esse formato.
+  moduleFormat       = "cjs"
+  // `moduleFormat` sozinho não basta: os `require()` internos gerados (ex.: client.ts
+  // requerendo internal/class) continuam com extensão `.ts` por padrão, que só resolve sob
+  // ts-node/execução nativa de TS — nunca sob `tsc` (que não reescreve strings de `require()`
+  // cru) + `node dist/...` puro, que é como o build de produção roda.
+  importFileExtension = "js"
 }
 
 datasource db {
