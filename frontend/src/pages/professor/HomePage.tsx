@@ -22,6 +22,10 @@ export function ProfessorHomePage() {
   const [erroFoto, setErroFoto] = useState<string | null>(null);
   const [baixando, setBaixando] = useState<string | null>(null);
   const professor = materias?.[0]?.professor;
+  // A agenda é o horário de aulas de AGORA — matérias de semestres já encerrados usam os
+  // mesmos slots de dia/hora (ex: sempre Segunda 08h pro turno da manhã), então incluí-las
+  // faria a grade mostrar duas disciplinas empilhadas na mesma célula.
+  const materiasAbertas = (materias ?? []).filter((m) => m.estado === 'ABERTA');
 
   const baixarAgenda = async (formato: 'pdf' | 'xlsx') => {
     setBaixando(formato);
@@ -116,7 +120,7 @@ export function ProfessorHomePage() {
             </Stack>
             <WeeklyAgenda
               mostrarTurma
-              itens={(materias ?? []).map((m) => ({
+              itens={materiasAbertas.map((m) => ({
                 id: m.id,
                 titulo: m.nome,
                 subtitulo: `${m.turma.cursoTecnico} — ${m.turma.anoSerie}`,

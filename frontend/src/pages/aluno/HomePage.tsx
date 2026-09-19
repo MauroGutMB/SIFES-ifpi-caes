@@ -145,7 +145,9 @@ export function AlunoHomePage() {
               </Stack>
             </Stack>
             <WeeklyAgenda
-              itens={(materias ?? []).map((m) => ({
+              itens={(materias ?? [])
+                .filter((m) => m.estado === 'ABERTA')
+                .map((m) => ({
                 id: m.id,
                 titulo: m.nome,
                 subtitulo: `${m.turma.cursoTecnico} — ${m.turma.anoSerie}`,
