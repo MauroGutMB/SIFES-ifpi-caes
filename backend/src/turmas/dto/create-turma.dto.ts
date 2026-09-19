@@ -3,7 +3,7 @@ import { IsEnum, IsString, IsUUID } from 'class-validator';
 import { Turno } from '../../../generated/prisma/client';
 
 export class CreateTurmaDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do semestre ao qual a turma pertence' })
   @IsUUID()
   semestreId: string;
 
@@ -15,7 +15,7 @@ export class CreateTurmaDto {
   @IsString()
   anoSerie: string;
 
-  @ApiProperty({ enum: Turno })
+  @ApiProperty({ enum: Turno, description: 'Turno em que a turma acontece' })
   @IsEnum(Turno)
   turno: Turno;
 }

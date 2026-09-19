@@ -3,10 +3,10 @@ import { Role } from '../../../generated/prisma/client';
 import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 
 class UserProfessorResumoDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do professor' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome do professor' })
   nome: string;
 }
 

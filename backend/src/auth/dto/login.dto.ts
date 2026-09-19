@@ -8,7 +8,7 @@ export class LoginDto {
   @IsString()
   login: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Senha do usuário' })
   @IsString()
   @MinLength(1)
   senha: string;

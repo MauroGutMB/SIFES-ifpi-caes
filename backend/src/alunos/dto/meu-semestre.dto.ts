@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Turno } from '../../../generated/prisma/client';
 
 class SemestreResumoDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do semestre' })
   id: string;
 
   @ApiProperty({ description: 'Nome do semestre', example: '2026.1' })
@@ -27,7 +27,10 @@ class TurmaResumoMeuSemestreDto {
 }
 
 export class MeuSemestreDto {
-  @ApiProperty({ type: SemestreResumoDto })
+  @ApiProperty({
+    type: SemestreResumoDto,
+    description: 'Dados do semestre letivo',
+  })
   semestre: SemestreResumoDto;
 
   @ApiProperty({

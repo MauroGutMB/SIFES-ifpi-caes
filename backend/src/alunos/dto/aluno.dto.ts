@@ -43,6 +43,10 @@ export class AlunoCriadoDto extends AlunoDto {
 }
 
 export class AlunoMeDto extends AlunoDto {
-  @ApiProperty({ type: TurmaDto, nullable: true })
+  @ApiProperty({
+    type: TurmaDto,
+    nullable: true,
+    description: 'Turma atual do aluno, ou null se estiver sem turma',
+  })
   turma: TurmaDto | null;
 }

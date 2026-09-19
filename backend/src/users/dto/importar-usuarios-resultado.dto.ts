@@ -49,7 +49,11 @@ export class IgnoradoImportacaoDto {
 }
 
 export class ImportarUsuariosResultadoDto {
-  @ApiProperty({ type: UsuarioImportadoDto, isArray: true })
+  @ApiProperty({
+    type: UsuarioImportadoDto,
+    isArray: true,
+    description: 'Usuários criados com sucesso a partir do CSV',
+  })
   importados: UsuarioImportadoDto[];
 
   @ApiProperty({

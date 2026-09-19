@@ -5,7 +5,11 @@ export class BoletimLinhaDto {
   @ApiProperty({ type: AlunoResumoDto })
   aluno: AlunoResumoDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'Nota final do aluno na disciplina, calculada a partir dos itens de avaliação',
+    example: 7.5,
+  })
   notaFinal: number;
 
   @ApiProperty({
@@ -14,9 +18,15 @@ export class BoletimLinhaDto {
   })
   notaParcial: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Percentual de frequência do aluno na disciplina',
+    example: 85,
+  })
   frequenciaPercentual: number;
 
-  @ApiProperty({ enum: ['CURSANDO', 'APROVADO', 'REPROVADO'] })
+  @ApiProperty({
+    enum: ['CURSANDO', 'APROVADO', 'REPROVADO'],
+    description: 'Situação atual do aluno na disciplina',
+  })
   situacao: 'CURSANDO' | 'APROVADO' | 'REPROVADO';
 }

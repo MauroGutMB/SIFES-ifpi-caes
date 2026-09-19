@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class CreateProfessorDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome completo do professor' })
   @IsString()
   @MinLength(1)
   nome: string;

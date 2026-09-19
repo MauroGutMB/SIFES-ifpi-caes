@@ -1,16 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PendenciaDetalheDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID da disciplina em que o aluno foi reprovado' })
   materiaId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Nome da disciplina em que o aluno foi reprovado',
+  })
   materiaNome: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Nome do semestre em que a disciplina foi cursada',
+  })
   semestreNome: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Nota final do aluno na disciplina',
+    example: 4.5,
+  })
   notaFinal: number;
 
   @ApiProperty({

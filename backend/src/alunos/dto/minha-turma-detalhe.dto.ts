@@ -54,7 +54,11 @@ export class MinhaTurmaDetalheDto {
   @ApiProperty({ description: 'Ano/série da turma' })
   anoSerie: string;
 
-  @ApiProperty({ type: DisciplinaDaTurmaDto, isArray: true })
+  @ApiProperty({
+    type: DisciplinaDaTurmaDto,
+    isArray: true,
+    description: 'Disciplinas cursadas pela turma',
+  })
   disciplinas: DisciplinaDaTurmaDto[];
 
   @ApiProperty({
