@@ -10,18 +10,25 @@ import {
 } from 'class-validator';
 
 export class NotaItemDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do aluno ao qual a nota será atribuída' })
   @IsUUID()
   alunoId: string;
 
-  @ApiProperty({ example: 8.5 })
+  @ApiProperty({
+    description: 'Nota obtida pelo aluno no item de avaliação',
+    example: 8.5,
+  })
   @IsNumber()
   @Min(0)
   valorObtido: number;
 }
 
 export class SetNotasDto {
-  @ApiProperty({ type: [NotaItemDto] })
+  @ApiProperty({
+    type: [NotaItemDto],
+    description:
+      'Lista de notas a serem lançadas para os alunos no item de avaliação',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

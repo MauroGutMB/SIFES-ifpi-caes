@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SenhaRedefinidaDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Login do usuário que teve a senha redefinida' })
   login: string;
 
   @ApiProperty({

@@ -3,24 +3,38 @@ import { StatusSolicitacaoFoto } from '../../../generated/prisma/client';
 import { AlunoResumoDto } from '../../common/aluno-resumo.dto';
 
 export class SolicitacaoFotoDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID da solicitação de troca de foto' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do aluno que solicitou a troca de foto' })
   alunoId: string;
 
-  @ApiProperty({ enum: StatusSolicitacaoFoto })
+  @ApiProperty({
+    enum: StatusSolicitacaoFoto,
+    description: 'Status atual da solicitação de troca de foto',
+  })
   status: StatusSolicitacaoFoto;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Data em que a solicitação foi criada',
+    example: '2026-09-16T12:00:00.000Z',
+  })
   criadaEm: Date;
 
-  @ApiProperty({ nullable: true, type: Date })
+  @ApiProperty({
+    nullable: true,
+    type: Date,
+    description:
+      'Data em que a solicitação foi aprovada ou rejeitada, ou null se ainda pendente',
+  })
   resolvidaEm: Date | null;
 
   @ApiProperty({ description: 'URL da foto enviada, pendente de aprovação' })
   arquivoStagingUrl: string;
 
-  @ApiProperty({ type: AlunoResumoDto })
+  @ApiProperty({
+    type: AlunoResumoDto,
+    description: 'Dados resumidos do aluno que fez a solicitação',
+  })
   aluno: AlunoResumoDto;
 }

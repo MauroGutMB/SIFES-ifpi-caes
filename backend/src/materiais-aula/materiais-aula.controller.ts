@@ -9,7 +9,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -18,6 +26,7 @@ import { FileSignatureValidationPipe } from '../common/file-signature-validation
 import { MateriaisAulaService } from './materiais-aula.service';
 import { CreateMaterialAulaDto } from './dto/create-material-aula.dto';
 import { MaterialAulaDto } from './dto/material-aula.dto';
+import { ApiAutenticado } from '../common/swagger-auth.decorator';
 
 const MAX_MATERIAL_BYTES = 20 * 1024 * 1024; // 20MB
 
@@ -40,10 +49,16 @@ const MATERIAL_MIME_REGEX = new RegExp(
 @ApiTags('materiais-aula')
 @Roles(Role.ADMIN, Role.PROFESSOR)
 @Controller('aulas/:aulaId/materiais')
+@ApiAutenticado()
 export class MateriaisAulaController {
   constructor(private readonly service: MateriaisAulaService) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Enviar material de aula',
+    description:
+      'Faz upload de um material (slide, apostila, foto) vinculado a uma aula. Aceita PDF, JPEG, PNG, Word e PowerPoint — o tipo é validado pela assinatura binária real do arquivo, não só extensão/mimetype declarado, para impedir upload de conteúdo executável disfarçado (ex: HTML/SVG com script).',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -54,6 +69,11 @@ export class MateriaisAulaController {
         arquivo: { type: 'string', format: 'binary' },
       },
     },
+  })
+  @ApiNotFoundResponse({ description: 'Aula não encontrada' })
+  @ApiBadRequestResponse({
+    description:
+      'Tipo de arquivo não permitido ou tamanho acima do limite (20MB)',
   })
   @UseInterceptors(FileInterceptor('arquivo'))
   criar(
@@ -74,6 +94,11 @@ export class MateriaisAulaController {
 
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
+  @ApiOperation({
+    summary: 'Listar materiais de uma aula',
+    description: 'Lista os materiais enviados para uma aula.',
+  })
+  @ApiNotFoundResponse({ description: 'Aula não encontrada' })
   @ApiOkResponse({ type: MaterialAulaDto, isArray: true })
   listar(
     @Param('aulaId') aulaId: string,

@@ -11,20 +11,30 @@ export class FrequenciaComAlunoDto {
   })
   id: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'ID da aula à qual a frequência pertence' })
   aulaId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do aluno' })
   alunoId: string;
 
-  @ApiProperty({ enum: StatusFrequencia })
+  @ApiProperty({
+    enum: StatusFrequencia,
+    description: 'Situação do aluno na aula',
+  })
   status: StatusFrequencia;
 
-  @ApiProperty({ type: AlunoResumoDto })
+  @ApiProperty({
+    type: AlunoResumoDto,
+    description: 'Dados resumidos do aluno',
+  })
   aluno: AlunoResumoDto;
 }
 
 export class AulaDetalheDto extends AulaDto {
-  @ApiProperty({ type: FrequenciaComAlunoDto, isArray: true })
+  @ApiProperty({
+    type: FrequenciaComAlunoDto,
+    isArray: true,
+    description: 'Frequências de cada aluno lançadas nesta aula',
+  })
   frequencias: FrequenciaComAlunoDto[];
 }

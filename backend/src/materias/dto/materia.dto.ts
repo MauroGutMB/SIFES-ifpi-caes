@@ -4,39 +4,50 @@ import { TurmaResumoDto } from '../../turmas/dto/turma.dto';
 import { ProfessorDto } from '../../professores/dto/professor.dto';
 
 export class HorarioMateriaDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do horário' })
   id: string;
 
-  @ApiProperty({ enum: DiaSemana })
+  @ApiProperty({ enum: DiaSemana, description: 'Dia da semana da aula' })
   diaSemana: DiaSemana;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Horário de início da aula', example: '08:00' })
   horaInicio: string;
 }
 
 export class MateriaDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da disciplina' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome da disciplina' })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da turma vinculada' })
   turmaId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do professor responsável' })
   professorId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Carga horária de referência, em horas' })
   cargaHorariaReferencia: number;
 
-  @ApiProperty({ type: HorarioMateriaDto, isArray: true })
+  @ApiProperty({
+    type: HorarioMateriaDto,
+    isArray: true,
+    description: 'Horários semanais recorrentes da disciplina',
+  })
   horarios: HorarioMateriaDto[];
 
-  @ApiProperty({ enum: EstadoMateria })
+  @ApiProperty({
+    enum: EstadoMateria,
+    description: 'Estado atual da disciplina',
+  })
   estado: EstadoMateria;
 
-  @ApiProperty({ nullable: true, type: Date })
+  @ApiProperty({
+    nullable: true,
+    type: Date,
+    description: 'Data em que a disciplina foi encerrada, se já encerrada',
+  })
   encerradaEm: Date | null;
 
   @ApiProperty({
@@ -46,9 +57,15 @@ export class MateriaDto {
   })
   notaMinimaAprovacao: string;
 
-  @ApiProperty({ type: TurmaResumoDto })
+  @ApiProperty({
+    type: TurmaResumoDto,
+    description: 'Turma vinculada à disciplina',
+  })
   turma: TurmaResumoDto;
 
-  @ApiProperty({ type: ProfessorDto })
+  @ApiProperty({
+    type: ProfessorDto,
+    description: 'Professor responsável pela disciplina',
+  })
   professor: ProfessorDto;
 }

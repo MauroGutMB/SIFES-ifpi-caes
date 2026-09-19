@@ -9,7 +9,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -18,14 +26,21 @@ import { AtividadesService } from './atividades.service';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { AtividadeDto } from './dto/atividade.dto';
 import { MAX_ENTREGA_BYTES } from './formato-entrega.util';
+import { ApiAutenticado } from '../common/swagger-auth.decorator';
 
 @ApiTags('atividades')
 @Roles(Role.ADMIN, Role.PROFESSOR)
 @Controller('materias/:materiaId/atividades')
+@ApiAutenticado()
 export class MateriaAtividadesController {
   constructor(private readonly service: AtividadesService) {}
 
   @Post()
+  @ApiOperation({
+    summary: 'Criar atividade',
+    description:
+      'Cria uma atividade (com prazo e formato de entrega exigido) numa disciplina. Só é permitido enquanto a disciplina estiver ABERTA.',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -40,6 +55,8 @@ export class MateriaAtividadesController {
       },
     },
   })
+  @ApiNotFoundResponse({ description: 'Disciplina não encontrada' })
+  @ApiBadRequestResponse({ description: 'Disciplina já encerrada' })
   @UseInterceptors(FileInterceptor('anexo'))
   criar(
     @Param('materiaId') materiaId: string,
@@ -57,6 +74,11 @@ export class MateriaAtividadesController {
 
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get()
+  @ApiOperation({
+    summary: 'Listar atividades da disciplina',
+    description: 'Lista as atividades cadastradas numa disciplina.',
+  })
+  @ApiNotFoundResponse({ description: 'Disciplina não encontrada' })
   @ApiOkResponse({ type: AtividadeDto, isArray: true })
   listar(
     @Param('materiaId') materiaId: string,

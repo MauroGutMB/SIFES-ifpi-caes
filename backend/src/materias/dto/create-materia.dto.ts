@@ -17,11 +17,11 @@ export class CreateMateriaDto {
   @MinLength(1)
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da turma à qual a disciplina pertence' })
   @IsUUID()
   turmaId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do professor responsável pela disciplina' })
   @IsUUID()
   professorId: string;
 

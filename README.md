@@ -14,10 +14,27 @@ O **SIFES** é um sistema de gestão acadêmica desenvolvido para uso interno do
 
 O sistema permite o controle de administradores, professores e alunos, cobrindo o gerenciamento de matérias, aulas, matrículas e presença, além da exportação de relatórios em PDF e Excel.
 
+## Telas
+
+<div align="center">
+  <img src="assets/tela_login.png" alt="Tela de login do SIFES" width="800" />
+  <p><sub>Tela de login</sub></p>
+</div>
+
+<div align="center">
+  <img src="assets/painel_admin.png" alt="Painel administrativo do SIFES" width="800" />
+  <p><sub>Painel administrativo</sub></p>
+</div>
+
+## Documentação
+
+- **[Backend](backend/README.md)** — API (NestJS + Prisma): como rodar em desenvolvimento, banco de dados e endpoints explicados.
+- **[Frontend](frontend/README.md)** — SPA (React + Vite): como rodar em desenvolvimento, geração do client da API e build.
+
 ## Identidade Visual
 
 <div align="center">
-  <img src="assets/identidade-visual.jpg" alt="Identidade visual do SIFES" width="800" />
+  <img src="assets/identidade-visual.png" alt="Identidade visual do SIFES" width="800" />
 </div>
 
 

@@ -3,7 +3,7 @@ import { IsEnum, Matches } from 'class-validator';
 import { DiaSemana } from '../../../generated/prisma/client';
 
 export class HorarioMateriaInputDto {
-  @ApiProperty({ enum: DiaSemana })
+  @ApiProperty({ enum: DiaSemana, description: 'Dia da semana da aula' })
   @IsEnum(DiaSemana)
   diaSemana: DiaSemana;
 

@@ -9,12 +9,18 @@ import {
 } from 'class-validator';
 
 export class CreateItemAvaliacaoDto {
-  @ApiProperty({ example: 'Prova 1' })
+  @ApiProperty({
+    description: 'Nome do item de avaliação',
+    example: 'Prova 1',
+  })
   @IsString()
   @MinLength(1)
   nome: string;
 
-  @ApiProperty({ example: 10 })
+  @ApiProperty({
+    description: 'Valor máximo (nota) que o item pode valer',
+    example: 10,
+  })
   @IsNumber()
   @Min(0.01)
   valorMaximo: number;

@@ -2,12 +2,18 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../../generated/prisma/client';
 
 export class LoginResponseDto {
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'Token JWT de acesso, usado nas próximas requisições autenticadas',
+  })
   accessToken: string;
 
-  @ApiProperty({ enum: Role })
+  @ApiProperty({ enum: Role, description: 'Papel do usuário no sistema' })
   role: Role;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'true quando o usuário ainda está com a senha inicial/temporária e deve trocá-la no próximo login',
+  })
   precisaTrocarSenha: boolean;
 }

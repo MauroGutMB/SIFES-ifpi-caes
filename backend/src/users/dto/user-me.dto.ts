@@ -2,18 +2,27 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../../generated/prisma/client';
 
 export class UserMeDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do usuário (conta de login)' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Login — matrícula (aluno) ou e-mail (professor/admin)',
+    example: '20231234',
+  })
   login: string;
 
-  @ApiProperty({ enum: Role })
+  @ApiProperty({ enum: Role, description: 'Papel do usuário no sistema' })
   role: Role;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Se o usuário precisa trocar a senha no próximo login',
+  })
   precisaTrocarSenha: boolean;
 
-  @ApiProperty({ nullable: true, type: String })
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'URL da foto de perfil, ou null se não tiver foto',
+  })
   fotoUrl: string | null;
 }

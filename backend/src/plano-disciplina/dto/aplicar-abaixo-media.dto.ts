@@ -4,6 +4,9 @@ export class AplicarAbaixoMediaDto {
   @ApiProperty({ description: 'Quantos alunos tiveram o item habilitado' })
   alunosHabilitados: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description: 'Nome do item especial aplicado, quando informado',
+  })
   itemNome?: string;
 }

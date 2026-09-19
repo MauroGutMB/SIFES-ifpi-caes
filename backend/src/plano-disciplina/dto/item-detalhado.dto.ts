@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ItemDetalhadoDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do item de avaliação' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome do item de avaliação' })
   nome: string;
 
   @ApiProperty({ description: 'Decimal serializado como string', type: String })
@@ -19,7 +19,10 @@ export class ItemDetalhadoDto {
   })
   notaLancada: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    description:
+      'Indica se o item é especial, aplicado seletivamente a alunos abaixo da média',
+  })
   especial: boolean;
 
   @ApiProperty({

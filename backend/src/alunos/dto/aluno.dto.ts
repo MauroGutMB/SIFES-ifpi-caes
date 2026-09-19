@@ -2,22 +2,36 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TurmaDto } from '../../turmas/dto/turma.dto';
 
 export class AlunoDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do aluno' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da conta de login (User) vinculada' })
   userId: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Nome completo do aluno',
+    example: 'Maria da Silva',
+  })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Matrícula — também usada como login',
+    example: '20231234',
+  })
   matricula: string;
 
-  @ApiProperty({ nullable: true, type: String })
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'Turma atual do aluno, ou null se estiver sem turma',
+  })
   turmaId: string | null;
 
-  @ApiProperty({ nullable: true, type: String })
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'URL da foto de perfil, ou null se não tiver foto',
+  })
   fotoUrl: string | null;
 }
 
@@ -29,6 +43,10 @@ export class AlunoCriadoDto extends AlunoDto {
 }
 
 export class AlunoMeDto extends AlunoDto {
-  @ApiProperty({ type: TurmaDto, nullable: true })
+  @ApiProperty({
+    type: TurmaDto,
+    nullable: true,
+    description: 'Turma atual do aluno, ou null se estiver sem turma',
+  })
   turma: TurmaDto | null;
 }

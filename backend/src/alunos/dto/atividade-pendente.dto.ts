@@ -1,18 +1,22 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AtividadePendenteDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da atividade' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Título da atividade' })
   titulo: string;
 
-  @ApiProperty({ nullable: true, type: Date })
+  @ApiProperty({
+    nullable: true,
+    type: Date,
+    description: 'Prazo de entrega, ou null se não tiver prazo definido',
+  })
   prazo: Date | null;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da disciplina da atividade' })
   materiaId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome da disciplina da atividade' })
   materiaNome: string;
 }

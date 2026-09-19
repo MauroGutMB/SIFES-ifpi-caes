@@ -7,6 +7,10 @@ export class ResolverTodasDto {
   })
   resolvidas: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    required: false,
+    description:
+      'Nome do aluno cujas pendências foram resolvidas, quando informado',
+  })
   alunoNome?: string;
 }

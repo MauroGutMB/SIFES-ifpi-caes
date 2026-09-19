@@ -10,17 +10,25 @@ import {
 import { StatusFrequencia } from '../../../generated/prisma/client';
 
 export class FrequenciaItemDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'ID do aluno cuja frequência está sendo lançada',
+  })
   @IsUUID()
   alunoId: string;
 
-  @ApiProperty({ enum: StatusFrequencia })
+  @ApiProperty({
+    enum: StatusFrequencia,
+    description: 'Situação do aluno na aula',
+  })
   @IsEnum(StatusFrequencia)
   status: StatusFrequencia;
 }
 
 export class SetFrequenciasDto {
-  @ApiProperty({ type: [FrequenciaItemDto] })
+  @ApiProperty({
+    type: [FrequenciaItemDto],
+    description: 'Lista de frequências a lançar para a aula',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

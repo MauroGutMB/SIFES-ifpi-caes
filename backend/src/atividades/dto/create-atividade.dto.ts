@@ -9,17 +9,20 @@ import {
 import { FormatoArquivo } from '../../../generated/prisma/client';
 
 export class CreateAtividadeDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Título da atividade' })
   @IsString()
   @MinLength(1)
   titulo: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, description: 'Descrição da atividade' })
   @IsOptional()
   @IsString()
   descricao?: string;
 
-  @ApiProperty({ enum: FormatoArquivo })
+  @ApiProperty({
+    enum: FormatoArquivo,
+    description: 'Formato de arquivo exigido para a entrega',
+  })
   @IsEnum(FormatoArquivo)
   formatoExigido: FormatoArquivo;
 

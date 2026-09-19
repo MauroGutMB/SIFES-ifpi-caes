@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AtividadesResumoMateriaDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da disciplina' })
   materiaId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome da disciplina' })
   materiaNome: string;
 
   @ApiProperty({ description: 'Atividades já entregues pelo aluno' })
@@ -16,6 +16,6 @@ export class AtividadesResumoMateriaDto {
   @ApiProperty({ description: 'Prazo vencido sem entrega' })
   vencidas: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Total de atividades da disciplina' })
   total: number;
 }

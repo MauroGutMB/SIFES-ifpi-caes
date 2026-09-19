@@ -1,10 +1,12 @@
+# Documentação interna — não vai pro repositório
+docs/
+
 # Node
 node_modules/
 
 # Builds
 dist/
 build/
-generated/
 coverage/
 
 # Env

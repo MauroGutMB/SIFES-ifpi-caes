@@ -14,7 +14,7 @@ import {
 import { ModoItemEspecial } from '../../../generated/prisma/client';
 
 export class ConfiguracaoItemDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'ID do item de avaliação a ser configurado' })
   @IsUUID()
   itemAvaliacaoId: string;
 
@@ -43,7 +43,11 @@ export class ConfiguracaoItemDto {
 }
 
 export class ConfigurarRegraDto {
-  @ApiProperty({ type: [ConfiguracaoItemDto] })
+  @ApiProperty({
+    type: [ConfiguracaoItemDto],
+    description:
+      'Lista de configurações de peso e modo especial para os itens de avaliação da disciplina',
+  })
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })
