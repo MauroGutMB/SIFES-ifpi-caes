@@ -152,7 +152,18 @@ export class UsersService {
   async importarUsuarios(
     arquivo: Buffer,
   ): Promise<ImportarUsuariosResultadoDto> {
-    const linhas = parseCsv(arquivo.toString('utf-8'));
+    let texto: string;
+    try {
+      // fatal:true rejeita bytes que não são UTF-8 válido — sem isso, um CSV exportado
+      // do Excel como Windows-1252 (comum no Brasil) decodifica errado em silêncio e
+      // corrompe nomes acentuados (ex: "José" vira lixo) sem nenhum aviso.
+      texto = new TextDecoder('utf-8', { fatal: true }).decode(arquivo);
+    } catch {
+      throw new BadRequestException(
+        'Arquivo CSV não está em UTF-8. No Excel/Sheets, salve como "CSV UTF-8 (separado por vírgulas)" e envie novamente.',
+      );
+    }
+    const linhas = parseCsv(texto);
     if (linhas.length === 0) {
       throw new BadRequestException('Arquivo CSV vazio');
     }
