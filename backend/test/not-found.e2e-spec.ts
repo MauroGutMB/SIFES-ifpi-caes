@@ -11,14 +11,12 @@ import { PrismaExceptionFilter } from '../src/common/prisma-exception.filter';
  * Regressão do bug: GET /alunos/:id (e outros findOne baseados em findUniqueOrThrow) com um
  * id inexistente vazava 500 com stack trace do Prisma, em vez de 404. Ver PrismaExceptionFilter.
  *
- * BLOQUEADO no momento: `npm run test:e2e` falha ao inicializar o PrismaClient dentro do Jest —
- * o motor de query do Prisma 7 carrega o compilador WASM via `import()` dinâmico, que o
- * ambiente CJS padrão do Jest não suporta (`--experimental-vm-modules` resolve esse erro
- * específico, mas aí quebra em outro lugar porque o `@nestjs/config` é ESM-only e o modo ESM
- * do Jest/ts-jest não faz o interop CJS/ESM automaticamente). Resolver isso de vez exige migrar
- * a config de e2e inteira pra ESM nativo (preset `ts-jest/presets/default-esm` + ajustes de
- * `tsconfig`/`package.json`) — escopo maior, fica pendente. O teste já está pronto pra rodar
- * assim que isso for destravado.
+ * `npm run test:e2e` roda em modo ESM nativo (ver `test/jest-e2e.json` + `test/tsconfig.e2e.json`
+ * + a flag `NODE_OPTIONS=--experimental-vm-modules` já embutida no script) — necessário porque o
+ * motor de query do Prisma 7 carrega o compilador WASM via `import()` dinâmico, que o CJS padrão
+ * do Jest não suporta. A config de e2e usa um tsconfig próprio com `module: ESNext` (em vez do
+ * `nodenext` do resto do projeto) justamente pra emitir sintaxe ESM de verdade independente do
+ * `package.json` do backend não ter `"type": "module"`.
  */
 describe('Not found regression (e2e)', () => {
   let app: INestApplication<App>;

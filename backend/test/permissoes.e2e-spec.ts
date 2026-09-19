@@ -13,12 +13,6 @@ import { PrismaExceptionFilter } from '../src/common/prisma-exception.filter';
  * common/posse.util.ts). Cobre o que os unit tests com Prisma mockado não cobrem: o guard de
  * roles real (@Roles/RolesGuard), o fluxo de JWT real, e a checagem de posse batendo no banco
  * de verdade, tudo junto.
- *
- * BLOQUEADO no momento, pelo mesmo motivo documentado em not-found.e2e-spec.ts: `npm run
- * test:e2e` falha ao inicializar o PrismaClient dentro do Jest (import dinâmico do compilador
- * WASM do Prisma 7 não é suportado pelo CJS padrão do Jest; rodar com
- * --experimental-vm-modules resolve esse erro específico mas quebra em outro lugar porque
- * @nestjs/config é ESM-only). Arquivo pronto pra rodar assim que isso for destravado.
  */
 describe('Permissões entre papéis (e2e)', () => {
   let app: INestApplication<App>;
@@ -37,7 +31,10 @@ describe('Permissões entre papéis (e2e)', () => {
   let turmaId: string;
   let materiaDoProfessorAId: string;
 
-  async function criarUsuario(
+  // Cria só o User (sem logar ainda) — logar antes de vincular Professor/Aluno gravaria
+  // professorId/alunoId undefined no JWT pra sempre, já que esse claim vem de user.professor?.id
+  // /user.aluno?.id lidos no momento exato do login (ver auth.service.ts).
+  async function criarUsuarioSemLogin(
     login: string,
     role: 'ADMIN' | 'PROFESSOR' | 'ALUNO',
   ) {
@@ -46,13 +43,14 @@ describe('Permissões entre papéis (e2e)', () => {
       data: { login, senhaHash, role, precisaTrocarSenha: false },
     });
     userIds.push(user.id);
+    return user.id;
+  }
+
+  async function login(loginStr: string) {
     const resposta = await request(app.getHttpServer())
       .post('/auth/login')
-      .send({ login, senha });
-    return {
-      userId: user.id,
-      token: (resposta.body as { accessToken: string }).accessToken,
-    };
+      .send({ login: loginStr, senha });
+    return (resposta.body as { accessToken: string }).accessToken;
   }
 
   beforeAll(async () => {
@@ -72,44 +70,48 @@ describe('Permissões entre papéis (e2e)', () => {
     await app.init();
     prisma = moduleFixture.get(PrismaService);
 
-    const admin = await criarUsuario(`e2e-admin-${sufixo}`, 'ADMIN');
-    adminToken = admin.token;
+    const loginAdmin = `e2e-admin-${sufixo}`;
+    await criarUsuarioSemLogin(loginAdmin, 'ADMIN');
+    adminToken = await login(loginAdmin);
 
-    const userProfessorA = await criarUsuario(
-      `e2e-profA-${sufixo}@teste.com`,
+    const loginProfessorA = `e2e-profA-${sufixo}@teste.com`;
+    const userProfessorAId = await criarUsuarioSemLogin(
+      loginProfessorA,
       'PROFESSOR',
     );
     const professorA = await prisma.professor.create({
       data: {
-        userId: userProfessorA.userId,
+        userId: userProfessorAId,
         nome: 'Professor A',
-        email: `e2e-profA-${sufixo}@teste.com`,
+        email: loginProfessorA,
       },
     });
-    professorAToken = userProfessorA.token;
+    professorAToken = await login(loginProfessorA);
 
-    const userProfessorB = await criarUsuario(
-      `e2e-profB-${sufixo}@teste.com`,
+    const loginProfessorB = `e2e-profB-${sufixo}@teste.com`;
+    const userProfessorBId = await criarUsuarioSemLogin(
+      loginProfessorB,
       'PROFESSOR',
     );
     await prisma.professor.create({
       data: {
-        userId: userProfessorB.userId,
+        userId: userProfessorBId,
         nome: 'Professor B',
-        email: `e2e-profB-${sufixo}@teste.com`,
+        email: loginProfessorB,
       },
     });
-    professorBToken = userProfessorB.token;
+    professorBToken = await login(loginProfessorB);
 
-    const userAluno = await criarUsuario(`e2e-aluno-${sufixo}`, 'ALUNO');
+    const loginAluno = `e2e-aluno-${sufixo}`;
+    const userAlunoId = await criarUsuarioSemLogin(loginAluno, 'ALUNO');
     await prisma.aluno.create({
       data: {
-        userId: userAluno.userId,
+        userId: userAlunoId,
         nome: 'Aluno E2E',
         matricula: `e2e-${sufixo}`,
       },
     });
-    alunoToken = userAluno.token;
+    alunoToken = await login(loginAluno);
 
     const semestre = await prisma.semestre.create({
       data: {

@@ -12,7 +12,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
 import { BoletimService } from '../boletim/boletim.service';
-import { agoraComoBrasiliaFake } from '../common/tempo.util';
+import { hojeComoBrasiliaFake } from '../common/tempo.util';
 import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
@@ -366,9 +366,12 @@ export class MateriasService {
       throw new BadRequestException('Disciplina já está encerrada');
     }
     // Professor só encerra após o fim do Semestre; admin pode a qualquer momento (override).
+    // Comparação por DATA (não instante): dataFim é o último dia do Semestre, ainda com aula
+    // possivelmente ocorrendo nele — "depois do fim" só vale a partir do dia seguinte, senão o
+    // professor consegue encerrar já na meia-noite do próprio último dia do Semestre.
     if (user.role === Role.PROFESSOR) {
-      const agora = agoraComoBrasiliaFake();
-      if (agora < materia.turma.semestre.dataFim) {
+      const hoje = hojeComoBrasiliaFake();
+      if (hoje <= materia.turma.semestre.dataFim) {
         throw new BadRequestException(
           'Só é possível encerrar a Disciplina após o fim do Semestre',
         );
@@ -405,11 +408,13 @@ export class MateriasService {
    * e uma vez na subida do processo, pra não depender de ninguém acessar o sistema no dia
    * exato em que o Semestre termina. */
   async encerrarMateriasDeSemestresEncerrados(): Promise<number> {
-    const agora = agoraComoBrasiliaFake();
+    // Mesma correção de off-by-one do encerramento manual: compara por DATA, não por
+    // instante, senão o cron fecharia a Matéria já na madrugada do próprio último dia do Semestre.
+    const hoje = hojeComoBrasiliaFake();
     const materias = await this.prisma.materia.findMany({
       where: {
         estado: EstadoMateria.ABERTA,
-        turma: { semestre: { dataFim: { lt: agora } } },
+        turma: { semestre: { dataFim: { lt: hoje } } },
       },
       select: { id: true },
     });
