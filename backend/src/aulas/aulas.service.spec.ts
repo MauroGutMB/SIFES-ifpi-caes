@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AulasService } from './aulas.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { Role } from '../../generated/prisma/client';
+import { EstadoMateria, Role } from '../../generated/prisma/client';
 
 const DATA_PASSADA = new Date('2000-01-01T00:00:00.000Z');
 const DATA_FUTURA = new Date('2999-01-01T00:00:00.000Z');
@@ -29,11 +29,14 @@ function criarServico(aulaEncontrada: unknown) {
 }
 
 describe('AulasService — checagem de posse e de data', () => {
-  const aulaDoProfessor1 = (data: Date) => ({
+  const aulaDoProfessor1 = (
+    data: Date,
+    estadoMateria: EstadoMateria = EstadoMateria.ABERTA,
+  ) => ({
     id: 'aula-1',
     materiaId: 'materia-1',
     data,
-    materia: { professorId: 'prof-1' },
+    materia: { professorId: 'prof-1', estado: estadoMateria },
   });
 
   describe('update', () => {
@@ -111,6 +114,21 @@ describe('AulasService — checagem de posse e de data', () => {
         dono,
       );
       expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('bloqueia com 400 o lançamento de frequência numa Disciplina já encerrada', async () => {
+      const { service, prisma } = criarServico(
+        aulaDoProfessor1(DATA_PASSADA, EstadoMateria.ENCERRADA),
+      );
+      const dono = usuario({ role: Role.PROFESSOR, professorId: 'prof-1' });
+      await expect(
+        service.setFrequencias(
+          'aula-1',
+          { frequencias: [{ alunoId: 'aluno-1', status: 'PRESENTE' }] },
+          dono,
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.$transaction).not.toHaveBeenCalled();
     });
   });
 

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthenticatedUser } from '../auth/auth.types';
-import { Role } from '../../generated/prisma/client';
+import { EstadoMateria, Role } from '../../generated/prisma/client';
 import {
   garantirAcessoLeituraMateria,
   garantirPosseProfessor,
@@ -118,6 +118,14 @@ export class AulasService {
     }
   }
 
+  private garantirAberta(materia: { estado: EstadoMateria }) {
+    if (materia.estado !== EstadoMateria.ABERTA) {
+      throw new BadRequestException(
+        'Só é possível lançar frequência enquanto a Disciplina estiver aberta',
+      );
+    }
+  }
+
   async update(id: string, dto: UpdateAulaDto, user: AuthenticatedUser) {
     const aula = await this.carregarAulaComPosse(id, user);
     this.garantirDataNaoFutura(
@@ -140,6 +148,7 @@ export class AulasService {
       aula,
       'Não é possível lançar frequência de uma aula com data futura',
     );
+    this.garantirAberta(aula.materia);
 
     const alunoIds = dto.frequencias.map((f) => f.alunoId);
     const vinculados = await this.prisma.vinculoAlunoMateria.count({
