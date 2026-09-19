@@ -12,7 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useAtividadesControllerListarEntregas } from '../../../api/generated/atividades/atividades';
-import { urlArquivo } from '../../../api/arquivo-url';
+import { baixarArquivo } from '../../../api/download';
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
 
@@ -47,9 +47,14 @@ export function EntregasDialog({ atividadeId, onClose }: EntregasDialogProps) {
                   <TableCell>{entrega.aluno.nome}</TableCell>
                   <TableCell>{new Date(entrega.enviadoEm).toLocaleString('pt-BR')}</TableCell>
                   <TableCell>
-                    <a href={urlArquivo(entrega.arquivoUrl)} target="_blank" rel="noreferrer">
-                      Abrir
-                    </a>
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        void baixarArquivo(entrega.arquivoUrl, `entrega-${entrega.aluno.nome}`)
+                      }
+                    >
+                      Baixar
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

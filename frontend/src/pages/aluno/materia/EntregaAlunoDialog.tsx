@@ -16,7 +16,7 @@ import {
   useEntregaControllerMinhaEntrega,
 } from '../../../api/generated/atividades/atividades';
 import type { AtividadeDto } from '../../../api/generated/models';
-import { urlArquivo } from '../../../api/arquivo-url';
+import { baixarArquivo } from '../../../api/download';
 
 interface EntregaAlunoDialogProps {
   atividade: AtividadeDto | null;
@@ -82,9 +82,13 @@ export function EntregaAlunoDialog({ atividade, onClose }: EntregaAlunoDialogPro
         {!isLoading && entrega && (
           <Typography variant="body2" sx={{ mb: 2 }}>
             Você já enviou em {new Date(entrega.enviadoEm).toLocaleString('pt-BR')} —{' '}
-            <a href={urlArquivo(entrega.arquivoUrl)} target="_blank" rel="noreferrer">
-              ver arquivo
-            </a>
+            <Button
+              size="small"
+              sx={{ p: 0, minWidth: 0, verticalAlign: 'baseline' }}
+              onClick={() => void baixarArquivo(entrega.arquivoUrl, `entrega-${atividade?.titulo}`)}
+            >
+              baixar arquivo
+            </Button>
           </Typography>
         )}
 

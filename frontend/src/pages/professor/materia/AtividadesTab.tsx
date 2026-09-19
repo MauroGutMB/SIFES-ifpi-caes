@@ -36,7 +36,7 @@ import type { AtividadeDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { EntregasDialog } from './EntregasDialog';
-import { urlArquivo } from '../../../api/arquivo-url';
+import { baixarArquivo } from '../../../api/download';
 
 type FormValues = z.infer<typeof MateriaAtividadesControllerCriarBody>;
 
@@ -164,9 +164,14 @@ export function AtividadesTab({ materiaId, materiaAberta }: AtividadesTabProps) 
                   <TableCell>{atividade.formatoExigido}</TableCell>
                   <TableCell>
                     {atividade.arquivoUrl ? (
-                      <a href={urlArquivo(atividade.arquivoUrl)} target="_blank" rel="noreferrer">
-                        Abrir
-                      </a>
+                      <Button
+                        size="small"
+                        onClick={() =>
+                          void baixarArquivo(atividade.arquivoUrl!, `anexo-${atividade.titulo}`)
+                        }
+                      >
+                        Baixar
+                      </Button>
                     ) : (
                       '—'
                     )}
