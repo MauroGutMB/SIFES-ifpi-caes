@@ -74,14 +74,17 @@ const SOBRENOMES = [
   'Freitas', 'Machado', 'Moreira', 'Batista', 'Dias', 'Pinto',
 ];
 
-/** Gera um nome completo determinístico (sem colisão) a partir de um índice global —
- * `grupo` separa os "espaços" de índice de professores/alunos pra eles nunca coincidirem. */
+/** Gera um nome completo determinístico a partir de um índice global — `grupo` separa os
+ * "espaços" de índice de professores/alunos pra eles nunca coincidirem. Os multiplicadores (7
+ * e 13) são coprimos com o tamanho de SOBRENOMES (30), então índices consecutivos (ex: os 20
+ * professores, ou os primeiros alunos de uma turma) caem em sobrenomes bem espalhados em vez
+ * de repetirem o mesmo par — dividir por PRIMEIROS_NOMES.length direto ficava constante
+ * sempre que o range de índices era menor que 40. */
 function nomeCompleto(indice: number, grupo: number): string {
   const i = indice + grupo * 10_000;
   const primeiro = PRIMEIROS_NOMES[i % PRIMEIROS_NOMES.length];
-  const sobrenome1 = SOBRENOMES[Math.floor(i / PRIMEIROS_NOMES.length) % SOBRENOMES.length];
-  const sobrenome2 =
-    SOBRENOMES[(Math.floor(i / PRIMEIROS_NOMES.length) + 11) % SOBRENOMES.length];
+  const sobrenome1 = SOBRENOMES[(i * 7) % SOBRENOMES.length];
+  const sobrenome2 = SOBRENOMES[(i * 13 + 5) % SOBRENOMES.length];
   return `${primeiro} ${sobrenome1} ${sobrenome2}`;
 }
 
