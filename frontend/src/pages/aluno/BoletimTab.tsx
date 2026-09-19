@@ -39,7 +39,8 @@ const FREQUENCIA_MINIMA = 75;
 export function BoletimTab() {
   const navigate = useNavigate();
   const { data: perfil } = useAlunosControllerMeuPerfil();
-  const { data: materias } = useMateriasControllerFindAll();
+  const { data: materias } = useMateriasControllerFindAll({ estado: 'ABERTA' });
+  const semestreAtualId = perfil?.turma?.semestre.id;
   const [baixando, setBaixando] = useState<string | null>(null);
 
   const resultados = useQueries({
@@ -147,11 +148,11 @@ export function BoletimTab() {
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
-              disabled={baixando === 'pdf'}
+              disabled={baixando === 'pdf' || !semestreAtualId}
               onClick={() =>
                 baixarComEstado(
                   'pdf',
-                  `/relatorios/boletim/${perfil.id}?formato=pdf`,
+                  `/relatorios/boletim/${perfil.id}?formato=pdf&semestreId=${semestreAtualId}`,
                   'boletim.pdf',
                 )
               }
@@ -161,11 +162,11 @@ export function BoletimTab() {
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
-              disabled={baixando === 'xlsx'}
+              disabled={baixando === 'xlsx' || !semestreAtualId}
               onClick={() =>
                 baixarComEstado(
                   'xlsx',
-                  `/relatorios/boletim/${perfil.id}?formato=xlsx`,
+                  `/relatorios/boletim/${perfil.id}?formato=xlsx&semestreId=${semestreAtualId}`,
                   'boletim.xlsx',
                 )
               }
@@ -173,6 +174,17 @@ export function BoletimTab() {
               Excel
             </Button>
           </Stack>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+            Precisa do boletim de um semestre já concluído?{' '}
+            <Button
+              size="small"
+              variant="text"
+              sx={{ p: 0, minWidth: 0, verticalAlign: 'baseline' }}
+              onClick={() => navigate('/app/aluno/semestres')}
+            >
+              Veja em Meus semestres
+            </Button>
+          </Typography>
         </Box>
       )}
     </>

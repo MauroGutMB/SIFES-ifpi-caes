@@ -46,7 +46,7 @@ function TituloBox({ icone, texto }: { icone: ReactNode; texto: string }) {
 export function MinhaSituacaoPage() {
   const navigate = useNavigate();
   const { data: perfil } = useAlunosControllerMeuPerfil();
-  const { data: materias } = useMateriasControllerFindAll();
+  const { data: materias } = useMateriasControllerFindAll({ estado: 'ABERTA' });
   const { data: atividadesResumo } = useAlunosControllerResumoAtividades();
 
   const turmaId = perfil?.turmaId ?? '';
