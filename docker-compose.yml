@@ -1,0 +1,57 @@
+# Stack completa (Postgres + API + frontend), pensada para rodar o SIFES inteiro localmente com
+# um único comando (`docker compose up --build`) ou como alternativa self-hosted ao par
+# Render+Cloudflare já usado em produção. Para desenvolvimento do dia a dia (só o banco, com
+# backend/frontend rodando fora do Docker via `npm run start:dev`/`npm run dev`), use
+# `docker-compose.dev.yml` — este arquivo aqui sobe tudo containerizado.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sifes
+      POSTGRES_PASSWORD: sifes
+      POSTGRES_DB: sifes
+    volumes:
+      - sifes_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sifes -d sifes"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://sifes:sifes@postgres:5432/sifes?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-troque-este-valor-em-producao}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-troque-este-outro-valor-em-producao}
+      JWT_REFRESH_EXPIRES_IN: 7d
+      # Ambos servidos pelo mesmo Nginx/origem (ver frontend/nginx.conf), então o cookie
+      # httpOnly do refresh token funciona em HTTP puro sem precisar de Secure/SameSite=None.
+      COOKIE_SECURE: "false"
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:8080}
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vazio de propósito — o Nginx do frontend faz proxy reverso das rotas da API pro
+        # container `backend` (ver frontend/nginx.conf), então o navegador nunca precisa de uma
+        # URL de API separada, só da própria origem do frontend.
+        VITE_API_URL: ""
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  sifes_postgres_data:
