@@ -1,5 +1,19 @@
-import { useState } from 'react';
-import { Box, Button, Chip, IconButton, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
+import { useState, type ReactNode } from 'react';
+import {
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { isAxiosError } from 'axios';
@@ -16,6 +30,7 @@ import { baixarArquivo } from '../../../api/download';
 import { tokens } from '../../../theme/tokens';
 import { ImportarUsuariosDialog } from './ImportarUsuariosDialog';
 import { InstrucoesImportacaoDialog } from './InstrucoesImportacaoDialog';
+import { InstrucoesExportacaoDialog } from './InstrucoesExportacaoDialog';
 
 const CARGOS = [
   { value: '', label: 'Todos' },
@@ -26,6 +41,35 @@ const CARGOS = [
 
 function nomeDoUsuario(user: UserDto): string {
   return user.professor?.nome ?? user.aluno?.nome ?? '—';
+}
+
+/** Box com o mesmo peso visual do filtro de Cargo (borda + legenda "flutuante", mesma altura
+ * de um TextField outlined size="small") — usada tanto pra importação quanto exportação. */
+function LabeledActionBox({ titulo, children }: { titulo: string; children: ReactNode }) {
+  return (
+    <Box
+      component="fieldset"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        height: 40,
+        m: 0,
+        px: 1.25,
+        border: `1px solid ${tokens.border}`,
+        borderRadius: 1,
+        '& legend': {
+          px: 0.5,
+          ml: 1,
+          fontSize: 12,
+          color: tokens.textSecondary,
+        },
+      }}
+    >
+      <Typography component="legend">{titulo}</Typography>
+      {children}
+    </Box>
+  );
 }
 
 export function UsuariosPage() {
@@ -42,10 +86,23 @@ export function UsuariosPage() {
     somenteVisualizacao?: boolean;
   } | null>(null);
   const [importarAberto, setImportarAberto] = useState(false);
-  const [instrucoesAberto, setInstrucoesAberto] = useState(false);
+  const [instrucoesImportacaoAberto, setInstrucoesImportacaoAberto] = useState(false);
+  const [instrucoesExportacaoAberto, setInstrucoesExportacaoAberto] = useState(false);
+  const [exportando, setExportando] = useState<'pdf' | 'xlsx' | null>(null);
+  const [confirmarRedefinicao, setConfirmarRedefinicao] = useState<UserDto | null>(null);
   // Senhas geradas nesta sessão do navegador, por login — nunca persistidas (o hash no banco
   // não é reversível, então isso é a única forma de "reexibir" a senha depois do diálogo inicial).
   const [senhasGeradas, setSenhasGeradas] = useState<Record<string, string>>({});
+
+  const pedirRedefinicao = (user: UserDto) => {
+    // Usuário que já trocou a senha tem algo real a perder (a senha que ele mesmo escolheu) —
+    // confirma antes. Quem ainda está na senha temporária não perde nada além dela mesma.
+    if (!user.precisaTrocarSenha) {
+      setConfirmarRedefinicao(user);
+      return;
+    }
+    void redefinir(user);
+  };
 
   const redefinir = async (user: UserDto) => {
     try {
@@ -69,7 +126,12 @@ export function UsuariosPage() {
 
   const verSenhaGerada = (login: string) => {
     const senha = senhasGeradas[login];
-    if (!senha) return;
+    if (!senha) {
+      toast.error(
+        'Senha não disponível nesta sessão — clique em "Redefinir" para gerar uma nova e poder visualizá-la',
+      );
+      return;
+    }
     setSenhaGerada({ titulo: `Senha de ${login}`, login, senha, somenteVisualizacao: true });
   };
 
@@ -78,6 +140,17 @@ export function UsuariosPage() {
       await baixarArquivo('/users/modelo-importacao', 'modelo-importacao-usuarios.csv');
     } catch {
       toast.error('Não foi possível baixar o modelo de importação');
+    }
+  };
+
+  const exportarUsuarios = async (formato: 'pdf' | 'xlsx') => {
+    setExportando(formato);
+    try {
+      await baixarArquivo(`/relatorios/usuarios?formato=${formato}`, `usuarios.${formato}`);
+    } catch {
+      toast.error('Não foi possível exportar os usuários');
+    } finally {
+      setExportando(null);
     }
   };
 
@@ -106,42 +179,35 @@ export function UsuariosPage() {
       width: 260,
       sortable: false,
       filterable: false,
-      renderCell: (params) => {
-        const senhaDisponivel = !!senhasGeradas[params.row.login];
-        return (
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Chip
-              size="small"
-              label={params.value ? 'Sim' : 'Não'}
-              color={params.value ? 'warning' : 'default'}
-              clickable={!!params.value && senhaDisponivel}
-              onClick={
-                params.value && senhaDisponivel ? () => verSenhaGerada(params.row.login) : undefined
-              }
-              title={
-                params.value && senhaDisponivel ? 'Ver senha gerada nesta sessão' : undefined
-              }
-            />
-            <Button
-              size="small"
-              disabled={!!params.value || redefinirSenha.isPending}
-              onClick={() => redefinir(params.row)}
-              sx={{
-                minWidth: 0,
-                px: 1,
-                py: 0.25,
-                fontSize: 12,
-                bgcolor: tokens.yellow,
-                color: tokens.yellowText,
-                '&:hover': { bgcolor: tokens.yellow, opacity: 0.85 },
-                '&.Mui-disabled': { bgcolor: tokens.border, color: tokens.textSecondary },
-              }}
-            >
-              Redefinir
-            </Button>
-          </Stack>
-        );
-      },
+      renderCell: (params) => (
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Chip
+            size="small"
+            label={params.value ? 'Sim' : 'Não'}
+            color={params.value ? 'warning' : 'default'}
+            clickable={!!params.value}
+            onClick={params.value ? () => verSenhaGerada(params.row.login) : undefined}
+            title={params.value ? 'Ver senha gerada' : undefined}
+          />
+          <Button
+            size="small"
+            disabled={redefinirSenha.isPending}
+            onClick={() => pedirRedefinicao(params.row)}
+            sx={{
+              minWidth: 0,
+              px: 1,
+              py: 0.25,
+              fontSize: 12,
+              bgcolor: tokens.yellow,
+              color: tokens.yellowText,
+              '&:hover': { bgcolor: tokens.yellow, opacity: 0.85 },
+              '&.Mui-disabled': { bgcolor: tokens.border, color: tokens.textSecondary },
+            }}
+          >
+            Redefinir
+          </Button>
+        </Stack>
+      ),
     },
     {
       field: 'criadoEm',
@@ -156,25 +222,40 @@ export function UsuariosPage() {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Usuários</Typography>
         <Stack direction="row" spacing={1.5} sx={{ flexWrap: 'wrap', alignItems: 'center' }}>
-          <Paper
-            variant="outlined"
-            sx={{ display: 'flex', gap: 1, alignItems: 'center', p: 1 }}
-          >
-            <Button size="small" variant="outlined" onClick={baixarModelo}>
-              Baixar modelo de importação
+          <LabeledActionBox titulo="Exportação">
+            <Button size="small" disabled={exportando === 'pdf'} onClick={() => exportarUsuarios('pdf')}>
+              PDF
             </Button>
-            <Button size="small" variant="contained" onClick={() => setImportarAberto(true)}>
-              Importar usuários
+            <Button size="small" disabled={exportando === 'xlsx'} onClick={() => exportarUsuarios('xlsx')}>
+              Excel
             </Button>
             <IconButton
               size="small"
-              onClick={() => setInstrucoesAberto(true)}
+              onClick={() => setInstrucoesExportacaoAberto(true)}
+              title="Sobre a exportação"
+              aria-label="Sobre a exportação"
+            >
+              <MenuBookOutlinedIcon fontSize="small" />
+            </IconButton>
+          </LabeledActionBox>
+
+          <LabeledActionBox titulo="Importação">
+            <Button size="small" onClick={baixarModelo}>
+              Baixar modelo
+            </Button>
+            <Button size="small" variant="contained" onClick={() => setImportarAberto(true)}>
+              Importar
+            </Button>
+            <IconButton
+              size="small"
+              onClick={() => setInstrucoesImportacaoAberto(true)}
               title="Como importar usuários"
               aria-label="Como importar usuários"
             >
               <MenuBookOutlinedIcon fontSize="small" />
             </IconButton>
-          </Paper>
+          </LabeledActionBox>
+
           <TextField
             select
             size="small"
@@ -222,7 +303,37 @@ export function UsuariosPage() {
         onImportado={(importados) => void aoImportar(importados)}
       />
 
-      <InstrucoesImportacaoDialog open={instrucoesAberto} onClose={() => setInstrucoesAberto(false)} />
+      <InstrucoesImportacaoDialog
+        open={instrucoesImportacaoAberto}
+        onClose={() => setInstrucoesImportacaoAberto(false)}
+      />
+      <InstrucoesExportacaoDialog
+        open={instrucoesExportacaoAberto}
+        onClose={() => setInstrucoesExportacaoAberto(false)}
+      />
+
+      <Dialog open={!!confirmarRedefinicao} onClose={() => setConfirmarRedefinicao(null)}>
+        <DialogTitle>Redefinir senha de {confirmarRedefinicao && nomeDoUsuario(confirmarRedefinicao)}?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Este usuário já trocou a senha inicial. Redefinir vai gerar uma nova senha temporária,
+            desconectar as sessões ativas dele e exigir a troca no próximo acesso.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmarRedefinicao(null)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="warning"
+            onClick={() => {
+              if (confirmarRedefinicao) void redefinir(confirmarRedefinicao);
+              setConfirmarRedefinicao(null);
+            }}
+          >
+            Redefinir mesmo assim
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
