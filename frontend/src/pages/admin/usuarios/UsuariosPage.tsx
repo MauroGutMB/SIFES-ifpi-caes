@@ -15,6 +15,7 @@ import {
   Typography,
 } from '@mui/material';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import AddIcon from '@mui/icons-material/Add';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,8 +24,11 @@ import {
   useUsersControllerFindAll,
   useUsersControllerRedefinirSenha,
 } from '../../../api/generated/users/users';
+import { useAlunosControllerCreate } from '../../../api/generated/alunos/alunos';
+import { useProfessoresControllerCreate } from '../../../api/generated/professores/professores';
 import type { UserDto, UsuarioImportadoDto } from '../../../api/generated/models';
 import { SenhaGeradaDialog } from '../../../components/SenhaGeradaDialog';
+import { FormDialog } from '../../../components/FormDialog';
 import { useToast } from '../../../components/ToastProvider';
 import { baixarArquivo } from '../../../api/download';
 import { tokens } from '../../../theme/tokens';
@@ -87,6 +91,13 @@ export function UsuariosPage() {
   const [instrucoesExportacaoAberto, setInstrucoesExportacaoAberto] = useState(false);
   const [exportando, setExportando] = useState<'pdf' | 'xlsx' | null>(null);
   const [confirmarRedefinicao, setConfirmarRedefinicao] = useState<UserDto | null>(null);
+  const [dialogNovoAberto, setDialogNovoAberto] = useState(false);
+  const [novoCargo, setNovoCargo] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
+  const [novoNome, setNovoNome] = useState('');
+  const [novoLoginOuEmail, setNovoLoginOuEmail] = useState('');
+  const [erroNovo, setErroNovo] = useState<string | null>(null);
+  const criarAluno = useAlunosControllerCreate();
+  const criarProfessor = useProfessoresControllerCreate();
   // Senhas geradas nesta sessão do navegador, por login — nunca persistidas (o hash no banco
   // não é reversível, então isso é a única forma de "reexibir" a senha depois do diálogo inicial).
   const [senhasGeradas, setSenhasGeradas] = useState<Record<string, string>>({});
@@ -150,6 +161,43 @@ export function UsuariosPage() {
       toast.error('Não foi possível exportar os usuários');
     } finally {
       setExportando(null);
+    }
+  };
+
+  const abrirNovoUsuario = () => {
+    setNovoCargo('ALUNO');
+    setNovoNome('');
+    setNovoLoginOuEmail('');
+    setErroNovo(null);
+    setDialogNovoAberto(true);
+  };
+
+  const salvarNovoUsuario = async () => {
+    setErroNovo(null);
+    try {
+      if (novoCargo === 'ALUNO') {
+        const criado = await criarAluno.mutateAsync({
+          data: { nome: novoNome, matricula: novoLoginOuEmail },
+        });
+        setSenhasGeradas((atual) => ({ ...atual, [criado.matricula]: criado.senhaInicial }));
+        setSenhaGerada({ nome: criado.nome, login: criado.matricula, senha: criado.senhaInicial });
+      } else {
+        const criado = await criarProfessor.mutateAsync({
+          data: { nome: novoNome, email: novoLoginOuEmail },
+        });
+        setSenhasGeradas((atual) => ({ ...atual, [criado.email]: criado.senhaInicial }));
+        setSenhaGerada({ nome: criado.nome, login: criado.email, senha: criado.senhaInicial });
+      }
+      await queryClient.invalidateQueries({ queryKey: getUsersControllerFindAllQueryKey() });
+      toast.success('Usuário criado com sucesso');
+      setDialogNovoAberto(false);
+    } catch (error) {
+      setErroNovo(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível criar o usuário')
+          : 'Não foi possível criar o usuário',
+      );
     }
   };
 
@@ -218,6 +266,12 @@ export function UsuariosPage() {
 
   return (
     <>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={abrirNovoUsuario}>
+          Adicionar usuário
+        </Button>
+      </Box>
+
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">Usuários</Typography>
         <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -295,6 +349,51 @@ export function UsuariosPage() {
           onClose={() => setSenhaGerada(null)}
         />
       )}
+
+      <FormDialog
+        open={dialogNovoAberto}
+        title="Adicionar usuário"
+        subtitle="O usuário poderá acessar o SIFES assim que o cadastro for salvo."
+        onClose={() => setDialogNovoAberto(false)}
+        onSubmit={() => void salvarNovoUsuario()}
+        error={erroNovo}
+        submitting={criarAluno.isPending || criarProfessor.isPending}
+        submitLabel="Salvar usuário"
+        submittingLabel="Salvando…"
+        isDirty={!!novoNome || !!novoLoginOuEmail}
+      >
+        <TextField
+          select
+          label="Cargo"
+          value={novoCargo}
+          onChange={(e) => {
+            setNovoCargo(e.target.value as 'ALUNO' | 'PROFESSOR');
+            setNovoLoginOuEmail('');
+          }}
+          fullWidth
+        >
+          <MenuItem value="ALUNO">Aluno</MenuItem>
+          <MenuItem value="PROFESSOR">Professor</MenuItem>
+        </TextField>
+        <TextField
+          label="Nome completo"
+          value={novoNome}
+          onChange={(e) => setNovoNome(e.target.value)}
+          fullWidth
+          autoFocus
+        />
+        <TextField
+          label={novoCargo === 'ALUNO' ? 'Matrícula' : 'E-mail'}
+          value={novoLoginOuEmail}
+          onChange={(e) => setNovoLoginOuEmail(e.target.value)}
+          helperText={
+            novoCargo === 'ALUNO'
+              ? '8 dígitos — também será o login do aluno'
+              : 'Também será o login do professor'
+          }
+          fullWidth
+        />
+      </FormDialog>
 
       <ImportarUsuariosDialog
         open={importarAberto}
