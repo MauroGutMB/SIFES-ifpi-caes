@@ -7,7 +7,13 @@ import {
   Query,
   StreamableFile,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiProduces,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
 import { LogAcao } from '../logs/log-acao.decorator';
@@ -15,6 +21,7 @@ import { PendenciasService } from './pendencias.service';
 import { PendenciaAlunoDto } from './dto/pendencia-aluno.dto';
 import { PendenciaDetalheDto } from './dto/pendencia-detalhe.dto';
 import { ResolverTodasDto } from './dto/resolver-todas.dto';
+import { ApiAutenticado } from '../common/swagger-auth.decorator';
 import {
   extensaoParaFormato,
   Formato,
@@ -36,16 +43,51 @@ function parseStatus(status?: string): 'PENDENTE' | 'RESOLVIDA' {
 @ApiTags('pendencias')
 @Roles(Role.ADMIN)
 @Controller('admin/pendencias')
+@ApiAutenticado()
 export class PendenciasController {
   constructor(private readonly service: PendenciasService) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Listar pendências',
+    description:
+      'Lista os alunos com pendência acadêmica (reprovação numa disciplina já encerrada), agrupados por aluno. A pendência é calculada ao vivo a partir do boletim, nunca armazenada — o único dado persistido é a marcação de "resolvida".',
+  })
+  @ApiQuery({
+    name: 'status',
+    enum: ['PENDENTE', 'RESOLVIDA'],
+    required: false,
+  })
   @ApiOkResponse({ type: PendenciaAlunoDto, isArray: true })
   listar(@Query('status') status?: string): Promise<PendenciaAlunoDto[]> {
     return this.service.listarPorStatus(parseStatus(status));
   }
 
   @Get('relatorio')
+  @ApiOperation({
+    summary: 'Relatório de pendências',
+    description:
+      'Gera o relatório de pendências (PDF ou Excel), filtrado por status.',
+  })
+  @ApiProduces(
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @ApiQuery({
+    name: 'formato',
+    enum: ['pdf', 'xlsx'],
+    required: false,
+    description: 'Formato do arquivo gerado. Padrão: "pdf".',
+  })
+  @ApiQuery({
+    name: 'status',
+    enum: ['PENDENTE', 'RESOLVIDA'],
+    required: false,
+  })
+  @ApiOkResponse({
+    description: 'Arquivo binário para download — não é JSON.',
+    schema: { type: 'string', format: 'binary' },
+  })
   async relatorio(
     @Query('formato') formatoQuery?: string,
     @Query('status') statusQuery?: string,
@@ -60,6 +102,11 @@ export class PendenciasController {
   }
 
   @Get(':alunoId')
+  @ApiOperation({
+    summary: 'Pendências de um aluno',
+    description:
+      'Detalha todas as pendências (pendentes e resolvidas) de um aluno específico.',
+  })
   @ApiOkResponse({ type: PendenciaDetalheDto, isArray: true })
   pendenciasDoAluno(
     @Param('alunoId') alunoId: string,
@@ -68,6 +115,11 @@ export class PendenciasController {
   }
 
   @Put(':alunoId/:materiaId/resolver')
+  @ApiOperation({
+    summary: 'Resolver uma pendência',
+    description:
+      'Marca que a pendência de um aluno numa disciplina específica já foi tratada — a nota não muda, só o status de "conhecimento" do admin. Idempotente: chamar de novo não falha.',
+  })
   @LogAcao(({ resultado }) => {
     const r = resultado as { alunoNome?: string; materiaNome?: string };
     return {
@@ -83,6 +135,11 @@ export class PendenciasController {
   }
 
   @Put(':alunoId/resolver-todas')
+  @ApiOperation({
+    summary: 'Resolver todas as pendências de um aluno',
+    description:
+      'Marca de uma vez todas as pendências ainda pendentes de um aluno como resolvidas.',
+  })
   @ApiOkResponse({ type: ResolverTodasDto })
   @LogAcao(({ resultado }) => {
     const r = resultado as { alunoNome?: string; resolvidas?: number };

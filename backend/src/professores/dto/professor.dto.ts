@@ -1,19 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ProfessorDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Id do professor' })
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Id da conta de login (User) vinculada' })
   userId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome completo do professor' })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'E-mail — também usado como login',
+    example: 'joao.souza@ifpi.edu.br',
+  })
   email: string;
 
-  @ApiProperty({ nullable: true, type: String })
+  @ApiProperty({
+    nullable: true,
+    type: String,
+    description: 'URL da foto de perfil, ou null se não tiver foto',
+  })
   fotoUrl: string | null;
 }
 

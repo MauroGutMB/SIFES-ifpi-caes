@@ -6,13 +6,16 @@ export class UsuarioImportadoDto {
   })
   linha: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome do usuário criado' })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Login gerado — matrícula ou e-mail' })
   login: string;
 
-  @ApiProperty({ enum: ['ALUNO', 'PROFESSOR'] })
+  @ApiProperty({
+    enum: ['ALUNO', 'PROFESSOR'],
+    description: 'Cargo com que o usuário foi criado',
+  })
   cargo: string;
 
   @ApiProperty({
@@ -25,7 +28,7 @@ export class ErroImportacaoDto {
   @ApiProperty({ description: 'Linha do CSV onde o erro ocorreu' })
   linha: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Motivo pelo qual a linha não foi importada' })
   motivo: string;
 }
 
@@ -33,10 +36,10 @@ export class IgnoradoImportacaoDto {
   @ApiProperty({ description: 'Linha do CSV que foi pulada' })
   linha: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome informado na linha pulada' })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Login informado na linha pulada' })
   login: string;
 
   @ApiProperty({

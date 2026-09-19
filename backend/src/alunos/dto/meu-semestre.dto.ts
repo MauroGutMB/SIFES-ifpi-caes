@@ -5,24 +5,24 @@ class SemestreResumoDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Nome do semestre', example: '2026.1' })
   nome: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de início do semestre' })
   dataInicio: Date;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Data de término do semestre' })
   dataFim: Date;
 }
 
 class TurmaResumoMeuSemestreDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Curso técnico da turma' })
   cursoTecnico: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Ano/série da turma' })
   anoSerie: string;
 
-  @ApiProperty({ enum: Turno })
+  @ApiProperty({ enum: Turno, description: 'Turno da turma' })
   turno: Turno;
 }
 
@@ -30,21 +30,28 @@ export class MeuSemestreDto {
   @ApiProperty({ type: SemestreResumoDto })
   semestre: SemestreResumoDto;
 
-  @ApiProperty({ type: TurmaResumoMeuSemestreDto })
+  @ApiProperty({
+    type: TurmaResumoMeuSemestreDto,
+    description: 'Turma do aluno naquele semestre',
+  })
   turma: TurmaResumoMeuSemestreDto;
 
   @ApiProperty({ description: 'Se é o semestre da turma atual do aluno' })
   atual: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Total de disciplinas vinculadas nesse semestre',
+  })
   totalMaterias: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Disciplinas em que o aluno foi aprovado' })
   aprovadas: number;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Disciplinas em que o aluno foi reprovado' })
   reprovadas: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Disciplinas ainda em curso (sem resultado final)',
+  })
   cursando: number;
 }

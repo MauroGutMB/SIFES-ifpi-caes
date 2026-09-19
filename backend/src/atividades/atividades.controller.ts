@@ -10,7 +10,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConsumes,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
@@ -20,14 +28,21 @@ import { AtividadesService } from './atividades.service';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 import { EntregaDto } from './dto/entrega.dto';
 import { MAX_ENTREGA_BYTES } from './formato-entrega.util';
+import { ApiAutenticado } from '../common/swagger-auth.decorator';
 
 @ApiTags('atividades')
 @Roles(Role.ADMIN, Role.PROFESSOR)
 @Controller('atividades')
+@ApiAutenticado()
 export class AtividadesController {
   constructor(private readonly service: AtividadesService) {}
 
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Editar atividade',
+    description:
+      'Edita título, descrição, formato exigido, prazo e/ou anexo de uma atividade. Só é permitido enquanto a disciplina estiver ABERTA.',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -41,6 +56,8 @@ export class AtividadesController {
       },
     },
   })
+  @ApiNotFoundResponse({ description: 'Atividade não encontrada' })
+  @ApiBadRequestResponse({ description: 'Disciplina já encerrada' })
   @UseInterceptors(FileInterceptor('anexo'))
   @LogAcao(({ resultado }) => ({
     acao: 'Editou atividade',
@@ -61,6 +78,13 @@ export class AtividadesController {
   }
 
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Excluir atividade',
+    description:
+      'Exclui uma atividade. Só é permitido enquanto a disciplina estiver ABERTA.',
+  })
+  @ApiNotFoundResponse({ description: 'Atividade não encontrada' })
+  @ApiBadRequestResponse({ description: 'Disciplina já encerrada' })
   @LogAcao(({ resultado }) => ({
     acao: 'Excluiu atividade',
     alvo: (resultado as { titulo?: string })?.titulo ?? 'atividade',
@@ -70,6 +94,12 @@ export class AtividadesController {
   }
 
   @Get(':id/entregas')
+  @ApiOperation({
+    summary: 'Listar entregas de uma atividade',
+    description:
+      'Lista as entregas feitas pelos alunos para uma atividade específica.',
+  })
+  @ApiNotFoundResponse({ description: 'Atividade não encontrada' })
   @ApiOkResponse({ type: EntregaDto, isArray: true })
   listarEntregas(
     @Param('id') id: string,
