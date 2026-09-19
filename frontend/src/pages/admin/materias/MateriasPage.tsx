@@ -168,21 +168,39 @@ export function MateriasPage() {
 
   const excluir = async () => {
     if (!paraExcluir) return;
-    await remover.mutateAsync({ id: paraExcluir.id });
-    await invalidar();
-    setParaExcluir(null);
-    toast.success('Disciplina excluída com sucesso');
+    try {
+      await remover.mutateAsync({ id: paraExcluir.id });
+      await invalidar();
+      setParaExcluir(null);
+      toast.success('Disciplina excluída com sucesso');
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível excluir a disciplina')
+          : 'Não foi possível excluir a disciplina',
+      );
+    }
   };
 
   const alternarEstado = async (materia: MateriaDto) => {
-    if (materia.estado === 'ABERTA') {
-      await encerrar.mutateAsync({ id: materia.id });
-      toast.success('Disciplina encerrada');
-    } else {
-      await reabrir.mutateAsync({ id: materia.id });
-      toast.success('Disciplina reaberta');
+    try {
+      if (materia.estado === 'ABERTA') {
+        await encerrar.mutateAsync({ id: materia.id });
+        toast.success('Disciplina encerrada');
+      } else {
+        await reabrir.mutateAsync({ id: materia.id });
+        toast.success('Disciplina reaberta');
+      }
+      await invalidar();
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível alterar o estado da disciplina')
+          : 'Não foi possível alterar o estado da disciplina',
+      );
     }
-    await invalidar();
   };
 
   const excluirSelecionados = async () => {

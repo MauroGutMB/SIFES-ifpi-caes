@@ -121,10 +121,19 @@ export function TurmasPage() {
 
   const excluir = async () => {
     if (!paraExcluir) return;
-    await remover.mutateAsync({ id: paraExcluir.id });
-    await invalidar();
-    setParaExcluir(null);
-    toast.success('Turma excluída com sucesso');
+    try {
+      await remover.mutateAsync({ id: paraExcluir.id });
+      await invalidar();
+      setParaExcluir(null);
+      toast.success('Turma excluída com sucesso');
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível excluir a turma')
+          : 'Não foi possível excluir a turma',
+      );
+    }
   };
 
   const excluirSelecionados = async () => {

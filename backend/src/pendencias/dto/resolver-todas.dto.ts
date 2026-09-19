@@ -6,4 +6,7 @@ export class ResolverTodasDto {
       'Quantas pendências desse aluno foram marcadas como resolvidas',
   })
   resolvidas: number;
+
+  @ApiProperty({ required: false })
+  alunoNome?: string;
 }

@@ -4,8 +4,10 @@ import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import { useAlunosControllerMeuPerfil, useAlunosControllerMeusSemestres } from '../../api/generated/alunos/alunos';
 import type { MeuSemestreDto } from '../../api/generated/models';
 import { baixarArquivo } from '../../api/download';
+import { useToast } from '../../components/ToastProvider';
 
 export function SemestresTab() {
+  const toast = useToast();
   const { data: perfil } = useAlunosControllerMeuPerfil();
   const { data, isLoading } = useAlunosControllerMeusSemestres();
   const [baixando, setBaixando] = useState<string | null>(null);
@@ -18,6 +20,8 @@ export function SemestresTab() {
         `/relatorios/boletim/${perfil.id}?formato=pdf&semestreId=${semestreId}`,
         'boletim.pdf',
       );
+    } catch {
+      toast.error('Não foi possível exportar o boletim');
     } finally {
       setBaixando(null);
     }

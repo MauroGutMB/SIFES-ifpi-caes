@@ -2,18 +2,22 @@ import { useState } from 'react';
 import { Button, Stack, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/DownloadOutlined';
 import { baixarArquivo } from '../../../api/download';
+import { useToast } from '../../../components/ToastProvider';
 
 interface RelatoriosTabProps {
   materiaId: string;
 }
 
 export function RelatoriosTab({ materiaId }: RelatoriosTabProps) {
+  const toast = useToast();
   const [baixando, setBaixando] = useState<string | null>(null);
 
   const baixar = async (chave: string, url: string, nomeArquivo: string) => {
     setBaixando(chave);
     try {
       await baixarArquivo(url, nomeArquivo);
+    } catch {
+      toast.error('Não foi possível exportar o arquivo');
     } finally {
       setBaixando(null);
     }

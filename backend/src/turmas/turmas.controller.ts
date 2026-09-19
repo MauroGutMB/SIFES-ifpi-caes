@@ -11,6 +11,7 @@ import {
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
+import { LogAcao } from '../logs/log-acao.decorator';
 import { TurmasService } from './turmas.service';
 import { CreateTurmaDto } from './dto/create-turma.dto';
 import { UpdateTurmaDto } from './dto/update-turma.dto';
@@ -39,11 +40,25 @@ export class TurmasController {
   }
 
   @Patch(':id')
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { cursoTecnico?: string; anoSerie?: string };
+    return {
+      acao: 'Editou turma',
+      alvo: `${r?.cursoTecnico ?? ''} ${r?.anoSerie ?? ''}`.trim() || 'turma',
+    };
+  })
   update(@Param('id') id: string, @Body() dto: UpdateTurmaDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { cursoTecnico?: string; anoSerie?: string };
+    return {
+      acao: 'Excluiu turma',
+      alvo: `${r?.cursoTecnico ?? ''} ${r?.anoSerie ?? ''}`.trim() || 'turma',
+    };
+  })
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }

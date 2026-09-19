@@ -20,6 +20,25 @@ export interface FiltrosFrequenciaTurma {
   dataFim?: string;
 }
 
+function formatarDataBR(iso: string): string {
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+/** Deixa explícito no relatório qual período foi filtrado — sem isso, quem abre o arquivo
+ * depois não tem como saber se os dados são de um recorte ou de tudo que já existe. */
+function formatarPeriodo(
+  dataInicio?: string,
+  dataFim?: string,
+): string | undefined {
+  if (dataInicio && dataFim) {
+    return `${formatarDataBR(dataInicio)} a ${formatarDataBR(dataFim)}`;
+  }
+  if (dataInicio) return `a partir de ${formatarDataBR(dataInicio)}`;
+  if (dataFim) return `até ${formatarDataBR(dataFim)}`;
+  return undefined;
+}
+
 @Injectable()
 export class RelatoriosService {
   constructor(
@@ -315,6 +334,10 @@ export class RelatoriosService {
 
     const materias = await this.prisma.materia.findMany({
       where: {
+        // A agenda é o horário de aulas em curso — matéria encerrada usa os mesmos slots de
+        // dia/hora de sempre (ex: sempre Segunda 08h pro turno da manhã), então incluí-la
+        // faria duas disciplinas de semestres diferentes aparecerem empilhadas na mesma célula.
+        estado: 'ABERTA',
         professorId:
           user.role === Role.PROFESSOR ? user.professorId : undefined,
         vinculos:
@@ -440,9 +463,9 @@ export class RelatoriosService {
 
   /** Usuários com senha já definida (precisaTrocarSenha=false) — os que ainda não trocaram a
    * senha inicial não entram, pois ainda não estão de fato "ativos" no sistema. */
-  async usuariosAtivos(formato: Formato) {
+  async usuariosAtivos(formato: Formato, role?: Role) {
     const usuarios = await this.prisma.user.findMany({
-      where: { precisaTrocarSenha: false },
+      where: { precisaTrocarSenha: false, role },
       include: {
         professor: { select: { nome: true } },
         aluno: { select: { nome: true } },
@@ -585,6 +608,84 @@ export class RelatoriosService {
       materias: materias.map((m) => ({ id: m.id, nome: m.nome })),
       resumo,
       detalhado,
+    };
+  }
+
+  /** Exporta a frequência da turma com uma tabela por Disciplina (respeita os mesmos filtros
+   * da tela: disciplina, aluno, intervalo de datas) — reaproveita o mesmo cálculo de
+   * frequenciaTurmaDetalhada, só reagrupa o resultado por Disciplina em vez de por aluno. */
+  async frequenciaTurmaPorDisciplina(
+    turmaId: string,
+    formato: Formato,
+    user: AuthenticatedUser,
+    filtros: FiltrosFrequenciaTurma,
+  ) {
+    const [turma, { resumo, detalhado }] = await Promise.all([
+      this.prisma.turma.findUnique({ where: { id: turmaId } }),
+      this.frequenciaTurmaDetalhada(turmaId, user, filtros),
+    ]);
+
+    const contagemPorMateriaAluno = new Map<
+      string,
+      { presentes: number; faltas: number; total: number }
+    >();
+    for (const linha of detalhado) {
+      const chave = `${linha.materiaId}:${linha.alunoId}`;
+      const atual = contagemPorMateriaAluno.get(chave) ?? {
+        presentes: 0,
+        faltas: 0,
+        total: 0,
+      };
+      atual.total += 1;
+      if (linha.status === 'PRESENTE') atual.presentes += 1;
+      else if (linha.status === 'FALTA') atual.faltas += 1;
+      contagemPorMateriaAluno.set(chave, atual);
+    }
+
+    const porMateria = new Map<
+      string,
+      { titulo: string; linhas: (string | number)[][] }
+    >();
+    for (const linha of resumo) {
+      const grupo = porMateria.get(linha.materiaId) ?? {
+        titulo: linha.materiaNome,
+        linhas: [],
+      };
+      const contagem = contagemPorMateriaAluno.get(
+        `${linha.materiaId}:${linha.alunoId}`,
+      ) ?? { presentes: 0, faltas: 0, total: 0 };
+      grupo.linhas.push([
+        linha.alunoNome,
+        Number(linha.frequenciaPercentual.toFixed(1)),
+        contagem.faltas,
+        contagem.presentes,
+        contagem.total,
+      ]);
+      porMateria.set(linha.materiaId, grupo);
+    }
+
+    const secoes = [...porMateria.values()];
+    const turmaLabel = turma
+      ? `${turma.cursoTecnico} — ${turma.anoSerie}`
+      : undefined;
+    const periodo = formatarPeriodo(filtros.dataInicio, filtros.dataFim);
+    const tabela: TabelaRelatorio = {
+      titulo: 'Frequência por disciplina',
+      subtitulo: [turmaLabel, periodo].filter(Boolean).join(' · ') || undefined,
+      tituloAlinhamento: 'center',
+      colunas: [
+        'Aluno',
+        'Frequência (%)',
+        'Faltas',
+        'Presenças',
+        'Número total de aulas',
+      ],
+      linhas: secoes.flatMap((s) => s.linhas),
+      secoes,
+    };
+    return {
+      buffer: await gerarRelatorio(tabela, formato),
+      nomeBase: 'frequencia-turma-disciplinas',
     };
   }
 }

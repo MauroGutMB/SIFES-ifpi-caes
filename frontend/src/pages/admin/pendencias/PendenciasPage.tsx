@@ -53,12 +53,16 @@ function DetalhesPendenciasDialog({ aluno, onClose }: DetalhesPendenciasDialogPr
 
   const resolverItem = async (materiaId: string) => {
     if (!aluno) return;
-    await resolver.mutateAsync({ alunoId: aluno.id, materiaId });
-    await queryClient.invalidateQueries({ queryKey: getPendenciasControllerListarQueryKey() });
-    await queryClient.invalidateQueries({
-      queryKey: getPendenciasControllerPendenciasDoAlunoQueryKey(aluno.id),
-    });
-    toast.success('Pendência marcada como resolvida');
+    try {
+      await resolver.mutateAsync({ alunoId: aluno.id, materiaId });
+      await queryClient.invalidateQueries({ queryKey: getPendenciasControllerListarQueryKey() });
+      await queryClient.invalidateQueries({
+        queryKey: getPendenciasControllerPendenciasDoAlunoQueryKey(aluno.id),
+      });
+      toast.success('Pendência marcada como resolvida');
+    } catch {
+      toast.error('Não foi possível marcar a pendência como resolvida');
+    }
   };
 
   return (
@@ -150,7 +154,12 @@ export function PendenciasPage() {
   const baixarRelatorio = async (formato: 'pdf' | 'xlsx') => {
     setBaixando(formato);
     try {
-      await baixarArquivo(`/admin/pendencias/relatorio?formato=${formato}`, `pendencias.${formato}`);
+      await baixarArquivo(
+        `/admin/pendencias/relatorio?formato=${formato}&status=${status}`,
+        `pendencias-${status.toLowerCase()}.${formato}`,
+      );
+    } catch {
+      toast.error('Não foi possível gerar o relatório');
     } finally {
       setBaixando(null);
     }

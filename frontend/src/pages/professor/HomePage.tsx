@@ -13,20 +13,28 @@ import { useMateriasControllerFindAll } from '../../api/generated/materias/mater
 import { urlArquivo } from '../../api/arquivo-url';
 import { baixarArquivo } from '../../api/download';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
+import { useToast } from '../../components/ToastProvider';
 
 export function ProfessorHomePage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data: me } = useUsersControllerMe();
   const { data: materias } = useMateriasControllerFindAll();
   const atualizarFoto = useUsersControllerUpdateFoto();
   const [erroFoto, setErroFoto] = useState<string | null>(null);
   const [baixando, setBaixando] = useState<string | null>(null);
   const professor = materias?.[0]?.professor;
+  // A agenda é o horário de aulas de AGORA — matérias de semestres já encerrados usam os
+  // mesmos slots de dia/hora (ex: sempre Segunda 08h pro turno da manhã), então incluí-las
+  // faria a grade mostrar duas disciplinas empilhadas na mesma célula.
+  const materiasAbertas = (materias ?? []).filter((m) => m.estado === 'ABERTA');
 
   const baixarAgenda = async (formato: 'pdf' | 'xlsx') => {
     setBaixando(formato);
     try {
       await baixarArquivo(`/relatorios/agenda?formato=${formato}`, `agenda-semanal.${formato}`);
+    } catch {
+      toast.error('Não foi possível exportar a agenda');
     } finally {
       setBaixando(null);
     }
@@ -68,7 +76,7 @@ export function ProfessorHomePage() {
               </div>
             </Stack>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              {materias?.length ?? 0} disciplina(s) atribuída(s)
+              {materiasAbertas.length} disciplina(s) atribuída(s)
             </Typography>
             <Button component="label" variant="outlined" size="small" disabled={atualizarFoto.isPending}>
               Trocar foto
@@ -116,7 +124,7 @@ export function ProfessorHomePage() {
             </Stack>
             <WeeklyAgenda
               mostrarTurma
-              itens={(materias ?? []).map((m) => ({
+              itens={materiasAbertas.map((m) => ({
                 id: m.id,
                 titulo: m.nome,
                 subtitulo: `${m.turma.cursoTecnico} — ${m.turma.anoSerie}`,

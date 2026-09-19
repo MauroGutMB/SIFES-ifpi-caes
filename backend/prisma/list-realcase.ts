@@ -13,8 +13,13 @@ async function main() {
   const users = await prisma.user.findMany({
     where: {
       OR: [
+        // Cenário antigo (1 semestre, seed-realcase.ts anterior).
         { login: { startsWith: 'DEMO-' } },
         { login: { endsWith: '@demo.sifes.ifpi.edu.br' } },
+        // Cenário atual (2025/1 + 2025/2): matrícula do aluno começa com o ano, e-mail do
+        // professor é @ifpi.edu.br (sem subdomínio "demo", esse é o do cenário antigo).
+        { login: { startsWith: '2025' } },
+        { login: { endsWith: '@ifpi.edu.br' } },
       ],
     },
     include: {
@@ -32,12 +37,12 @@ async function main() {
   }
 
   console.log('Logins do cenário de demonstração (senha "demo1234" para todos):\n');
-  console.log('ROLE       LOGIN                                NOME                  SEM TURMA');
+  console.log('ROLE       LOGIN                                    NOME                       SEM TURMA');
   for (const u of users) {
     const nome = u.professor?.nome ?? u.aluno?.nome ?? '';
     const semTurma = u.role === 'ALUNO' && !u.aluno?.turmaId ? '(sem turma)' : '';
     console.log(
-      `${u.role.padEnd(10)} ${u.login.padEnd(36)} ${nome.padEnd(21)} ${semTurma}`,
+      `${u.role.padEnd(10)} ${u.login.padEnd(40)} ${nome.padEnd(26)} ${semTurma}`,
     );
   }
   console.log(`\nTotal: ${users.length} usuário(s).`);

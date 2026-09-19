@@ -15,6 +15,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
+import { LogAcao } from '../logs/log-acao.decorator';
 import { AtividadesService } from './atividades.service';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
 import { EntregaDto } from './dto/entrega.dto';
@@ -41,6 +42,10 @@ export class AtividadesController {
     },
   })
   @UseInterceptors(FileInterceptor('anexo'))
+  @LogAcao(({ resultado }) => ({
+    acao: 'Editou atividade',
+    alvo: (resultado as { titulo?: string })?.titulo ?? 'atividade',
+  }))
   atualizar(
     @Param('id') id: string,
     @Body() dto: UpdateAtividadeDto,
@@ -56,6 +61,10 @@ export class AtividadesController {
   }
 
   @Delete(':id')
+  @LogAcao(({ resultado }) => ({
+    acao: 'Excluiu atividade',
+    alvo: (resultado as { titulo?: string })?.titulo ?? 'atividade',
+  }))
   remover(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.service.remover(id, user);
   }

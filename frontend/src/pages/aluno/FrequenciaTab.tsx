@@ -31,7 +31,7 @@ const LABEL_STATUS: Record<string, { label: string; color: 'success' | 'error' |
 
 export function FrequenciaTab() {
   const { data: perfil } = useAlunosControllerMeuPerfil();
-  const { data: materias } = useMateriasControllerFindAll();
+  const { data: materias } = useMateriasControllerFindAll({ estado: 'ABERTA' });
   const [materiaId, setMateriaId] = useState('');
 
   const turmaId = perfil?.turmaId ?? '';

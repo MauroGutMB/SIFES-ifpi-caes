@@ -233,9 +233,15 @@ export class PlanoDisciplinaService {
         'Configure como este item conta na nota (Regra de aprovação) antes de habilitá-lo para algum aluno',
       );
     }
-    const vinculado = await this.prisma.vinculoAlunoMateria.findUnique({
-      where: { alunoId_materiaId: { alunoId, materiaId: item.materiaId } },
-    });
+    const [vinculado, aluno] = await Promise.all([
+      this.prisma.vinculoAlunoMateria.findUnique({
+        where: { alunoId_materiaId: { alunoId, materiaId: item.materiaId } },
+      }),
+      this.prisma.aluno.findUnique({
+        where: { id: alunoId },
+        select: { nome: true },
+      }),
+    ]);
     if (!vinculado) {
       throw new BadRequestException(
         'Aluno não está vinculado a esta Disciplina',
@@ -255,7 +261,7 @@ export class PlanoDisciplinaService {
         where: { itemAvaliacaoId: itemId, alunoId },
       });
     }
-    return { habilitado };
+    return { habilitado, itemNome: item.nome, alunoNome: aluno?.nome };
   }
 
   /** Habilita este item especial de uma vez pra todos os alunos cuja média atual está abaixo
@@ -299,7 +305,10 @@ export class PlanoDisciplinaService {
       );
     }
 
-    return { alunosHabilitados: alunosAbaixoDaMedia.length };
+    return {
+      alunosHabilitados: alunosAbaixoDaMedia.length,
+      itemNome: item.nome,
+    };
   }
 
   async atualizarItem(
@@ -362,10 +371,11 @@ export class PlanoDisciplinaService {
       ),
     );
 
-    return this.prisma.nota.findMany({
+    const notas = await this.prisma.nota.findMany({
       where: { itemAvaliacaoId: itemId },
       include: { aluno: { select: { id: true, nome: true, matricula: true } } },
     });
+    return { notas, itemNome: item.nome, materiaNome: item.materia.nome };
   }
 
   async boletimMateria(materiaId: string, user: AuthenticatedUser) {

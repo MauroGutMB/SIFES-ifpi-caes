@@ -10,6 +10,7 @@ import {
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../generated/prisma/client';
+import { LogAcao } from '../logs/log-acao.decorator';
 import { PendenciasService } from './pendencias.service';
 import { PendenciaAlunoDto } from './dto/pendencia-aluno.dto';
 import { PendenciaDetalheDto } from './dto/pendencia-detalhe.dto';
@@ -45,9 +46,13 @@ export class PendenciasController {
   }
 
   @Get('relatorio')
-  async relatorio(@Query('formato') formatoQuery?: string) {
+  async relatorio(
+    @Query('formato') formatoQuery?: string,
+    @Query('status') statusQuery?: string,
+  ) {
     const formato = parseFormato(formatoQuery);
-    const resultado = await this.service.relatorio(formato);
+    const status = parseStatus(statusQuery);
+    const resultado = await this.service.relatorio(formato, status);
     return new StreamableFile(resultado.buffer, {
       type: mimeParaFormato(formato),
       disposition: `attachment; filename="${resultado.nomeBase}.${extensaoParaFormato(formato)}"`,
@@ -63,6 +68,13 @@ export class PendenciasController {
   }
 
   @Put(':alunoId/:materiaId/resolver')
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Resolveu pendência',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   resolver(
     @Param('alunoId') alunoId: string,
     @Param('materiaId') materiaId: string,
@@ -72,6 +84,13 @@ export class PendenciasController {
 
   @Put(':alunoId/resolver-todas')
   @ApiOkResponse({ type: ResolverTodasDto })
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; resolvidas?: number };
+    return {
+      acao: 'Resolveu todas as pendências do aluno',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.resolvidas ?? 0} pendência(s)`,
+    };
+  })
   resolverTodas(@Param('alunoId') alunoId: string): Promise<ResolverTodasDto> {
     return this.service.resolverTodasDoAluno(alunoId);
   }

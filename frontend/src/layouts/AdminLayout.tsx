@@ -7,6 +7,7 @@ import MenuBookIcon from '@mui/icons-material/MenuBookOutlined';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCameraOutlined';
 import BadgeIcon from '@mui/icons-material/BadgeOutlined';
 import ReportProblemIcon from '@mui/icons-material/ReportProblemOutlined';
+import HistoryIcon from '@mui/icons-material/HistoryOutlined';
 import { SidebarLayout } from './SidebarLayout';
 import { SidebarNavList, type SidebarNavItem } from './SidebarNavList';
 
@@ -28,6 +29,7 @@ const ITENS_NAV: SidebarNavItem[] = [
     icon: <ReportProblemIcon fontSize="small" />,
   },
   { to: '/app/admin/usuarios', label: 'Usuários', icon: <BadgeIcon fontSize="small" /> },
+  { to: '/app/admin/logs', label: 'Logs', icon: <HistoryIcon fontSize="small" /> },
 ];
 
 export function AdminLayout() {

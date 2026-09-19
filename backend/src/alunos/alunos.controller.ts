@@ -13,6 +13,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { Role } from '../../generated/prisma/client';
+import { LogAcao } from '../logs/log-acao.decorator';
 import { AlunosService } from './alunos.service';
 import { CreateAlunoDto } from './dto/create-aluno.dto';
 import { UpdateAlunoDto } from './dto/update-aluno.dto';
@@ -94,26 +95,49 @@ export class AlunosController {
   }
 
   @Patch(':id')
+  @LogAcao(({ resultado }) => ({
+    acao: 'Editou aluno',
+    alvo: (resultado as { nome?: string })?.nome ?? 'aluno',
+  }))
   update(@Param('id') id: string, @Body() dto: UpdateAlunoDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
+  @LogAcao(({ resultado }) => ({
+    acao: 'Excluiu aluno',
+    alvo: (resultado as { nome?: string })?.nome ?? 'aluno',
+  }))
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 
   @Post(':id/turma')
+  @LogAcao(({ resultado }) => ({
+    acao: 'Vinculou aluno a turma',
+    alvo: (resultado as { nome?: string })?.nome ?? 'aluno',
+  }))
   vincularTurma(@Param('id') id: string, @Body() dto: VincularTurmaDto) {
     return this.service.vincularTurma(id, dto.turmaId);
   }
 
   @Delete(':id/turma')
+  @LogAcao(({ resultado }) => ({
+    acao: 'Desvinculou aluno da turma',
+    alvo: (resultado as { nome?: string })?.nome ?? 'aluno',
+  }))
   desligarTurma(@Param('id') id: string) {
     return this.service.desligarTurma(id);
   }
 
   @Post(':id/materias/:materiaId')
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Vinculou aluno a disciplina',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   adicionarMateria(
     @Param('id') id: string,
     @Param('materiaId') materiaId: string,
@@ -122,6 +146,13 @@ export class AlunosController {
   }
 
   @Delete(':id/materias/:materiaId')
+  @LogAcao(({ resultado }) => {
+    const r = resultado as { alunoNome?: string; materiaNome?: string };
+    return {
+      acao: 'Removeu vínculo de aluno com disciplina',
+      alvo: `${r?.alunoNome ?? 'aluno'} — ${r?.materiaNome ?? 'disciplina'}`,
+    };
+  })
   removerMateria(
     @Param('id') id: string,
     @Param('materiaId') materiaId: string,

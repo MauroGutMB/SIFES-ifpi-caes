@@ -1,4 +1,4 @@
-import { Box, Card, CardActionArea, CardContent, Chip, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Divider, Grid, Skeleton, Stack, Typography } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined';
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined';
 import ScheduleIcon from '@mui/icons-material/ScheduleOutlined';
@@ -12,7 +12,7 @@ import { resumoHorarios } from '../admin/materias/dias-semana';
 import { tokens } from '../../theme/tokens';
 
 export function MinhasMateriasTab() {
-  const { data, isLoading } = useMateriasControllerFindAll();
+  const { data, isLoading } = useMateriasControllerFindAll({ estado: 'ABERTA' });
   const navigate = useNavigate();
 
   return (
@@ -49,14 +49,9 @@ export function MinhasMateriasTab() {
                   sx={{ height: '100%', display: 'flex', alignItems: 'stretch' }}
                 >
                   <CardContent sx={{ width: '100%' }}>
-                    <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="h6">{materia.nome}</Typography>
-                      <Chip
-                        size="small"
-                        label={materia.estado === 'ABERTA' ? 'Aberta' : 'Encerrada'}
-                        color={materia.estado === 'ABERTA' ? 'success' : 'default'}
-                      />
-                    </Stack>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      {materia.nome}
+                    </Typography>
 
                     <Divider sx={{ mb: 1.5 }} />
 

@@ -61,7 +61,7 @@ export class FotoSolicitacoesService {
   private async buscarPendente(id: string) {
     const solicitacao = await this.prisma.solicitacaoFoto.findUnique({
       where: { id },
-      include: { aluno: { select: { userId: true } } },
+      include: { aluno: { select: { userId: true, nome: true } } },
     });
     if (!solicitacao) {
       throw new NotFoundException('Solicitação não encontrada');
@@ -86,10 +86,11 @@ export class FotoSolicitacoesService {
     );
     await this.prisma.arquivo.delete({ where: { id: arquivoId } });
 
-    return this.prisma.solicitacaoFoto.update({
+    const atualizada = await this.prisma.solicitacaoFoto.update({
       where: { id },
       data: { status: StatusSolicitacaoFoto.APROVADA, resolvidaEm: new Date() },
     });
+    return { ...atualizada, alunoNome: solicitacao.aluno.nome };
   }
 
   async aprovarTodas() {
@@ -108,12 +109,13 @@ export class FotoSolicitacoesService {
     const solicitacao = await this.buscarPendente(id);
     await removerArquivo(this.prisma, solicitacao.arquivoStagingUrl);
 
-    return this.prisma.solicitacaoFoto.update({
+    const atualizada = await this.prisma.solicitacaoFoto.update({
       where: { id },
       data: {
         status: StatusSolicitacaoFoto.REJEITADA,
         resolvidaEm: new Date(),
       },
     });
+    return { ...atualizada, alunoNome: solicitacao.aluno.nome };
   }
 }

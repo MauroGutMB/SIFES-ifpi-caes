@@ -125,9 +125,12 @@ export class RelatoriosController {
 
   @Roles(Role.ADMIN)
   @Get('usuarios')
-  async usuarios(@Query('formato') formatoQuery: string | undefined) {
+  async usuarios(
+    @Query('formato') formatoQuery: string | undefined,
+    @Query('role') role: Role | undefined,
+  ) {
     const formato = parseFormato(formatoQuery);
-    const resultado = await this.service.usuariosAtivos(formato);
+    const resultado = await this.service.usuariosAtivos(formato, role);
     return this.empacotar(resultado, formato);
   }
 
@@ -148,5 +151,26 @@ export class RelatoriosController {
       dataInicio,
       dataFim,
     });
+  }
+
+  @Roles(Role.ADMIN, Role.PROFESSOR)
+  @Get('turma/:turmaId/frequencia-por-disciplina')
+  async frequenciaTurmaPorDisciplina(
+    @Param('turmaId') turmaId: string,
+    @Query('formato') formatoQuery: string | undefined,
+    @Query('materiaId') materiaId: string | undefined,
+    @Query('alunoId') alunoId: string | undefined,
+    @Query('dataInicio') dataInicio: string | undefined,
+    @Query('dataFim') dataFim: string | undefined,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    const formato = parseFormato(formatoQuery);
+    const resultado = await this.service.frequenciaTurmaPorDisciplina(
+      turmaId,
+      formato,
+      user,
+      { materiaId, alunoId, dataInicio, dataFim },
+    );
+    return this.empacotar(resultado, formato);
   }
 }
