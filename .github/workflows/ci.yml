@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend (lint + typecheck + testes)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sifes
+          POSTGRES_PASSWORD: sifes
+          POSTGRES_DB: sifes
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://sifes:sifes@localhost:5432/sifes?schema=public
+      JWT_ACCESS_SECRET: ci-e2e-access-secret
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: ci-e2e-refresh-secret
+      JWT_REFRESH_EXPIRES_IN: 7d
+      COOKIE_SECURE: "false"
+      WEB_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: backend
+        run: npm ci
+
+      - name: Lint
+        working-directory: backend
+        run: npx eslint "src/**/*.ts" "test/**/*.ts"
+
+      - name: Typecheck
+        working-directory: backend
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Testes unitários
+        working-directory: backend
+        run: npx jest --silent
+
+      - name: Aplicar migrations no Postgres de CI
+        working-directory: backend
+        run: npx prisma migrate deploy
+
+      - name: Testes e2e
+        working-directory: backend
+        run: npm run test:e2e
+
+      - name: Build (garante que compila pra produção)
+        working-directory: backend
+        run: npm run build
+
+  frontend:
+    name: Frontend (lint + typecheck + testes + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Testes unitários
+        working-directory: frontend
+        run: npm run test
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
