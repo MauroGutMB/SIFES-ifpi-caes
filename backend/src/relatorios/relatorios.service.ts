@@ -343,30 +343,47 @@ export class RelatoriosService {
       SABADO: 'Sábado',
     };
 
-    const itens = materias.flatMap((materia) =>
-      materia.horarios.map((horario) => ({
-        diaSemana: horario.diaSemana,
-        horaInicio: horario.horaInicio,
-        materiaNome: materia.nome,
-        turmaNome: `${materia.turma.cursoTecnico} — ${materia.turma.anoSerie}`,
-        professorNome: materia.professor.nome,
-      })),
+    // Mesma grade dia x hora mostrada no WeeklyAgenda da tela (7h-17h, Sábado só entra se
+    // houver aula nele) — em vez da lista simples de linhas do relatório genérico.
+    const HORAS = Array.from({ length: 11 }, (_, i) => 7 + i);
+    const diasComAula = new Set(
+      materias.flatMap((m) => m.horarios.map((h) => h.diaSemana)),
     );
-    itens.sort(
-      (a, b) =>
-        ORDEM_DIA[a.diaSemana] - ORDEM_DIA[b.diaSemana] ||
-        a.horaInicio.localeCompare(b.horaInicio),
-    );
+    const dias = Object.keys(ORDEM_DIA)
+      .filter((d) => d !== 'SABADO' || diasComAula.has('SABADO'))
+      .sort((a, b) => ORDEM_DIA[a] - ORDEM_DIA[b]);
+
+    // Professor pode lecionar em turmas diferentes — mostra a turma junto na célula, igual à
+    // tela (mostrarTurma). Aluno só tem uma turma, então ela vai só no cabeçalho do relatório.
+    const celula = (dia: string, hora: number): string =>
+      materias
+        .filter((m) =>
+          m.horarios.some(
+            (h) =>
+              h.diaSemana === dia && Number(h.horaInicio.slice(0, 2)) === hora,
+          ),
+        )
+        .map((m) =>
+          user.role === Role.PROFESSOR
+            ? `${m.nome} — ${m.turma.cursoTecnico} ${m.turma.anoSerie}`
+            : m.nome,
+        )
+        .join(' / ');
+
+    const turmas = [
+      ...new Set(
+        materias.map((m) => `${m.turma.cursoTecnico} — ${m.turma.anoSerie}`),
+      ),
+    ];
 
     const tabela: TabelaRelatorio = {
       titulo: 'Agenda da semana',
-      colunas: ['Dia', 'Horário', 'Disciplina', 'Turma', 'Professor'],
-      linhas: itens.map((item) => [
-        LABEL_DIA[item.diaSemana],
-        item.horaInicio,
-        item.materiaNome,
-        item.turmaNome,
-        item.professorNome,
+      subtitulo: turmas.length > 0 ? turmas.join(', ') : undefined,
+      tituloAlinhamento: 'center',
+      colunas: ['Hora', ...dias.map((d) => LABEL_DIA[d])],
+      linhas: HORAS.map((hora) => [
+        `${String(hora).padStart(2, '0')}h`,
+        ...dias.map((dia) => celula(dia, hora)),
       ]),
     };
     return {
