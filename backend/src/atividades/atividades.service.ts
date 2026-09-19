@@ -14,7 +14,9 @@ import {
 } from '../common/posse.util';
 import {
   mimeRegexParaFormato,
+  mimeRegexTodosFormatos,
   mimeTiposParaFormato,
+  mimeTiposTodosFormatos,
 } from './formato-entrega.util';
 import { CreateAtividadeDto } from './dto/create-atividade.dto';
 import { UpdateAtividadeDto } from './dto/update-atividade.dto';
@@ -66,9 +68,9 @@ export class AtividadesService {
     return atividade;
   }
 
-  /** Valida o anexo contra o formato exigido pela Atividade — tanto o header Content-Type
-   * (declarado pelo cliente) quanto os magic bytes reais do conteúdo, que não podem ser
-   * falsificados da mesma forma. */
+  /** Valida a entrega do aluno contra o formatoExigido da Atividade — tanto o header
+   * Content-Type (declarado pelo cliente) quanto os magic bytes reais do conteúdo, que não
+   * podem ser falsificados da mesma forma. */
   private validarAnexo(file: Express.Multer.File, formato: FormatoArquivo) {
     const regexEsperado = mimeRegexParaFormato(formato);
     if (!regexEsperado.test(file.mimetype)) {
@@ -77,6 +79,22 @@ export class AtividadesService {
       );
     }
     if (!validarAssinaturaArquivo(file.buffer, mimeTiposParaFormato(formato))) {
+      throw new BadRequestException(
+        'O conteúdo do arquivo não corresponde ao tipo declarado',
+      );
+    }
+  }
+
+  /** O anexo do professor (enunciado/material da Atividade) pode ser qualquer formato que o
+   * sistema aceita — PNG, JPEG, Word ou PDF — independente do formatoExigido, que é uma regra
+   * sobre o que o ALUNO vai entregar, não sobre o material do professor. */
+  private validarAnexoProfessor(file: Express.Multer.File) {
+    if (!mimeRegexTodosFormatos().test(file.mimetype)) {
+      throw new BadRequestException(
+        'Formato de arquivo inválido — o anexo deve ser PNG, JPEG, Word ou PDF',
+      );
+    }
+    if (!validarAssinaturaArquivo(file.buffer, mimeTiposTodosFormatos())) {
       throw new BadRequestException(
         'O conteúdo do arquivo não corresponde ao tipo declarado',
       );
@@ -100,7 +118,7 @@ export class AtividadesService {
     const materia = await this.carregarMateria(materiaId, user);
     this.garantirAberta(materia);
     if (anexo) {
-      this.validarAnexo(anexo, dto.formatoExigido);
+      this.validarAnexoProfessor(anexo);
     }
     return this.prisma.atividade.create({
       data: {
@@ -132,7 +150,7 @@ export class AtividadesService {
     this.garantirAberta(atividade.materia);
     let arquivoUrl = atividade.arquivoUrl;
     if (anexo) {
-      this.validarAnexo(anexo, dto.formatoExigido ?? atividade.formatoExigido);
+      this.validarAnexoProfessor(anexo);
       await this.removerAnexo(atividade.arquivoUrl);
       arquivoUrl = await this.salvarAnexo(anexo);
     }

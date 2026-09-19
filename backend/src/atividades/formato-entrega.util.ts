@@ -23,3 +23,19 @@ export function mimeRegexParaFormato(formato: FormatoArquivo): RegExp {
     .join('|');
   return new RegExp(`^(${alternativas})$`);
 }
+
+// Todos os mimeTypes aceitos pelo sistema, independente de formato — usado pro anexo do
+// professor (enunciado/material), que pode ser qualquer um deles, ao contrário da entrega do
+// aluno, que é restrita ao formatoExigido daquela Atividade.
+export function mimeTiposTodosFormatos(): string[] {
+  return Object.values(FormatoArquivo).flatMap(
+    (formato) => MIME_TIPOS_POR_FORMATO[formato],
+  );
+}
+
+export function mimeRegexTodosFormatos(): RegExp {
+  const alternativas = mimeTiposTodosFormatos()
+    .map((mime) => mime.replace(/[.+]/g, '\\$&'))
+    .join('|');
+  return new RegExp(`^(${alternativas})$`);
+}

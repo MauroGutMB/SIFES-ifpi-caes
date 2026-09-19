@@ -47,6 +47,25 @@ function criarServico(atividadeEncontrada: unknown) {
   return { service: new AtividadesService(prisma as never), prisma };
 }
 
+function criarServicoParaCriar() {
+  const prisma = {
+    materia: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'materia-1',
+        professorId: 'professor-1',
+        estado: 'ABERTA',
+      }),
+    },
+    atividade: {
+      create: jest.fn().mockResolvedValue({ id: 'atividade-1' }),
+    },
+    arquivo: {
+      create: jest.fn().mockResolvedValue({ id: 'arquivo-1' }),
+    },
+  };
+  return { service: new AtividadesService(prisma as never), prisma };
+}
+
 describe('AtividadesService.entregar — prazo e permissão', () => {
   const atividadeAberta = (prazo: Date | null) => ({
     id: 'atividade-1',
@@ -143,5 +162,36 @@ describe('AtividadesService.entregar — prazo e permissão', () => {
         },
       }),
     );
+  });
+});
+
+describe('AtividadesService.criar — anexo do professor', () => {
+  const professor = usuario({
+    role: 'PROFESSOR',
+    professorId: 'professor-1',
+  });
+  const dto = {
+    titulo: 'Trabalho',
+    descricao: 'Descrição',
+    formatoExigido: 'PDF',
+    prazo: '2999-01-01T00:00:00.000Z',
+  } as never;
+
+  it('aceita anexo do professor em formato diferente do formatoExigido do aluno', async () => {
+    const { service, prisma } = criarServicoParaCriar();
+    await service.criar(
+      'materia-1',
+      dto,
+      professor,
+      arquivoFalso('image/png'), // formatoExigido é PDF, anexo do professor é PNG
+    );
+    expect(prisma.atividade.create).toHaveBeenCalled();
+  });
+
+  it('rejeita anexo do professor num formato que o sistema não aceita', async () => {
+    const { service } = criarServicoParaCriar();
+    await expect(
+      service.criar('materia-1', dto, professor, arquivoFalso('text/plain')),
+    ).rejects.toThrow(BadRequestException);
   });
 });
