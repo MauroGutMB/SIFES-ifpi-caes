@@ -375,6 +375,34 @@ export class RelatoriosService {
     };
   }
 
+  /** Usuários com senha já definida (precisaTrocarSenha=false) — os que ainda não trocaram a
+   * senha inicial não entram, pois ainda não estão de fato "ativos" no sistema. */
+  async usuariosAtivos(formato: Formato) {
+    const usuarios = await this.prisma.user.findMany({
+      where: { precisaTrocarSenha: false },
+      include: {
+        professor: { select: { nome: true } },
+        aluno: { select: { nome: true } },
+      },
+      orderBy: { criadoEm: 'desc' },
+    });
+
+    const tabela: TabelaRelatorio = {
+      titulo: 'Usuários com senha definida',
+      colunas: ['Nome', 'Login', 'Cargo', 'Criado em'],
+      linhas: usuarios.map((u) => [
+        u.professor?.nome ?? u.aluno?.nome ?? '—',
+        u.login,
+        u.role,
+        u.criadoEm.toISOString().slice(0, 10),
+      ]),
+    };
+    return {
+      buffer: await gerarRelatorio(tabela, formato),
+      nomeBase: 'usuarios',
+    };
+  }
+
   /** Painel de frequência da turma — exibível na tela, com filtros por matéria, aluno e
    * intervalo de datas. Sem filtro de data, o padrão é "até hoje" (nunca antecipa aulas
    * futuras, que ainda não têm frequência lançada). */

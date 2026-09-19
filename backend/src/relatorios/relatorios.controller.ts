@@ -123,6 +123,14 @@ export class RelatoriosController {
     return this.empacotar(resultado, formato);
   }
 
+  @Roles(Role.ADMIN)
+  @Get('usuarios')
+  async usuarios(@Query('formato') formatoQuery: string | undefined) {
+    const formato = parseFormato(formatoQuery);
+    const resultado = await this.service.usuariosAtivos(formato);
+    return this.empacotar(resultado, formato);
+  }
+
   @Roles(Role.ADMIN, Role.PROFESSOR, Role.ALUNO)
   @Get('turma/:turmaId/frequencia')
   @ApiOkResponse({ type: RelatorioFrequenciaTurmaDto })
