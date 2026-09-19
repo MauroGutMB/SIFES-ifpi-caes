@@ -32,6 +32,7 @@ import { baixarArquivo } from '../../api/download';
 import { FotoPopup } from '../../components/FotoPopup';
 import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
+import { useToast } from '../../components/ToastProvider';
 import { AulaDialog } from './materia/AulaDialog';
 
 interface AlunoAgrupado {
@@ -215,6 +216,7 @@ function DetalheDisciplinaDialog({
 export function TurmaProfessorPage() {
   const { turmaId = '' } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const { data: materias, isLoading } = useMateriasControllerFindAll();
 
   const [materiaId, setMateriaId] = useState('');
@@ -313,6 +315,8 @@ export function TurmaProfessorPage() {
         `/relatorios/turma/${turmaId}/frequencia-por-disciplina?${params}`,
         `frequencia-turma${periodo}.${formato}`,
       );
+    } catch {
+      toast.error('Não foi possível exportar a frequência da turma');
     } finally {
       setExportando(null);
     }

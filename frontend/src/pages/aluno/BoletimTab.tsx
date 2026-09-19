@@ -27,6 +27,7 @@ import {
 } from '../../api/generated/plano-disciplina/plano-disciplina';
 import { tokens } from '../../theme/tokens';
 import { corMedia } from '../../utils/corMedia';
+import { useToast } from '../../components/ToastProvider';
 
 const LABEL_SITUACAO: Record<string, { label: string; color: 'default' | 'success' | 'error' }> = {
   CURSANDO: { label: 'Cursando', color: 'default' },
@@ -38,6 +39,7 @@ const FREQUENCIA_MINIMA = 75;
 
 export function BoletimTab() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { data: perfil } = useAlunosControllerMeuPerfil();
   const { data: materias } = useMateriasControllerFindAll({ estado: 'ABERTA' });
   const semestreAtualId = perfil?.turma?.semestre.id;
@@ -55,6 +57,8 @@ export function BoletimTab() {
     setBaixando(chave);
     try {
       await baixarArquivo(url, nomeArquivo);
+    } catch {
+      toast.error('Não foi possível exportar o boletim');
     } finally {
       setBaixando(null);
     }

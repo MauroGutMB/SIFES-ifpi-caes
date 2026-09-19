@@ -3,6 +3,7 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import CheckIcon from '@mui/icons-material/CheckOutlined';
 import CloseIcon from '@mui/icons-material/CloseOutlined';
 import DoneAllIcon from '@mui/icons-material/DoneAllOutlined';
+import { isAxiosError } from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   getAdminFotoSolicitacoesControllerListarQueryKey,
@@ -14,9 +15,17 @@ import {
 import type { SolicitacaoFotoDto } from '../../../api/generated/models';
 import { urlArquivo } from '../../../api/arquivo-url';
 import { FotoPopup } from '../../../components/FotoPopup';
+import { useToast } from '../../../components/ToastProvider';
+
+function mensagemDeErro(error: unknown, padrao: string): string {
+  return isAxiosError(error)
+    ? ((error.response?.data as { message?: string } | undefined)?.message ?? padrao)
+    : padrao;
+}
 
 export function SolicitacoesFotoPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data, isLoading } = useAdminFotoSolicitacoesControllerListar();
   const aprovar = useAdminFotoSolicitacoesControllerAprovar();
   const rejeitar = useAdminFotoSolicitacoesControllerRejeitar();
@@ -26,6 +35,36 @@ export function SolicitacoesFotoPage() {
     queryClient.invalidateQueries({
       queryKey: getAdminFotoSolicitacoesControllerListarQueryKey(),
     });
+
+  const aprovarSolicitacao = async (id: string) => {
+    try {
+      await aprovar.mutateAsync({ id });
+      await invalidar();
+      toast.success('Foto aprovada com sucesso');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível aprovar a foto'));
+    }
+  };
+
+  const rejeitarSolicitacao = async (id: string) => {
+    try {
+      await rejeitar.mutateAsync({ id });
+      await invalidar();
+      toast.success('Foto rejeitada');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível rejeitar a foto'));
+    }
+  };
+
+  const aprovarTodasSolicitacoes = async () => {
+    try {
+      await aprovarTodas.mutateAsync();
+      await invalidar();
+      toast.success('Todas as solicitações foram aprovadas');
+    } catch (error) {
+      toast.error(mensagemDeErro(error, 'Não foi possível aprovar todas as solicitações'));
+    }
+  };
 
   const columns: GridColDef<SolicitacaoFotoDto>[] = [
     {
@@ -87,24 +126,12 @@ export function SolicitacoesFotoPage() {
         params.row.status === 'PENDENTE' && (
           <Stack direction="row">
             <Tooltip title="Aprovar">
-              <IconButton
-                size="small"
-                onClick={async () => {
-                  await aprovar.mutateAsync({ id: params.row.id });
-                  await invalidar();
-                }}
-              >
+              <IconButton size="small" onClick={() => void aprovarSolicitacao(params.row.id)}>
                 <CheckIcon fontSize="small" color="success" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Rejeitar">
-              <IconButton
-                size="small"
-                onClick={async () => {
-                  await rejeitar.mutateAsync({ id: params.row.id });
-                  await invalidar();
-                }}
-              >
+              <IconButton size="small" onClick={() => void rejeitarSolicitacao(params.row.id)}>
                 <CloseIcon fontSize="small" color="error" />
               </IconButton>
             </Tooltip>
@@ -121,10 +148,7 @@ export function SolicitacoesFotoPage() {
           variant="contained"
           startIcon={<DoneAllIcon />}
           disabled={!data?.length}
-          onClick={async () => {
-            await aprovarTodas.mutateAsync();
-            await invalidar();
-          }}
+          onClick={() => void aprovarTodasSolicitacoes()}
         >
           Aprovar todas
         </Button>

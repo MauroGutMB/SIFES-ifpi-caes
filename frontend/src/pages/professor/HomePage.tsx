@@ -13,9 +13,11 @@ import { useMateriasControllerFindAll } from '../../api/generated/materias/mater
 import { urlArquivo } from '../../api/arquivo-url';
 import { baixarArquivo } from '../../api/download';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
+import { useToast } from '../../components/ToastProvider';
 
 export function ProfessorHomePage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { data: me } = useUsersControllerMe();
   const { data: materias } = useMateriasControllerFindAll();
   const atualizarFoto = useUsersControllerUpdateFoto();
@@ -31,6 +33,8 @@ export function ProfessorHomePage() {
     setBaixando(formato);
     try {
       await baixarArquivo(`/relatorios/agenda?formato=${formato}`, `agenda-semanal.${formato}`);
+    } catch {
+      toast.error('Não foi possível exportar a agenda');
     } finally {
       setBaixando(null);
     }

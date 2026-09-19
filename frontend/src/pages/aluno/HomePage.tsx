@@ -24,6 +24,7 @@ import {
 import { useMateriasControllerFindAll } from '../../api/generated/materias/materias';
 import { baixarArquivo } from '../../api/download';
 import { WeeklyAgenda } from '../../components/WeeklyAgenda';
+import { useToast } from '../../components/ToastProvider';
 import { ContaTab } from './ContaTab';
 
 function agruparPorMateria<T extends { materiaId: string; materiaNome: string }>(itens: T[]) {
@@ -38,6 +39,7 @@ function agruparPorMateria<T extends { materiaId: string; materiaNome: string }>
 
 export function AlunoHomePage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const { data: perfil } = useAlunosControllerMeuPerfil();
   const { data: materias } = useMateriasControllerFindAll();
   const { data: pendentes } = useAlunosControllerAtividadesPendentes({ limite: '5' });
@@ -48,6 +50,8 @@ export function AlunoHomePage() {
     setBaixando(formato);
     try {
       await baixarArquivo(`/relatorios/agenda?formato=${formato}`, `agenda-semanal.${formato}`);
+    } catch {
+      toast.error('Não foi possível exportar a agenda');
     } finally {
       setBaixando(null);
     }

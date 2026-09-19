@@ -105,10 +105,19 @@ export function ProfessoresPage() {
 
   const excluir = async () => {
     if (!paraExcluir) return;
-    await remover.mutateAsync({ id: paraExcluir.id });
-    await invalidar();
-    setParaExcluir(null);
-    toast.success('Professor excluído com sucesso');
+    try {
+      await remover.mutateAsync({ id: paraExcluir.id });
+      await invalidar();
+      setParaExcluir(null);
+      toast.success('Professor excluído com sucesso');
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível excluir o professor')
+          : 'Não foi possível excluir o professor',
+      );
+    }
   };
 
   const excluirSelecionados = async () => {

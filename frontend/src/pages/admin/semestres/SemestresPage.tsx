@@ -108,10 +108,19 @@ export function SemestresPage() {
 
   const excluir = async () => {
     if (!paraExcluir) return;
-    await remover.mutateAsync({ id: paraExcluir.id });
-    await invalidar();
-    setParaExcluir(null);
-    toast.success('Semestre excluído com sucesso');
+    try {
+      await remover.mutateAsync({ id: paraExcluir.id });
+      await invalidar();
+      setParaExcluir(null);
+      toast.success('Semestre excluído com sucesso');
+    } catch (error) {
+      toast.error(
+        isAxiosError(error)
+          ? ((error.response?.data as { message?: string } | undefined)?.message ??
+            'Não foi possível excluir o semestre')
+          : 'Não foi possível excluir o semestre',
+      );
+    }
   };
 
   const excluirSelecionados = async () => {
