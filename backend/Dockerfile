@@ -24,6 +24,10 @@ COPY prisma ./prisma
 RUN npm ci
 
 COPY --from=build /app/dist ./dist
+# Logos do timbre institucional usados nos relatórios PDF (report-render.util.ts lê a partir de
+# `process.cwd()/assets/relatorio`) — sem isso, toda exportação em PDF falha ao tentar desenhar
+# o cabeçalho porque o arquivo de imagem não existe na imagem de runtime.
+COPY assets ./assets
 
 EXPOSE 3000
 
