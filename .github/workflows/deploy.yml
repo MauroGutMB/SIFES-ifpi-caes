@@ -73,7 +73,7 @@ jobs:
         run: npm run test:e2e
 
   deploy:
-    name: Build das imagens + deploy na VPS
+    name: Backend (build da imagem + deploy na VPS)
     needs: backend
     runs-on: ubuntu-latest
     # Os secrets abaixo ficam no Environment "production" (Settings > Environments), que pode
@@ -109,20 +109,6 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
-      - name: Build e push do frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: frontend
-          push: true
-          # Vazio: o Nginx do container faz proxy da API na mesma origem (cookie do refresh
-          # token funciona sem CORS/SameSite=None). O client da API (orval) já está commitado.
-          build-args: VITE_API_URL=
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/sifes-frontend:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.OWNER }}/sifes-frontend:latest
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
-
       - name: Configurar SSH (host key fixada, sem confiar no primeiro uso)
         env:
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
@@ -146,16 +132,50 @@ jobs:
           # Token efêmero do job (expira ao fim do run) — nenhum PAT guardado na VPS.
           printf '%s' "$GH_TOKEN" | ssh vps "docker login ghcr.io -u '$GH_ACTOR' --password-stdin"
           ssh vps "cd /opt/sifes && export IMAGE_TAG=$IMAGE_TAG && \
-            docker compose -f docker-compose.prod.yml pull backend frontend && \
+            docker compose -f docker-compose.prod.yml pull backend && \
             docker compose -f docker-compose.prod.yml up -d --remove-orphans && \
             docker logout ghcr.io && docker image prune -f"
 
-      - name: Verificar saúde
+      - name: Verificar saúde da API
         env:
-          VPS_DOMAIN: ${{ secrets.VPS_DOMAIN }}
+          API_URL: ${{ secrets.API_URL }}
         run: |
+          # GET / exige login (guard global): 401 também prova que Caddy + API estão respondendo.
           for i in $(seq 1 20); do
-            if curl -fsS -o /dev/null "https://$VPS_DOMAIN/"; then echo "no ar"; exit 0; fi
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/" || true)
+            if [ "$CODE" = "200" ] || [ "$CODE" = "401" ]; then echo "no ar ($CODE)"; exit 0; fi
             sleep 6
           done
-          echo "Site não respondeu após o deploy"; exit 1
+          echo "API não respondeu após o deploy"; exit 1
+
+  frontend:
+    name: Frontend (build + deploy no Cloudflare)
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: frontend
+        run: npm ci
+
+      # O client da API (orval) já está commitado em src/api/generated — não precisa do Swagger
+      # no ar (o /docs não é exposto em produção).
+      - name: Build
+        working-directory: frontend
+        env:
+          VITE_API_URL: ${{ secrets.API_URL }}
+        run: npm run build
+
+      - name: Deploy no Cloudflare
+        working-directory: frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy

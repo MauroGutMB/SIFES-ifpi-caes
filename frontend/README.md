@@ -42,7 +42,7 @@ API_DOCS_URL=https://sua-api.exemplo.com/docs-json npm run codegen
 npm run build
 ```
 
-Roda `tsc -b` (typecheck) seguido de `vite build`, gerando os arquivos estáticos em `dist/`. Em produção (backend e frontend em domínios diferentes), é preciso apontar o cliente Axios para a URL pública da API via variável de ambiente de build:
+Roda `tsc -b` (typecheck) seguido de `vite build`, gerando os arquivos estáticos em `dist/`. Em produção (backend e frontend em domínios diferentes — frontend no Cloudflare, API em VPS), é preciso apontar o cliente Axios para a URL pública da API via variável de ambiente de build:
 
 ```bash
 VITE_API_URL=https://sua-api.exemplo.com npm run build
@@ -86,5 +86,3 @@ src/
 
 O sistema tem três papéis (`ADMIN`, `PROFESSOR`, `ALUNO`), cada um com seu próprio conjunto de telas sob `src/pages/<papel>/`. O `RoleGate` (em `src/auth/`) bloqueia acesso a rotas de um papel que o usuário logado não possui, redirecionando para a home do papel correto.
 
-
-> Em produção (VPS) o frontend é servido pelo Nginx na mesma origem da API, com `VITE_API_URL` vazio.
