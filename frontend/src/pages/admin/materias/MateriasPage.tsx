@@ -60,9 +60,8 @@ function horaParaData(hora: string): Date | null {
 
 function dataParaHora(data: Date | null): string {
   if (!data) return '';
-  // Aulas só começam em hora cheia — o picker só mostra a view de horas, mas zera os minutos
-  // aqui também pra nunca deixar passar um valor antigo com minuto não-zero.
-  return `${String(data.getHours()).padStart(2, '0')}:00`;
+  if (Number.isNaN(data.getTime())) return '';
+  return `${String(data.getHours()).padStart(2, '0')}:${String(data.getMinutes()).padStart(2, '0')}`;
 }
 
 export function MateriasPage() {
@@ -431,9 +430,7 @@ export function MateriasPage() {
                       ampm={false}
                       minTime={horaParaData('07:00') ?? undefined}
                       maxTime={horaParaData('17:00') ?? undefined}
-                      shouldDisableTime={(valor, view) =>
-                        view === 'minutes' && valor.getMinutes() !== 0
-                      }
+                      minutesStep={5}
                       value={horaParaData(campo.value)}
                       onChange={(data) => campo.onChange(dataParaHora(data))}
                       slotProps={{

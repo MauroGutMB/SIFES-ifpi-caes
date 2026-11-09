@@ -10,6 +10,10 @@ async function main() {
   const login = process.env.ADMIN_LOGIN ?? 'admin';
   const senha = process.env.ADMIN_SENHA ?? 'admin123';
 
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_SENHA) {
+    throw new Error('Em produção, defina ADMIN_SENHA — o padrão não é aceito.');
+  }
+
   const existente = await prisma.user.findUnique({ where: { login } });
   if (existente) {
     console.log(`Admin "${login}" já existe, nada a fazer.`);

@@ -1,5 +1,4 @@
 // Schema de dados do SIFES — Diário de Aula
-// Referência de regras de negócio: docs/regras-negocio.md
 
 generator client {
   provider           = "prisma-client"
@@ -46,7 +45,7 @@ enum EstadoMateria {
 }
 
 // Override manual do admin sobre o estado calculado (por horário) de uma Aula.
-// Nulo = sem override, estado segue a janela de horário (ver regras-negocio.md).
+// Nulo = sem override, estado segue a janela de horário.
 enum AulaEstadoOverride {
   LANCADO
   NAO_LANCADO
@@ -238,7 +237,7 @@ model HorarioMateria {
   materiaId  String
   materia    Materia   @relation(fields: [materiaId], references: [id], onDelete: Cascade)
   diaSemana  DiaSemana
-  horaInicio String    // "HH:mm", duração fixa de 1h (ver regras-negocio.md)
+  horaInicio String    // "HH:mm", duração fixa de 1h
 
   @@unique([materiaId, diaSemana, horaInicio])
   @@map("horarios_materia")

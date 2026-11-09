@@ -19,10 +19,10 @@ Consulte o [README principal](../README.md) para a visão geral do projeto e o [
 
    | Variável | Para quê serve |
    |---|---|
-   | `DATABASE_URL` | Connection string do Postgres. Em produção (Neon), inclua `?sslmode=require`. |
+   | `DATABASE_URL` | Connection string do Postgres. Em produção (Neon), use a conexão direta (sem pooler) com `?sslmode=require`. |
    | `JWT_ACCESS_SECRET` / `JWT_ACCESS_EXPIRES_IN` | Segredo e validade do access token (padrão 15m). |
    | `JWT_REFRESH_SECRET` / `JWT_REFRESH_EXPIRES_IN` | Segredo e validade do refresh token (padrão 7d). |
-   | `COOKIE_SECURE` | `false` em dev (HTTP local). **Precisa ser `true` em produção** (frontend e backend em domínios diferentes) senão o navegador descarta o cookie do refresh token. |
+   | `COOKIE_SECURE` | `false` em dev (HTTP local). **Precisa ser `true` em produção** (sempre que houver HTTPS) senão o navegador descarta o cookie do refresh token. |
    | `WEB_ORIGIN` | Origem exata do frontend, sem barra no final — usada no CORS. |
 
 2. Suba o Postgres local (Docker Compose, na raiz do repo):
@@ -276,4 +276,4 @@ Todas retornam arquivo binário via query `formato=pdf|xlsx`, exceto a de frequ�
 
 ## CI
 
-`.github/workflows/ci.yml` roda em toda PR: lint, typecheck, testes unitários, migrations + testes e2e contra um Postgres de serviço, e build. `.github/workflows/deploy.yml` roda a mesma bateria em push pra `main`, antes de disparar o deploy no Render.
+`.github/workflows/ci.yml` roda em toda PR: lint, typecheck, testes unitários, migrations + testes e2e contra um Postgres de serviço, e build. `.github/workflows/deploy.yml` roda a mesma bateria em push pra `main`, antes de publicar as imagens e atualizar a VPS.

@@ -21,7 +21,7 @@ const JS_DAY_BY_DIA_SEMANA: Record<DiaSemana, number> = {
 // podem ser oferecidas em contraturno, então não há restrição de turno aqui, só a janela geral.
 const JANELA_MINUTOS = { inicio: 7 * 60, fim: 18 * 60 };
 
-const DURACAO_AULA_MINUTOS = 60;
+export const DURACAO_AULA_MINUTOS = 60;
 
 export function parseHoraMinuto(hora: string): number {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hora);
@@ -31,15 +31,10 @@ export function parseHoraMinuto(hora: string): number {
   return Number(match[1]) * 60 + Number(match[2]);
 }
 
-/** Valida que o horário (HH:mm) é hora cheia e cabe na janela geral 7h–18h (considerando
- * 1h de duração) — aulas nunca começam em hora quebrada. */
+/** Valida que o horário (HH:mm) cabe na janela geral 7h–18h (considerando 1h de duração).
+ * Minutos quebrados (ex: 08:30) são permitidos. */
 export function validarHorario(hora: string): string | null {
   const minutos = parseHoraMinuto(hora);
-
-  if (minutos % 60 !== 0) {
-    return 'Horário deve começar em hora cheia (ex: 08:00), sem minutos';
-  }
-
   const fimAula = minutos + DURACAO_AULA_MINUTOS;
 
   if (minutos < JANELA_MINUTOS.inicio || fimAula > JANELA_MINUTOS.fim) {
@@ -47,6 +42,14 @@ export function validarHorario(hora: string): string | null {
   }
 
   return null;
+}
+
+/** Duas aulas (1h cada) se sobrepõem se os intervalos [início, início+1h) se cruzam. */
+export function horariosSeSobrepoem(horaA: string, horaB: string): boolean {
+  return (
+    Math.abs(parseHoraMinuto(horaA) - parseHoraMinuto(horaB)) <
+    DURACAO_AULA_MINUTOS
+  );
 }
 
 function combinarDataHora(data: Date, minutosDoDia: number): Date {

@@ -1,6 +1,6 @@
+# ATENÇÃO: credenciais/defaults abaixo são SÓ para uso local — nunca exponha este compose na internet.
 # Stack completa (Postgres + API + frontend), pensada para rodar o SIFES inteiro localmente com
-# um único comando (`docker compose up --build`) ou como alternativa self-hosted ao par
-# Render+Cloudflare já usado em produção. Para desenvolvimento do dia a dia (só o banco, com
+# um único comando (`docker compose up --build`). Para desenvolvimento do dia a dia (só o banco, com
 # backend/frontend rodando fora do Docker via `npm run start:dev`/`npm run dev`), use
 # `docker-compose.dev.yml` — este arquivo aqui sobe tudo containerizado.
 services:

@@ -171,7 +171,7 @@ export class AlunosService {
 
   /**
    * Histórico de semestres do aluno, derivado dos vínculos aluno-matéria (nada é apagado ao
-   * trocar de semestre — ver regras-negocio.md). Um por semestre distinto que ele já teve
+   * trocar de semestre). Um por semestre distinto que ele já teve
    * matéria vinculada, com um resumo de situação (aprovado/reprovado/cursando) calculado a
    * partir do boletim de cada matéria daquele semestre.
    */

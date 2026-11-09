@@ -29,6 +29,9 @@ COPY --from=build /app/dist ./dist
 # o cabeçalho porque o arquivo de imagem não existe na imagem de runtime.
 COPY assets ./assets
 
+# Não roda como root dentro do container.
+USER node
+
 EXPOSE 3000
 
 # Aplica migrations pendentes antes de subir — mesmo comando usado no deploy do Render.

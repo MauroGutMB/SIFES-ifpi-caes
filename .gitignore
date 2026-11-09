@@ -12,3 +12,14 @@ coverage/
 # Env
 .env
 .env.local
+
+# Segredos e estado de produção — NUNCA commitar (repositório público)
+.env.*
+!.env.*.example
+*.pem
+*.key
+*.dump
+*.sql.gz
+deploy/certbot/
+deploy/backups/
+.claude/

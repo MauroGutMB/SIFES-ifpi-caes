@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
@@ -7,7 +8,11 @@ import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Em produção a API fica atrás do Nginx (1 salto). Sem isso o rate limit (ThrottlerGuard) e o
+  // log de auditoria enxergariam o IP do proxy para todo mundo. TRUST_PROXY=0 desliga.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 0));
 
   // contentSecurityPolicy desligado porque quebraria o Swagger UI montado em /docs (ele carrega
   // scripts/estilos inline) — os headers que importam pra prevenir XSS de upload (nosniff,

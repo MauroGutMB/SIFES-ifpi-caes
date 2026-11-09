@@ -16,7 +16,11 @@ import { hojeComoBrasiliaFake } from '../common/tempo.util';
 import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
-import { gerarOcorrenciasAula, validarHorario } from './horario.util';
+import {
+  gerarOcorrenciasAula,
+  horariosSeSobrepoem,
+  validarHorario,
+} from './horario.util';
 
 type Tx = Prisma.TransactionClient;
 type Horario = { diaSemana: DiaSemana; horaInicio: string };
@@ -62,7 +66,7 @@ export class MateriasService {
   }
 
   /**
-   * Dentro de uma mesma Turma, dois slots com o mesmo dia+horário não podem pertencer a
+   * Dentro de uma mesma Turma, dois slots com horários sobrepostos (aulas de 1h) no mesmo dia não podem pertencer a
    * Matérias diferentes — a Turma (seus alunos) não pode estar em duas aulas ao mesmo tempo.
    */
   private async validarConflitosDeHorario(
@@ -71,10 +75,9 @@ export class MateriasService {
     horarios: Horario[],
   ) {
     for (const horario of horarios) {
-      const conflito = await this.prisma.horarioMateria.findFirst({
+      const mesmoDia = await this.prisma.horarioMateria.findMany({
         where: {
           diaSemana: horario.diaSemana,
-          horaInicio: horario.horaInicio,
           materia: {
             turmaId,
             id: materiaId ? { not: materiaId } : undefined,
@@ -82,10 +85,13 @@ export class MateriasService {
         },
         include: { materia: true },
       });
+      const conflito = mesmoDia.find((existente) =>
+        horariosSeSobrepoem(existente.horaInicio, horario.horaInicio),
+      );
       if (conflito) {
         throw new BadRequestException(
           `Conflito de horário: a turma já tem "${conflito.materia.nome}" em ` +
-            `${horario.diaSemana} às ${horario.horaInicio}`,
+            `${horario.diaSemana} às ${conflito.horaInicio}`,
         );
       }
     }
@@ -440,7 +446,7 @@ export class MateriasService {
    * Um semestre só é concluído pro aluno quando todas as Matérias vinculadas da sua turma
    * atual estiverem encerradas. Aprovado em tudo → desliga automaticamente (fica sem turma,
    * livre pra ser matriculado em outra). Reprovado em alguma → fica pendente, vinculado até
-   * o admin agir manualmente (ver regras-negocio.md — Pendência e desligamento do semestre).
+   * o admin agir manualmente.
    */
   private async verificarDesligamentoAutomatico(alunoId: string) {
     const aluno = await this.prisma.aluno.findUnique({
