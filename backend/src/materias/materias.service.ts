@@ -446,7 +446,7 @@ export class MateriasService {
    * Um semestre só é concluído pro aluno quando todas as Matérias vinculadas da sua turma
    * atual estiverem encerradas. Aprovado em tudo → desliga automaticamente (fica sem turma,
    * livre pra ser matriculado em outra). Reprovado em alguma → fica pendente, vinculado até
-   * o admin agir manualmente (ver regras-negocio.md — Pendência e desligamento do semestre).
+   * o admin agir manualmente.
    */
   private async verificarDesligamentoAutomatico(alunoId: string) {
     const aluno = await this.prisma.aluno.findUnique({
