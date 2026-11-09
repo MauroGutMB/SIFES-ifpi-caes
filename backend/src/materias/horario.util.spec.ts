@@ -1,6 +1,7 @@
 import {
   gerarOcorrenciasAula,
   parseHoraMinuto,
+  horariosSeSobrepoem,
   validarHorario,
 } from './horario.util';
 import { DiaSemana } from '../../generated/prisma/client';
@@ -21,15 +22,17 @@ describe('horario.util', () => {
   });
 
   describe('validarHorario', () => {
-    it('aceita horários em hora cheia dentro da janela 7h–18h (considerando 1h de duração)', () => {
+    it('aceita horários dentro da janela 7h–18h (considerando 1h de duração)', () => {
       expect(validarHorario('07:00')).toBeNull();
       expect(validarHorario('17:00')).toBeNull();
       expect(validarHorario('12:00')).toBeNull();
     });
 
-    it('rejeita hora quebrada — aulas só começam em hora cheia', () => {
-      expect(validarHorario('12:30')).not.toBeNull();
-      expect(validarHorario('08:15')).not.toBeNull();
+    it('aceita hora quebrada (ex.: 08:30), respeitando a janela', () => {
+      expect(validarHorario('08:30')).toBeNull();
+      expect(validarHorario('17:00')).toBeNull();
+      expect(validarHorario('17:30')).not.toBeNull();
+      expect(validarHorario('06:59')).not.toBeNull();
     });
 
     it('rejeita horário antes das 7h', () => {
@@ -43,6 +46,16 @@ describe('horario.util', () => {
     it('não restringe mais por turno (matéria pode estar em contraturno)', () => {
       // 14h é válido mesmo que a turma seja de manhã — a restrição de turno foi removida.
       expect(validarHorario('14:00')).toBeNull();
+    });
+  });
+
+  describe('horariosSeSobrepoem', () => {
+    it('detecta sobreposição de aulas de 1h', () => {
+      expect(horariosSeSobrepoem('08:00', '08:00')).toBe(true);
+      expect(horariosSeSobrepoem('08:00', '08:30')).toBe(true);
+      expect(horariosSeSobrepoem('08:30', '08:00')).toBe(true);
+      expect(horariosSeSobrepoem('08:00', '09:00')).toBe(false);
+      expect(horariosSeSobrepoem('08:00', '09:30')).toBe(false);
     });
   });
 
