@@ -1,7 +1,9 @@
 import {
   gerarOcorrenciasAula,
   parseHoraMinuto,
+  encontrarSobreposicao,
   horariosSeSobrepoem,
+  rotuloHorario,
   validarHorario,
 } from './horario.util';
 import { DiaSemana } from '../../generated/prisma/client';
@@ -56,6 +58,32 @@ describe('horario.util', () => {
       expect(horariosSeSobrepoem('08:30', '08:00')).toBe(true);
       expect(horariosSeSobrepoem('08:00', '09:00')).toBe(false);
       expect(horariosSeSobrepoem('08:00', '09:30')).toBe(false);
+    });
+  });
+
+  describe('encontrarSobreposicao', () => {
+    it('acha slots da mesma matéria que se cruzam no mesmo dia', () => {
+      const a = { diaSemana: DiaSemana.SEGUNDA, horaInicio: '08:00' };
+      const b = { diaSemana: DiaSemana.SEGUNDA, horaInicio: '08:30' };
+      expect(encontrarSobreposicao([a, b])).toEqual([a, b]);
+    });
+
+    it('não acusa dias diferentes nem aulas encostadas (08:00 e 09:00)', () => {
+      expect(
+        encontrarSobreposicao([
+          { diaSemana: DiaSemana.SEGUNDA, horaInicio: '08:00' },
+          { diaSemana: DiaSemana.TERCA, horaInicio: '08:30' },
+          { diaSemana: DiaSemana.SEGUNDA, horaInicio: '09:00' },
+        ]),
+      ).toBeNull();
+    });
+  });
+
+  describe('rotuloHorario', () => {
+    it('hora cheia vira "08h" e horário quebrado mantém os minutos', () => {
+      expect(rotuloHorario('08:00')).toBe('08h');
+      expect(rotuloHorario('08:30')).toBe('08:30');
+      expect(rotuloHorario('17:05')).toBe('17:05');
     });
   });
 

@@ -25,6 +25,12 @@ const HORAS = Array.from({ length: 11 }, (_, i) => 7 + i); // 7h..17h (janela 7h
 
 const PALETA = ['#1E6B41', '#2E7D32', '#0277BD', '#6A1B9A', '#AD5C00', '#00695C', '#5D4037'];
 
+/** Aulas em hora cheia ficam só na linha da hora; as de horário quebrado (ex: 08:30) mostram o
+ * horário completo na célula, senão pareceriam começar às 08:00. */
+function prefixoHorario(horaInicio: string): string {
+  return horaInicio.slice(3, 5) === '00' ? '' : `${horaInicio} · `;
+}
+
 function corPara(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
@@ -53,6 +59,10 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
       lista.push({ item, horario });
       porCelula.set(chave, lista);
     }
+  }
+
+  for (const lista of porCelula.values()) {
+    lista.sort((a, b) => a.horario.horaInicio.localeCompare(b.horario.horaInicio));
   }
 
   if (itens.length === 0) {
@@ -128,7 +138,9 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
                   {celulas.map(({ item, horario }) => (
                     <Tooltip
                       key={`${item.id}-${horario.horaInicio}`}
-                      title={item.subtitulo ? `${item.titulo} — ${item.subtitulo}` : item.titulo}
+                      title={`${horario.horaInicio} — ${
+                        item.subtitulo ? `${item.titulo} — ${item.subtitulo}` : item.titulo
+                      }`}
                     >
                       <Box
                         sx={{
@@ -143,6 +155,7 @@ export function WeeklyAgenda({ itens, mostrarTurma = false }: WeeklyAgendaProps)
                           wordBreak: 'break-word',
                         }}
                       >
+                        {prefixoHorario(horario.horaInicio)}
                         {mostrarTurma && item.subtitulo
                           ? `${item.titulo} — ${item.subtitulo}`
                           : item.titulo}

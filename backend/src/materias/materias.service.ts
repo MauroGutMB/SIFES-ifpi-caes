@@ -17,6 +17,7 @@ import { garantirPosseProfessor } from '../common/posse.util';
 import { CreateMateriaDto } from './dto/create-materia.dto';
 import { UpdateMateriaDto } from './dto/update-materia.dto';
 import {
+  encontrarSobreposicao,
   gerarOcorrenciasAula,
   horariosSeSobrepoem,
   validarHorario,
@@ -62,6 +63,13 @@ export class MateriasService {
       if (erro) {
         throw new BadRequestException(erro);
       }
+    }
+
+    const par = encontrarSobreposicao(horarios);
+    if (par) {
+      throw new BadRequestException(
+        `Horários da própria matéria se sobrepõem: ${par[0].diaSemana} ${par[0].horaInicio} e ${par[1].horaInicio}`,
+      );
     }
   }
 

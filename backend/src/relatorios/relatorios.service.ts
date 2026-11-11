@@ -11,6 +11,7 @@ import { garantirPosseProfessor } from '../common/posse.util';
 import { hojeComoBrasiliaFake } from '../common/tempo.util';
 import { calcularFrequenciaPercentual } from '../boletim/boletim.util';
 import { Formato, gerarRelatorio, TabelaRelatorio } from './report-render.util';
+import { rotuloHorario } from '../materias/horario.util';
 import type { RelatorioFrequenciaTurmaDto } from './dto/frequencia-turma-relatorio.dto';
 
 export interface FiltrosFrequenciaTurma {
@@ -380,17 +381,27 @@ export class RelatoriosService {
     // tela (mostrarTurma). Aluno só tem uma turma, então ela vai só no cabeçalho do relatório.
     const celula = (dia: string, hora: number): string =>
       materias
-        .filter((m) =>
-          m.horarios.some(
-            (h) =>
-              h.diaSemana === dia && Number(h.horaInicio.slice(0, 2)) === hora,
-          ),
+        .flatMap((m) =>
+          m.horarios
+            .filter(
+              (h) =>
+                h.diaSemana === dia &&
+                Number(h.horaInicio.slice(0, 2)) === hora,
+            )
+            .map((h) => ({ materia: m, horaInicio: h.horaInicio })),
         )
-        .map((m) =>
-          user.role === Role.PROFESSOR
-            ? `${m.nome} — ${m.turma.cursoTecnico} ${m.turma.anoSerie}`
-            : m.nome,
-        )
+        .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio))
+        .map(({ materia: m, horaInicio }) => {
+          // Aula em horário quebrado (ex: 08:30) leva o horário na célula — a linha só diz "08h".
+          const prefixo =
+            horaInicio.slice(3, 5) === '00' ? '' : `${horaInicio} `;
+          return (
+            prefixo +
+            (user.role === Role.PROFESSOR
+              ? `${m.nome} — ${m.turma.cursoTecnico} ${m.turma.anoSerie}`
+              : m.nome)
+          );
+        })
         .join(' / ');
 
     const turmas = [
@@ -433,7 +444,7 @@ export class RelatoriosService {
               )
               .map(
                 (h) =>
-                  `${DIA_ABREV[h.diaSemana] ?? h.diaSemana} ${h.horaInicio.slice(0, 2)}h`,
+                  `${DIA_ABREV[h.diaSemana] ?? h.diaSemana} ${rotuloHorario(h.horaInicio)}`,
               ),
           ),
         ];

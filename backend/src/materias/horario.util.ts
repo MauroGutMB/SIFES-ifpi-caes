@@ -52,6 +52,32 @@ export function horariosSeSobrepoem(horaA: string, horaB: string): boolean {
   );
 }
 
+/** Primeiro par de slots (mesmo dia) cujas aulas de 1h se cruzam, ou null. Serve para barrar uma
+ * matéria com, por exemplo, 08:00 e 08:30 na mesma segunda — o conflito com OUTRAS matérias da
+ * turma é checado à parte, no serviço. */
+export function encontrarSobreposicao<
+  T extends { diaSemana: DiaSemana; horaInicio: string },
+>(horarios: T[]): [T, T] | null {
+  for (let i = 0; i < horarios.length; i++) {
+    for (let j = i + 1; j < horarios.length; j++) {
+      if (
+        horarios[i].diaSemana === horarios[j].diaSemana &&
+        horariosSeSobrepoem(horarios[i].horaInicio, horarios[j].horaInicio)
+      ) {
+        return [horarios[i], horarios[j]];
+      }
+    }
+  }
+  return null;
+}
+
+/** "08h" para hora cheia, "08:30" para horário quebrado — nunca descarta os minutos. */
+export function rotuloHorario(horaInicio: string): string {
+  return horaInicio.slice(3, 5) === '00'
+    ? `${horaInicio.slice(0, 2)}h`
+    : horaInicio;
+}
+
 function combinarDataHora(data: Date, minutosDoDia: number): Date {
   const resultado = new Date(data);
   resultado.setUTCHours(Math.floor(minutosDoDia / 60), minutosDoDia % 60, 0, 0);
