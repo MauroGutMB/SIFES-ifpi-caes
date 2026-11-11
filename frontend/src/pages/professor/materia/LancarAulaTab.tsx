@@ -3,6 +3,7 @@ import { Button, Chip, Paper, Stack, Typography } from '@mui/material';
 import { useMateriaAulasControllerFindAll } from '../../../api/generated/aulas/aulas';
 import type { AulaDto } from '../../../api/generated/models';
 import { AulaDialog } from './AulaDialog';
+import { formatarDataCivil, formatarHoraCivil } from '../../../utils/data';
 
 interface LancarAulaTabProps {
   materiaId: string;
@@ -15,13 +16,7 @@ function hojeBrasiliaISO(): string {
 }
 
 function formatarDataHora(aula: AulaDto): string {
-  const data = new Date(aula.data).toLocaleDateString('pt-BR');
-  const hora = new Date(aula.horaInicio).toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-  });
-  return `${data} - ${hora}`;
+  return `${formatarDataCivil(aula.data)} - ${formatarHoraCivil(aula.horaInicio)}`;
 }
 
 export function LancarAulaTab({ materiaId }: LancarAulaTabProps) {

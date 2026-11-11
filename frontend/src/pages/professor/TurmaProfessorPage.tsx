@@ -34,6 +34,7 @@ import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
 import { useToast } from '../../components/ToastProvider';
 import { AulaDialog } from './materia/AulaDialog';
+import { formatarDataCivil } from '../../utils/data';
 
 interface AlunoAgrupado {
   alunoId: string;
@@ -179,7 +180,7 @@ function DetalheDisciplinaDialog({
           <TableBody>
             {aulas.map((aula) => (
               <TableRow key={aula.aulaId}>
-                <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell>{formatarDataCivil(aula.data)}</TableCell>
                 <TableCell>
                   <Chip
                     size="small"

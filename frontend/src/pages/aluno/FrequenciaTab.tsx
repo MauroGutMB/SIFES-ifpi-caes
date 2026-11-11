@@ -22,6 +22,7 @@ import { useMateriasControllerFindAll } from '../../api/generated/materias/mater
 import { useRelatoriosControllerFrequenciaTurmaDetalhada } from '../../api/generated/relatorios/relatorios';
 import { usePaginacao } from '../../components/usePaginacao';
 import { Paginacao } from '../../components/Paginacao';
+import { formatarDataCivil } from '../../utils/data';
 
 const LABEL_STATUS: Record<string, { label: string; color: 'success' | 'error' | 'default' }> = {
   PRESENTE: { label: 'Presente', color: 'success' },
@@ -153,7 +154,7 @@ export function FrequenciaTab() {
             {!isLoading &&
               diasDaPagina.map((dia) => (
                 <TableRow key={dia.data}>
-                  <TableCell>{new Date(dia.data).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{formatarDataCivil(dia.data)}</TableCell>
                   <TableCell>
                     <Button size="small" variant="outlined" onClick={() => setDiaSelecionado(dia.data)}>
                       Aulas
@@ -177,7 +178,7 @@ export function FrequenciaTab() {
 
       <Dialog open={!!diaSelecionado} onClose={() => setDiaSelecionado(null)} fullWidth maxWidth="xs">
         <DialogTitle>
-          Aulas de {diaAberto && new Date(diaAberto.data).toLocaleDateString('pt-BR')}
+          Aulas de {diaAberto && formatarDataCivil(diaAberto.data)}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={1}>

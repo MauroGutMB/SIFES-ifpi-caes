@@ -4,6 +4,7 @@ import { useMateriaAulasControllerFindAll } from '../../../api/generated/aulas/a
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
 import { AulaDialog } from './AulaDialog';
+import { formatarDataCivil } from '../../../utils/data';
 
 interface DiarioTabProps {
   materiaId: string;
@@ -35,7 +36,7 @@ export function DiarioTab({ materiaId }: DiarioTabProps) {
                   sx={{ cursor: 'pointer' }}
                   onClick={() => setAulaSelecionada(aula.id)}
                 >
-                  <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{formatarDataCivil(aula.data)}</TableCell>
                   <TableCell>{aula.titulo ?? '—'}</TableCell>
                   <TableCell>
                     <Chip

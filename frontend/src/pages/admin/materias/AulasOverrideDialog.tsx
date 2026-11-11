@@ -22,6 +22,7 @@ import { useAulasControllerOverride } from '../../../api/generated/aulas/aulas';
 import type { AulaDto } from '../../../api/generated/models';
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
+import { formatarDataCivil, formatarHoraCivil } from '../../../utils/data';
 
 interface AulasOverrideDialogProps {
   materiaId: string | null;
@@ -72,19 +73,11 @@ export function AulasOverrideDialog({ materiaId, onClose }: AulasOverrideDialogP
             {!isLoading &&
               itensDaPagina.map((aula) => (
                 <TableRow key={aula.id}>
-                  <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{formatarDataCivil(aula.data)}</TableCell>
                   <TableCell>
-                    {new Date(aula.horaInicio).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      timeZone: 'UTC',
-                    })}
+                    {formatarHoraCivil(aula.horaInicio)}
                     {' – '}
-                    {new Date(aula.horaFim).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      timeZone: 'UTC',
-                    })}
+                    {formatarHoraCivil(aula.horaFim)}
                   </TableCell>
                   <TableCell>
                     <Chip
