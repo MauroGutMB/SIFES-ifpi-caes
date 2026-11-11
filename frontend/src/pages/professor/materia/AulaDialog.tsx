@@ -40,6 +40,7 @@ import {
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { urlArquivo } from '../../../api/arquivo-url';
 import { tokens } from '../../../theme/tokens';
+import { formatarDataCivil } from '../../../utils/data';
 
 interface AulaDialogProps {
   aulaId: string | null;
@@ -168,7 +169,7 @@ export function AulaDialog({ aulaId, onClose }: AulaDialogProps) {
   return (
     <Dialog open={!!aulaId} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>
-        Aula {aula ? new Date(aula.data).toLocaleDateString('pt-BR') : ''}
+        Aula {aula ? formatarDataCivil(aula.data) : ''}
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, overflowX: 'auto' }}>
         {isLoading || !aula ? (

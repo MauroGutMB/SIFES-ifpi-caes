@@ -22,6 +22,7 @@ import type { SemestreDto } from '../../../api/generated/models';
 import { FormDialog } from '../../../components/FormDialog';
 import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { useToast } from '../../../components/ToastProvider';
+import { formatarDataCivil } from '../../../utils/data';
 
 type FormValues = z.infer<typeof SemestresControllerCreateBody>;
 
@@ -152,13 +153,13 @@ export function SemestresPage() {
       field: 'dataInicio',
       headerName: 'Início',
       flex: 1,
-      valueFormatter: (value: string) => new Date(value).toLocaleDateString('pt-BR'),
+      valueFormatter: (value: string) => formatarDataCivil(value),
     },
     {
       field: 'dataFim',
       headerName: 'Fim',
       flex: 1,
-      valueFormatter: (value: string) => new Date(value).toLocaleDateString('pt-BR'),
+      valueFormatter: (value: string) => formatarDataCivil(value),
     },
     {
       field: 'acoes',

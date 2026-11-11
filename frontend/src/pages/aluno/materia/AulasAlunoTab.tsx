@@ -4,6 +4,7 @@ import { useMateriaAulasControllerFindAll } from '../../../api/generated/aulas/a
 import { usePaginacao } from '../../../components/usePaginacao';
 import { Paginacao } from '../../../components/Paginacao';
 import { AulaMateriaisDialog } from './AulaMateriaisDialog';
+import { formatarDataCivil } from '../../../utils/data';
 
 interface AulasAlunoTabProps {
   materiaId: string;
@@ -30,7 +31,7 @@ export function AulasAlunoTab({ materiaId }: AulasAlunoTabProps) {
             {!isLoading &&
               itensDaPagina.map((aula) => (
                 <TableRow key={aula.id}>
-                  <TableCell>{new Date(aula.data).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell>{formatarDataCivil(aula.data)}</TableCell>
                   <TableCell>{aula.titulo ?? '—'}</TableCell>
                   <TableCell>
                     <Button size="small" onClick={() => setAulaSelecionada(aula.id)}>
